@@ -1,11 +1,13 @@
-CC = g++
-CFLAGS = -g -lm -Wall -Wextra
+CXX = g++
+CXXFLAGS = -g -lm -Wall -Wextra
 
-.PHONY: all
+SOURCES = main.cpp mem.cpp cpu.cpp
 
-all: clean main
+6502: $(SOURCES)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-main: main.cpp mem.cpp cpu.cpp
+.PHONY: rebuild
+rebuild: clean 6502
 
 clean:
-	rm -f main
+	rm -f 6502

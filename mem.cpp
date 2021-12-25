@@ -14,7 +14,7 @@ char* AddressSpace::operator[](uint i) {
 ushort AddressSpace::read_word(uint addr, bool wrap_page) {
     char loByte, hiByte;
     loByte = *mapped_mem[addr];
-    if (!wrap_page || addr&0xFF != 0xFF)
+    if (!wrap_page || (addr&0xFF) != 0xFF)
         hiByte = *mapped_mem[addr+1];
     else
         hiByte = *mapped_mem[addr&0xFF00];

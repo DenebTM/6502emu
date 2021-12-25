@@ -137,6 +137,7 @@ void Emu6502::alu_op(const char op1, const char op2,
             res = op1 >> 1 | (SR_C<<7);
             set_flags(res, flag_n|flag_z);
             CLC(); if (op1&flag_c) SEC();
+            break;
         case alu_and:
             res = op1 & op2;
             set_flags(res, flag_n|flag_z);
@@ -165,9 +166,9 @@ void Emu6502::set_flags(const char op1, const char op2,
     // Negative
     CLN(); reg_sr |= res & flag_n;
     // Zero
-    CLZ(); reg_sr |= flag_z * (res&0xFF == 0);
+    CLZ(); reg_sr |= flag_z * ((res&0xFF) == 0);
     // Arithmetic overflow
-    CLV(); reg_sr |= flag_v * ((op1&flag_n == op2&flag_n) && (op1&flag_n != res&flag_n));
+    CLV(); reg_sr |= flag_v * ((op1&flag_n) == (op2&flag_n) && (op1&flag_n) != (res&flag_n));
     // Restore flags that should not be set
     reg_sr &= flag_mask;
     reg_sr |= flags_tmp;
