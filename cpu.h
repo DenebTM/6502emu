@@ -5,6 +5,14 @@
 #include <iostream>
 #include <list>
 
+#define flag_n 0x80
+#define flag_v 0x40
+#define flag_b 0x10
+#define flag_d 0x08
+#define flag_i 0x04
+#define flag_z 0x02
+#define flag_c 0x01
+
 #define SR_N (reg_sr & flag_n)
 #define SR_V (reg_sr & flag_v)
 #define SR_B (reg_sr & flag_b)
@@ -12,9 +20,29 @@
 #define SR_Z (reg_sr & flag_z)
 #define SR_C (reg_sr & flag_c)
 
+#define VEC_NMI 0xFFFA
+#define VEC_RST 0xFFFC
+#define VEC_IRQ 0xFFFE
+
+enum AddressingMode { addr_acc, addr_abs, add_absx, add_absy, addr_imm, addr_imp, addr_ind, add_xind, add_indy, addr_rel, addr_zpg, add_zpgx, add_zpgy,
+                      auxreg_a, auxreg_x, auxreg_y, auxre_sp, auxre_sr /* some auxiliary modes */ };
+enum AluOp { alu_add, alu_sub, alu_mul, alu_div, alu_asl, alu_lsr, alu_rol, alu_ror, alu_and, alu_ora, alu_eor };
+
+//using opcode = void(Emu6502::*)(void*);
+
+//typedef void (*opcode)(void* op);
+
 //#endif
 class Emu6502 {
+    //using opcode = void (Emu6502::*)(void*);
+    typedef struct instruction {
+        void (Emu6502::*func)(void*);
+        char mode;
+    } instruction;
     public:
+        Emu6502();
+
+        //typedef void (Emu6502::*opcode)(void*);
         Emu6502(bool *irq, bool *nmi) { _irq = irq; _nmi = nmi; }
 
         bool* _irq, _nmi;
@@ -29,76 +57,88 @@ class Emu6502 {
         char current_opcode;
         
         void run();
-        void instruction();
+        void do_instruction();
 
     private:
-        ushort get_target_addr(char addrMode);
+        instruction opcodes[256];
+        //static opcode inst_map[];
 
-        void SEN(); void CLN();
-        void SEV(); void CLV();
-        void SED(); void CLD();
-        void SEI(); void CLI();
-        void SEZ(); void CLZ();
-        void SEC(); void CLC();
+        void* get_target(char addrMode);
+
+        void SEN(); void CLN();  void SEN(void* ign); void CLN(void* ign);
+        void SEV(); void CLV();  void SEV(void* ign); void CLV(void* ign);
+        void SED(); void CLD();  void SED(void* ign); void CLD(void* ign);
+        void SEI(); void CLI();  void SEI(void* ign); void CLI(void* ign);
+        void SEZ(); void CLZ();  void SEZ(void* ign); void CLZ(void* ign);
+        void SEC(); void CLC();  void SEC(void* ign); void CLC(void* ign);
 
         void comp(const char op1, const char op2);
-        void copy(const char *src, char *dst);
-        void push(char *src);
-        void pull(char *dst);
+        void copy(void* src, void* dst);
+        void push(void* src);
+        void pull(void* dst);
+        void push(void* src, size_t count);
+        void pull(void* dst, size_t count);
         void alu_op(const char op1, const char op2, char *dest, char op_id);
         void set_flags(const ushort res, const char flag_mask);
         void set_flags(const char op1, const char op2, const ushort res, const char flag_mask);
+        void incdec(char* op, char inc);
+
+        void NOP(void* ign);
         
-        void ADC(const char *op);
-        void SBC(const char *op);
-        void ASL(char *op);
-        void LSR(char *op);
-        void ROL(char *op);
-        void ROR(char *op);
-        void AND(const char *op);
-        void ORA(const char *op);
-        void incdec(char *op, char inc);
-        void INC(char *op);
-        void DEC(char *op);
-        void INX(); void DEX();
-        void INY(); void DEY();
+        void ADC(void* op);
+        void SBC(void* op);
+        void ASL(void* op);
+        void LSR(void* op);
+        void ROL(void* op);
+        void ROR(void* op);
+        void AND(void* op);
+        void ORA(void* op);
+        void EOR(void* op);
+        void INC(void* op);
+        void DEC(void* op);
+        /*void INX();
+        void DEX();
+        void INY();
+        void DEY();*/
         
-        void LDA(const char *op);
-        void LDX(const char *op);
-        void LDY(const char *op);
-        void STA(char *loc);
-        void STX(char *loc);
-        void STY(char *loc);
-        void TSX();
+        void LDA(void* src);
+        void LDX(void* src);
+        void LDY(void* src);
+        void STA(void* dst);
+        void STX(void* dst);
+        void STY(void* dst);
+        /*void TSX();
         void TSY();
         void TXA();
         void TXS();
         void TYA();
+        void TAX();
+        void TAY();
         void PHA();
         void PLA();
         void PHP();
-        void PLP();
+        void PLP();*/
         
-        void BIT(const char *op);
-        void CMP(const char *op);
-        void CPX(const char *op);
-        void CPY(const char *op);
+        void BIT(void* op);
+        void CMP(void* op);
+        void CPX(void* op);
+        void CPY(void* op);
         
-        void JMP(char *loc);
-        void JSR(char *loc);
-        void RTS();
-        void BCC(const char *loc);
-        void BCS(const char *loc);
-        void BNE(const char *loc);
-        void BEQ(const char *loc);
-        void BVC(const char *loc);
-        void BVS(const char *loc);
-        void BPL(const char *loc);
-        void BMI(const char *loc);
-        void IRQ();
-        void NMI();
-        void BRK();
-        void RTI();
+        void JMP(void *loc);
+        void BCC(void *loc);
+        void BCS(void *loc);
+        void BVC(void *loc);
+        void BVS(void *loc);
+        void BNE(void *loc);
+        void BEQ(void *loc);
+        void BPL(void *loc);
+        void BMI(void *loc);
+        void JSR(void *loc);
+        void RTS(void *ign);
+        void IRQ(void *ign);
+        void NMI(void *ign);
+        void BRK(void *ign);
+        void RTI(void *ign);
         void RESET();
 };
 //#endif

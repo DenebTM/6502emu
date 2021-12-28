@@ -11,6 +11,9 @@ char* AddressSpace::operator[](uint i) {
         return *(mapped_mem + i);
     return NULL;
 }
+ushort AddressSpace::read_word(uint addr) {
+    return read_word(addr, false);
+}
 ushort AddressSpace::read_word(uint addr, bool wrap_page) {
     char loByte, hiByte;
     loByte = *mapped_mem[addr];

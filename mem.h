@@ -33,6 +33,7 @@ class AddressSpace {
         }
 
         char *operator[](uint i);
+        ushort read_word(uint addr);
         ushort read_word(uint addr, bool wrap_page);
         void write_word(uint addr, ushort val);
         void clear_ram();

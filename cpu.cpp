@@ -1,12 +1,125 @@
 #include "mem.h"
 #include "cpu.h"
+#include <string.h>
 
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
 
-enum AddressingMode { addr_acc, addr_abs, addr_absx, addr_abs_y, addr_imm, addr_imp, addr_ind, addr_xind, addr_indy, addr_rel, addr_zpg, addr_zpgx, addr_zpgy };
-enum AluOp { alu_add, alu_sub, alu_mul, alu_div, alu_asl, alu_lsr, alu_rol, alu_ror, alu_and, alu_ora };
-enum flags { flag_n = 0x80, flag_v = 0x40, flag_b = 0x10, flag_d = 0x08, flag_i = 0x04, flag_z = 0x02, flag_c = 0x01 };
+Emu6502::Emu6502() {
+    // done
+    /* BRK impl  */ opcodes[0x00] = { &Emu6502::BRK, addr_imp };        /* ORA x,ind */ opcodes[0x01] = { &Emu6502::ORA, add_xind };
+    /* BPL rel   */ opcodes[0x10] = { &Emu6502::BPL, addr_rel };        /* ORA ind,y */ opcodes[0x11] = { &Emu6502::ORA, add_indy };
+    /* JSR abs   */ opcodes[0x20] = { &Emu6502::JSR, addr_abs };        /* AND x,ind */ opcodes[0x21] = { &Emu6502::AND, add_xind };
+    /* BMI rel   */ opcodes[0x30] = { &Emu6502::BMI, addr_rel };        /* AND ind,y */ opcodes[0x31] = { &Emu6502::AND, add_indy };
+    /* RTI impl  */ opcodes[0x40] = { &Emu6502::RTI, addr_imp };        /* EOR x,ind */ opcodes[0x41] = { &Emu6502::EOR, add_xind };
+    /* BVC rel   */ opcodes[0x50] = { &Emu6502::BVC, addr_rel };        /* EOR ind,y */ opcodes[0x51] = { &Emu6502::EOR, add_indy };
+    /* RTS impl  */ opcodes[0x60] = { &Emu6502::RTS, addr_imp };        /* ADC x,ind */ opcodes[0x61] = { &Emu6502::ADC, add_xind };
+    /* BVS rel   */ opcodes[0x70] = { &Emu6502::BVS, addr_rel };        /* ADC ind,y */ opcodes[0x71] = { &Emu6502::ADC, add_indy };
+                                                                        /* STA x,ind */ opcodes[0x81] = { &Emu6502::STA, add_xind };
+    /* BCC rel   */ opcodes[0x90] = { &Emu6502::BCC, addr_rel };        /* STA ind,y */ opcodes[0x91] = { &Emu6502::STA, add_indy };
+    /* LDY #     */ opcodes[0xA0] = { &Emu6502::LDY, addr_imm };        /* LDA x,ind */ opcodes[0xA1] = { &Emu6502::LDA, add_xind };
+    /* BCS rel   */ opcodes[0xB0] = { &Emu6502::BCS, addr_rel };        /* LDA ind,y */ opcodes[0xB1] = { &Emu6502::LDA, add_indy };
+    /* CPY #     */ opcodes[0xC0] = { &Emu6502::CPY, addr_imm };        /* CMP x,ind */ opcodes[0xC1] = { &Emu6502::CMP, add_xind };
+    /* BNE rel   */ opcodes[0xD0] = { &Emu6502::BNE, addr_rel };        /* CMP ind,y */ opcodes[0xD1] = { &Emu6502::CMP, add_indy };
+    /* CPX #     */ opcodes[0xE0] = { &Emu6502::CPX, addr_imm };        /* SBC x,ind */ opcodes[0xE1] = { &Emu6502::SBC, add_xind };
+    /* BEQ rel   */ opcodes[0xF0] = { &Emu6502::BEQ, addr_rel };        /* SBC ind,y */ opcodes[0xF1] = { &Emu6502::SBC, add_indy };
+
+    // done
+                                                                        /* BIT zpg   */ opcodes[0x24] = { &Emu6502::JSR, addr_abs };                                                                        
+
+                                                                        /* STY zpg   */ opcodes[0x84] = { &Emu6502::BCC, addr_rel };
+                                                                        /* STY zpg,x */ opcodes[0x94] = { &Emu6502::LDY, addr_imm };
+    /* STY zpg   */ opcodes[0x84] = { &Emu6502::BCC, addr_rel };        /* LDY zpg   */ opcodes[0xA4] = { &Emu6502::BCS, addr_rel };
+                                                                        /* LDY zpg,x */ opcodes[0xB4] = { &Emu6502::CPY, addr_imm };
+                                                                        /* CPY zpg   */ opcodes[0xC4] = { &Emu6502::BNE, addr_rel };
+                                                                        /* CPX zpg   */ opcodes[0xE4] = { &Emu6502::CPX, addr_imm };
+
+    // done
+    /* ORA zpg   */ opcodes[0x05] = { &Emu6502::ORA, addr_zpg };        /* ASL zpg   */ opcodes[0x06] = { &Emu6502::ASL, addr_zpg };
+    /* ORA zpg,x */ opcodes[0x15] = { &Emu6502::ORA, add_zpgx };        /* ASL zpg,x */ opcodes[0x16] = { &Emu6502::ASL, add_zpgx };
+    /* AND zpg   */ opcodes[0x25] = { &Emu6502::AND, addr_zpg };        /* ROL zpg   */ opcodes[0x26] = { &Emu6502::ROL, addr_zpg };
+    /* AND zpg,x */ opcodes[0x35] = { &Emu6502::AND, add_zpgx };        /* ROL zpg,x */ opcodes[0x36] = { &Emu6502::ROL, add_zpgx };
+    /* EOR zpg   */ opcodes[0x45] = { &Emu6502::EOR, addr_zpg };        /* LSR zpg   */ opcodes[0x46] = { &Emu6502::LSR, addr_zpg };
+    /* EOR zpg,x */ opcodes[0x55] = { &Emu6502::EOR, add_zpgx };        /* LSR zpg,x */ opcodes[0x56] = { &Emu6502::LSR, add_zpgx };
+    /* ADC zpg   */ opcodes[0x65] = { &Emu6502::ADC, addr_zpg };        /* ROR zpg   */ opcodes[0x66] = { &Emu6502::ROR, addr_zpg };
+    /* ADC zpg,x */ opcodes[0x75] = { &Emu6502::ADC, add_zpgx };        /* ROR zpg,x */ opcodes[0x76] = { &Emu6502::ROR, add_zpgx };
+    /* STA zpg   */ opcodes[0x85] = { &Emu6502::STA, addr_zpg };        /* STX zpg   */ opcodes[0x86] = { &Emu6502::STX, addr_zpg };                         
+    /* STA zpg,x */ opcodes[0x95] = { &Emu6502::STA, add_zpgx };        /* STX zpg,x */ opcodes[0x96] = { &Emu6502::STX, add_zpgx };
+    /* LDA zpg   */ opcodes[0xA5] = { &Emu6502::LDA, addr_zpg };        /* LDX zpg   */ opcodes[0xA6] = { &Emu6502::LDX, addr_zpg };
+    /* LDA zpg,x */ opcodes[0xB5] = { &Emu6502::LDA, add_zpgx };        /* LDX zpg,x */ opcodes[0xB6] = { &Emu6502::LDX, add_zpgx };
+    /* CMP zpg   */ opcodes[0xC5] = { &Emu6502::CMP, addr_zpg };        /* DEC zpg   */ opcodes[0xC6] = { &Emu6502::DEC, addr_zpg };
+    /* CMP zpg,x */ opcodes[0xD5] = { &Emu6502::CMP, add_zpgx };        /* DEC zpg,x */ opcodes[0xD6] = { &Emu6502::DEC, add_zpgx };
+    /* SBC zpg   */ opcodes[0xE5] = { &Emu6502::SBC, addr_zpg };        /* INC zpg   */ opcodes[0xE6] = { &Emu6502::INC, addr_zpg };
+    /* SBC zpg,x */ opcodes[0xF5] = { &Emu6502::SBC, add_zpgx };        /* INC zpg,x */ opcodes[0xF6] = { &Emu6502::INC, add_zpgx };
+
+    // done but to be revised
+    /* PHP impl  */ opcodes[0x08] = { &Emu6502::push,auxre_sr };        /* ORA #     */ opcodes[0x09] = { &Emu6502::ORA, addr_imm };
+    /* CLC impl  */ opcodes[0x18] = { &Emu6502::CLC, addr_imp };        /* ORA abs,y */ opcodes[0x19] = { &Emu6502::ORA, add_absy };
+    /* PLP impl  */ opcodes[0x28] = { &Emu6502::pull,auxre_sr };        /* AND #     */ opcodes[0x29] = { &Emu6502::AND, addr_imm };
+    /* SEC impl  */ opcodes[0x38] = { &Emu6502::SEC, addr_imp };        /* AND abs,y */ opcodes[0x39] = { &Emu6502::AND, add_absy };
+    /* PHA impl  */ opcodes[0x48] = { &Emu6502::push,auxreg_a };        /* EOR #     */ opcodes[0x49] = { &Emu6502::EOR, addr_imm };
+    /* CLI impl  */ opcodes[0x58] = { &Emu6502::CLI, addr_imp };        /* EOR abs,y */ opcodes[0x59] = { &Emu6502::EOR, add_absy };
+    /* PLA impl  */ opcodes[0x68] = { &Emu6502::pull,auxreg_a };        /* ADC #     */ opcodes[0x69] = { &Emu6502::ADC, addr_imm };
+    /* SEI impl  */ opcodes[0x78] = { &Emu6502::SEI, addr_imp };        /* ADC abs,y */ opcodes[0x79] = { &Emu6502::ADC, add_absy };
+    /* DEY impl  */ opcodes[0x88] = { &Emu6502::DEC, auxreg_y };
+    /* TYA impl  */ opcodes[0x98] = { &Emu6502::STY, auxreg_a };        /* STA abs,y */ opcodes[0x99] = { &Emu6502::STA, add_absy };
+    /* TAY impl  */ opcodes[0xA8] = { &Emu6502::STA, auxreg_y };        /* LDA #     */ opcodes[0xA9] = { &Emu6502::LDA, addr_imm };
+    /* CLV impl  */ opcodes[0xB8] = { &Emu6502::CLV, addr_imp };        /* LDA abs,y */ opcodes[0xB9] = { &Emu6502::LDA, add_absy };
+    /* INY impl  */ opcodes[0xC8] = { &Emu6502::INC, auxreg_y };        /* CMP #     */ opcodes[0xC9] = { &Emu6502::CMP, addr_imm };
+    /* CLD impl  */ opcodes[0xD8] = { &Emu6502::CLD, addr_imp };        /* CMP abs,y */ opcodes[0xD9] = { &Emu6502::CMP, add_absy };
+    /* INX impl  */ opcodes[0xE8] = { &Emu6502::INC, auxreg_x };        /* SBC #     */ opcodes[0xE9] = { &Emu6502::SBC, addr_imm };
+    /* SED impl  */ opcodes[0xF8] = { &Emu6502::SED, addr_imp };        /* SBC abs,y */ opcodes[0xF9] = { &Emu6502::SBC, add_absy };
+
+    // done, I think
+    /* ASL impl  */ opcodes[0x0A] = { &Emu6502::ASL, addr_acc };
+    /* ROL impl  */ opcodes[0x2A] = { &Emu6502::ROL, addr_imp };        /* AND #     */ opcodes[0x2C] = { &Emu6502::AND, addr_imm };
+    /* LSR impl  */ opcodes[0x4A] = { &Emu6502::LSR, addr_imp };        /* EOR #     */ opcodes[0x4C] = { &Emu6502::EOR, addr_imm };
+    /* ROR impl  */ opcodes[0x6A] = { &Emu6502::ROR, addr_imp };        /* ADC #     */ opcodes[0x6C] = { &Emu6502::ADC, addr_imm };
+    /* TXA impl  */ opcodes[0x8A] = { &Emu6502::STX, auxreg_a };        /* STA abs,y */ opcodes[0x9C] = { &Emu6502::STA, add_absy };
+    /* TXS impl  */ opcodes[0x9A] = { &Emu6502::STX, auxre_sp };
+    /* TAX impl  */ opcodes[0xAA] = { &Emu6502::STA, auxreg_x };        /* LDA #     */ opcodes[0xAC] = { &Emu6502::LDA, addr_imm };
+    /* TSX impl  */ opcodes[0xBA] = { &Emu6502::LDX, auxre_sp };        /* LDA abs,y */ opcodes[0xBC] = { &Emu6502::LDA, add_absy };
+    /* DEX impl  */ opcodes[0xCA] = { &Emu6502::DEC, auxreg_x };        /* CMP #     */ opcodes[0xCC] = { &Emu6502::CMP, addr_imm };
+    /* NOP impl  */ opcodes[0xEA] = { &Emu6502::NOP, addr_imp };        /* SBC #     */ opcodes[0xEC] = { &Emu6502::SBC, addr_imm };
+
+    // done
+    /* ORA abs   */ opcodes[0x0D] = { &Emu6502::ORA, addr_abs };        /* ASL abs   */ opcodes[0x0E] = { &Emu6502::ASL, addr_abs };
+    /* ORA abs,x */ opcodes[0x1D] = { &Emu6502::ORA, add_absx };        /* ASL abs,x */ opcodes[0x1E] = { &Emu6502::ASL, add_absx };
+    /* AND abs   */ opcodes[0x2D] = { &Emu6502::AND, addr_abs };        /* ROL abs   */ opcodes[0x2E] = { &Emu6502::ROL, addr_abs };
+    /* AND abs,x */ opcodes[0x3D] = { &Emu6502::AND, add_absx };        /* ROL abs,x */ opcodes[0x3E] = { &Emu6502::ROL, add_absx };
+    /* EOR abs   */ opcodes[0x4D] = { &Emu6502::EOR, addr_abs };        /* LSR abs   */ opcodes[0x4E] = { &Emu6502::LSR, addr_abs };
+    /* EOR abs,x */ opcodes[0x5D] = { &Emu6502::EOR, add_absx };        /* LSR abs,x */ opcodes[0x5E] = { &Emu6502::LSR, add_absx };
+    /* ADC abs   */ opcodes[0x6D] = { &Emu6502::ADC, addr_abs };        /* ROR abs   */ opcodes[0x6E] = { &Emu6502::ROR, addr_abs };
+    /* ADC abs,x */ opcodes[0x7D] = { &Emu6502::ADC, add_absx };        /* ROR abs,x */ opcodes[0x7E] = { &Emu6502::ROR, add_absx };
+    /* STA abs   */ opcodes[0x8D] = { &Emu6502::STA, addr_abs };        /* STX abs   */ opcodes[0x8E] = { &Emu6502::STX, addr_abs };                         
+    /* STA abs,x */ opcodes[0x9D] = { &Emu6502::STA, add_absx };
+    /* LDA abs   */ opcodes[0xAD] = { &Emu6502::LDA, addr_abs };        /* LDX abs   */ opcodes[0xAE] = { &Emu6502::LDX, addr_abs };
+    /* LDA abs,x */ opcodes[0xBD] = { &Emu6502::LDA, add_absx };        /* LDX abs,x */ opcodes[0xBE] = { &Emu6502::LDX, add_absy };
+    /* CMP abs   */ opcodes[0xCD] = { &Emu6502::CMP, addr_abs };        /* DEC abs   */ opcodes[0xCE] = { &Emu6502::DEC, addr_abs };
+    /* CMP abs,x */ opcodes[0xDD] = { &Emu6502::CMP, add_absx };        /* DEC abs,x */ opcodes[0xDE] = { &Emu6502::DEC, add_absx };
+    /* SBC abs   */ opcodes[0xED] = { &Emu6502::SBC, addr_abs };        /* INC abs   */ opcodes[0xEE] = { &Emu6502::INC, addr_abs };
+    /* SBC abs,x */ opcodes[0xFD] = { &Emu6502::SBC, add_absx };        /* INC abs,x */ opcodes[0xFE] = { &Emu6502::INC, add_absx };
+
+}
+
+/*Emu6502::opcode Emu6502::inst_map[] = {
+    BRK,ORA,  0,  0,  0,ORA,ASL,  0,PHP,ORA,ASL,  0,  0,ORA,ASL,  0,
+    BPL,ORA,  0,  0,  0,ORA,ASL,  0,CLC,ORA,  0,  0,  0,ORA,ASL,  0,
+    JSR,AND,  0,  0,BIT,AND,ROL,  0,PLP,AND,ROL,  0,BIT,AND,ROL,  0,
+    BMI,AND,  0,  0,  0,AND,ROL,  0,SEC,AND,  0,  0,  0,AND,ROL,  0,
+    RTI,EOR,  0,  0,  0,EOR,LSR,  0,PHA,EOR,LSR,  0,JMP,EOR,LSR,  0,
+    BVC,EOR,  0,  0,  0,EOR,LSR,  0,CLI,EOR,  0,  0,  0,EOR,LSR,  0,
+    RTS,ADC,  0,  0,  0,ADC,ROR,  0,PLA,ADC,ROR,  0,JMP,ADC,ROR,  0,
+    BVS,ADC,  0,  0,  0,ADC,ROR,  0,SEI,ADC,  0,  0,  0,ADC,ROR,  0,
+      0,STA,  0,  0,STY,STA,STX,  0,DEY,  0,TXA,  0,STY,STA,STX,  0,
+    BCC,STA,  0,  0,STY,STA,STX,  0,TYA,STA,TXS,  0,  0,STA,  0,  0,
+    LDY,LDA,LDX,  0,LDY,LDA,LDX,  0,TAY,LDA,TAX,  0,LDY,LDA,LDX,  0,
+    BCS,LDA,  0,  0,LDY,LDA,LDX,  0,CLV,LDA,TSX,  0,LDY,LDA,LDX,  0,
+    CPY,CMP,  0,  0,CPY,CMP,DEC,  0,INY,CMP,DEX,  0,LDY,CMP,DEC,  0,
+    BNE,CMP,  0,  0,  0,CMP,DEC,  0,CLD,CMP,  0,  0,  0,CMP,DEC,  0,
+    CPX,SBC,  0,  0,CPX,SBC,INC,  0,INX,SBC,NOP,  0,CPX,SBC,INC,  0,
+    BEQ,SBC,  0,  0,  0,SBC,INC,  0,SED,SBC,  0,  0,  0,SBC,INC,  0,
+};*/
 
 /**
  * Addressing Modes
@@ -37,81 +150,93 @@ enum flags { flag_n = 0x80, flag_v = 0x40, flag_b = 0x10, flag_d = 0x08, flag_i 
  * 12: Zpg,Y   -> Zeropage, Y-indexed
  *     Operand is address (1-byte) + Y with carry
  */
-ushort Emu6502::get_target_addr(char addrMode) {
+void* Emu6502::get_target(char addrMode) {
     switch (addrMode) {
         case addr_acc:
-            return add_spc.read_word((++reg_pc)++, false);
+            return add_spc[(++reg_pc)++];
         case addr_abs:
-            return add_spc.read_word((++reg_pc)++ + reg_x, false);
-        case addr_absx:
-            return add_spc.read_word((++reg_pc)++ + reg_y, false);
+            return add_spc[(++reg_pc)++ + reg_x];
+        case add_absx:
+            return add_spc[(++reg_pc)++ + reg_y];
         case addr_imm:
         case addr_rel:
-            return ++reg_pc;
+            return add_spc[++reg_pc];
         case addr_ind:
-            return add_spc.read_word(add_spc.read_word((++reg_pc)++, false), true);
-        case addr_xind:
-            return add_spc.read_word(add_spc.read_word((++reg_pc)++ + reg_x, false), true);
-        case addr_indy:
-            return add_spc.read_word(add_spc.read_word((++reg_pc)++, false) + reg_y, true);
+            // TODO: wrap page boundary on outer lookup
+            return add_spc[*add_spc[(++reg_pc)++]];
+        case add_xind:
+            // TODO: wrap page boundary on outer lookup
+            return add_spc[*add_spc[(++reg_pc)++ + reg_x]];
+        case add_indy:
+            // TODO: wrap page boundary on outer lookup
+            return add_spc[*add_spc[(++reg_pc)++] + reg_y];
         case addr_zpg:
-            return *add_spc[++reg_pc];
-        case addr_zpgx:
-            return *add_spc[++reg_pc] + reg_x;
-        case addr_zpgy:
-            return *add_spc[++reg_pc] + reg_y;
+            return add_spc[++reg_pc];
+        case add_zpgx:
+            return add_spc[++reg_pc] + reg_x;
+        case add_zpgy:
+            return add_spc[++reg_pc] + reg_y;
+
+        case auxreg_a:
+            return &reg_a;
+        case auxreg_x:
+            return &reg_x;
+        case auxreg_y:
+            return &reg_y;
+        case auxre_sp:
+            return &reg_sp;
+        case auxre_sr:
+            return &reg_sr;
+
+        case addr_imp:
         default:
-            return 0;
+            return NULL;
     }
 }
 
 // Flag operations
 //   only CLV, SED, CLD, SEI, CLI, SEC and CLC actually exist on the 6502
 //   the others are merely helper functions
-void Emu6502::SEN() { reg_sr |=  flag_n; }
-void Emu6502::CLN() { reg_sr &= ~flag_n; }
-void Emu6502::SEV() { reg_sr |=  flag_n; }
-void Emu6502::CLV() { reg_sr &= ~flag_v; }
-void Emu6502::SED() { reg_sr |=  flag_d; }
-void Emu6502::CLD() { reg_sr &= ~flag_d; }
-void Emu6502::SEI() { reg_sr |=  flag_i; }
-void Emu6502::CLI() { reg_sr &= ~flag_i; }
-void Emu6502::SEZ() { reg_sr |=  flag_z; }
-void Emu6502::CLZ() { reg_sr &= ~flag_z; }
-void Emu6502::SEC() { reg_sr |=  flag_c; }
-void Emu6502::CLC() { reg_sr &= ~flag_c; }
+void Emu6502::SEN() { reg_sr |=  flag_n; } void Emu6502::SEN(void* ign) { SEN(); }
+void Emu6502::CLN() { reg_sr &= ~flag_n; } void Emu6502::CLN(void* ign) { CLN(); }
+void Emu6502::SEV() { reg_sr |=  flag_n; } void Emu6502::SEV(void* ign) { SEV(); }
+void Emu6502::CLV() { reg_sr &= ~flag_v; } void Emu6502::CLV(void* ign) { CLV(); }
+void Emu6502::SED() { reg_sr |=  flag_d; } void Emu6502::SED(void* ign) { SED(); }
+void Emu6502::CLD() { reg_sr &= ~flag_d; } void Emu6502::CLD(void* ign) { CLD(); }
+void Emu6502::SEI() { reg_sr |=  flag_i; } void Emu6502::SEI(void* ign) { SEI(); }
+void Emu6502::CLI() { reg_sr &= ~flag_i; } void Emu6502::CLI(void* ign) { CLI(); }
+void Emu6502::SEZ() { reg_sr |=  flag_z; } void Emu6502::SEZ(void* ign) { SEZ(); }
+void Emu6502::CLZ() { reg_sr &= ~flag_z; } void Emu6502::CLZ(void* ign) { CLZ(); }
+void Emu6502::SEC() { reg_sr |=  flag_c; } void Emu6502::SEC(void* ign) { SEC(); }
+void Emu6502::CLC() { reg_sr &= ~flag_c; } void Emu6502::CLC(void* ign) { CLC(); }
 
 void Emu6502::comp(const char op1, const char op2) {
     ushort res = op1 - op2;
     set_flags(op1, op2, res, flag_n|flag_z|flag_c);
-    reg_pc++;
+    //reg_pc++;
 }
 
-void Emu6502::copy(const char *src, char *dst) {
-    *dst = *src;
-    reg_pc++;
+void Emu6502::copy(void* src, void *dst) {
+    *(char*)dst = *(char*)src;
+    //reg_pc++;
 }
 
-void Emu6502::push(char *src) { copy(src, add_spc[reg_sp++]); }
-void Emu6502::pull(char *dst) { copy(add_spc[reg_sp--], dst); }
+void Emu6502::push(void *src) { copy(src, add_spc[reg_sp++]); }
+void Emu6502::pull(void *dst) { copy(add_spc[reg_sp--], dst); }
+void Emu6502::push(void *src, size_t count) {
+    for (size_t i = 0; i < count; i++)
+        push((char*)((char*)src+i));
+}
+void Emu6502::pull(void *dst, size_t count) {
+    for (size_t i = 0; i < count; i++)
+        pull((char*)((char*)dst+i));
+}
 
 void Emu6502::alu_op(const char op1, const char op2,
                      char *dest,
                      char op_id) {
-    /**
-     *  0: add
-     *  1: sub
-     *  2: multiply
-     *  3: divide
-     *  4: shift left
-     *  5: shift right
-     *  6: rotate left
-     *  7: rotate right
-     *  8: AND
-     *  9: OR
-     */
-    //char tmp = 0;
-    ushort res = *dest;
+    ushort res;
+    if (dest) res = *dest;
     switch (op_id) {
         case alu_add:
             res = op1 + op2 + SR_C;
@@ -146,10 +271,13 @@ void Emu6502::alu_op(const char op1, const char op2,
             res = op1 | op2;
             set_flags(res, flag_n|flag_z);
             break;
+        case alu_eor:
+            res = op1 ^ op2;
+            set_flags(res, flag_n|flag_z);
         default:
             break;
     }
-    *dest = (char)res;
+    if(dest) *dest = (char)res;
 }
 
 void Emu6502::set_flags(const ushort res, const char flag_mask) {
@@ -180,18 +308,103 @@ void Emu6502::incdec(char *op, char inc) {
     reg_sr &= flag_c; reg_sr |= carrybak;
 }
 
-void Emu6502::ADC(const char *op) { alu_op(reg_a, *op, &reg_a, alu_add); }
-void Emu6502::SBC(const char *op) { alu_op(reg_a, *op, &reg_a, alu_sub); }
-void Emu6502::ASL(char *op) { alu_op(*op, 1, op, alu_asl); }
-void Emu6502::LSR(char *op) { alu_op(*op, 1, op, alu_lsr); }
-void Emu6502::ROL(char *op) { alu_op(*op, 1, op, alu_rol); }
-void Emu6502::ROR(char *op) { alu_op(*op, 1, op, alu_ror); }
-void Emu6502::AND(const char *op) { alu_op(reg_a, *op, &reg_a, alu_and); }
-void Emu6502::ORA(const char *op) { alu_op(reg_a, *op, &reg_a, alu_ora); }
-void Emu6502::INC(char *op) { incdec(op, 1); }
-void Emu6502::DEC(char *op) { incdec(op, -1); }
-void Emu6502::INX() { incdec(&reg_x, 1); }
-void Emu6502::DEX() { incdec(&reg_x, -1); }
-void Emu6502::INY() { incdec(&reg_y, 1); }
-void Emu6502::DEY() { incdec(&reg_y, -1); }
+void Emu6502::NOP(void* ign) {
+    reg_pc++;
+}
 
+void Emu6502::ADC(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_add); }
+void Emu6502::SBC(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_sub); }
+void Emu6502::ASL(void* op) { alu_op(*(char*)op, 1,  (char*)op, alu_asl); }
+void Emu6502::LSR(void* op) { alu_op(*(char*)op, 1,  (char*)op, alu_lsr); }
+void Emu6502::ROL(void* op) { alu_op(*(char*)op, 1,  (char*)op, alu_rol); }
+void Emu6502::ROR(void* op) { alu_op(*(char*)op, 1,  (char*)op, alu_ror); }
+void Emu6502::AND(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_and); }
+void Emu6502::ORA(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_ora); }
+void Emu6502::EOR(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_eor); }
+void Emu6502::INC(void* op) { incdec((char*)op, 1); }
+void Emu6502::DEC(void* op) { incdec((char*)op, -1); }
+/*void Emu6502::INX() { incdec(&reg_x, 1); }
+  void Emu6502::DEX() { incdec(&reg_x, -1); }
+  void Emu6502::INY() { incdec(&reg_y, 1); }
+  void Emu6502::DEY() { incdec(&reg_y, -1); }*/
+
+void Emu6502::LDA(void* src) { copy(src, &reg_a); }
+void Emu6502::LDX(void* src) { copy(src, &reg_x); }
+void Emu6502::LDY(void* src) { copy(src, &reg_y); }
+void Emu6502::STA(void* dst) { copy(&reg_a, dst); }
+void Emu6502::STX(void* dst) { copy(&reg_x, dst); }
+void Emu6502::STY(void* dst) { copy(&reg_y, dst); }
+/*void Emu6502::TSX() { copy(&reg_sp, &reg_x); }
+  void Emu6502::TSY() { copy(&reg_sp, &reg_y); }
+  void Emu6502::TXS() { copy(&reg_y, &reg_sp); }
+  void Emu6502::TXA() { copy(&reg_x, &reg_a); }
+  void Emu6502::TYA() { copy(&reg_y, &reg_a); }
+  void Emu6502::TAX() { copy(&reg_a, &reg_y); }
+  void Emu6502::TAY() { copy(&reg_a, &reg_y); }
+  void Emu6502::PHA() { push(&reg_a); }
+  void Emu6502::PLA() { pull(&reg_a); }
+  void Emu6502::PHP() { push(&reg_sr); }
+  void Emu6502::PLP() { pull(&reg_sr); }*/
+
+void Emu6502::BIT(void* op) {
+    CLZ(); CLN(); CLV();
+    reg_sp |= flag_z*((reg_a&*(char*)op)==0);
+    reg_sp |= (*(char*)op & (flag_n|flag_v));
+}
+void Emu6502::CMP(void* op) { comp(reg_a, *(char*)op); }
+void Emu6502::CPX(void* op) { comp(reg_x, *(char*)op); }
+void Emu6502::CPY(void* op) { comp(reg_y, *(char*)op); }
+
+void Emu6502::JMP(void *loc) { memcpy(&reg_pc, loc, 2); }
+void Emu6502::BCC(void *loc) { if (!SR_C) JMP(loc); }
+void Emu6502::BCS(void *loc) { if (SR_C) JMP(loc); }
+void Emu6502::BVC(void *loc) { if (!SR_V) JMP(loc); }
+void Emu6502::BVS(void *loc) { if (SR_V) JMP(loc); }
+void Emu6502::BNE(void *loc) { if (!SR_Z) JMP(loc); }
+void Emu6502::BEQ(void *loc) { if (SR_Z) JMP(loc); }
+void Emu6502::BPL(void *loc) { if (!SR_N) JMP(loc); }
+void Emu6502::BMI(void *loc) { if (SR_N) JMP(loc); }
+
+void Emu6502::JSR(void *loc) {
+    reg_pc += 2;
+    push(&reg_pc, 2);
+    JMP(loc);
+}
+
+void Emu6502::RTS(void *ign) {
+    pull(&reg_pc, 2);
+    reg_pc++;
+}
+
+void Emu6502::IRQ(void* ign) {
+    push(&reg_pc, 2);
+    push(&reg_sr);
+    SEI();
+    reg_pc = add_spc.read_word(VEC_IRQ);
+}
+
+void Emu6502::NMI(void* ign) {
+    push(&reg_pc, 2);
+    push(&reg_sr);
+    SEI();
+    reg_pc = add_spc.read_word(VEC_NMI);
+}
+
+void Emu6502::BRK(void* ign) {
+    reg_pc += 2;
+    IRQ(ign);
+}
+
+void Emu6502::RTI(void* ign) {
+    pull(&reg_sr);
+    pull(&reg_pc, 2);
+}
+
+void Emu6502::RESET() {
+    reg_sp = 0xFF;
+    reg_a = 0;
+    reg_x = 0;
+    reg_y = 0;
+    reg_sr = 0x20;
+    reg_pc = add_spc.read_word(VEC_RST);
+}
