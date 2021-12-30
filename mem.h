@@ -6,44 +6,51 @@
 #include <list>
 //#endif
 
+class OutChar {
+    public:
+        OutChar() { val = 0; lastVal = 0;}
+        char val;
+        void check_changed();
+    private:
+        char lastVal;
+};
+
 class ROM {
     public:
         char *content;
         uint size;
         uint start_address;
-        ROM(uint rom_size, char *rom_content) : ROM(rom_size, rom_content, 0) { }
-        ROM(uint rom_size, char *rom_content, uint start_addr) {
-            size = rom_size;
-            content = rom_content;
-            start_address = start_addr;
-        }
-
-        char *operator[](uint i);
+        ROM(uint rom_size, char* rom_content);
+        ROM(uint rom_size, char* rom_content, uint start_addr);
+        
+        char* operator[](uint i);
 };
 
 class AddressSpace {
     public:
-        AddressSpace() : AddressSpace(0x10000, std::list<ROM>()) { }
-        AddressSpace(uint mSize) : AddressSpace(mSize, std::list<ROM>()) { }
-        AddressSpace(uint mSize, std::list<ROM> roms) {
-            mem_size = mSize;
-            init_ram();
-            for (ROM r : roms)
-                map_mem(r);
-        }
+        AddressSpace();
+        AddressSpace(uint mSize);
+        AddressSpace(uint mSize, std::list<ROM> roms);
 
-        char *operator[](uint i);
         ushort read_word(uint addr);
         ushort read_word(uint addr, bool wrap_page);
         void write_word(uint addr, ushort val);
         void clear_ram();
+        void map_roms(std::list<ROM> roms);
         void map_mem(ROM rom);
-        void map_mem(char *bytes, uint size, uint start_addr);
+        void map_mem(void* bytes, uint size, uint start_addr);
+        void map_mem(void* bytes, uint size, uint start_addr, bool mask);
+        void unmap_mem(uint size, uint start_addr);
+
+        char* operator[](uint i);
+
+        void clear();
 
     private:
         uint mem_size;
         char *ram;
-        char **mapped_mem;
+        void **mapped_mem;
+        bool *is_mapped;
         void init_ram();
 };
 //#endif

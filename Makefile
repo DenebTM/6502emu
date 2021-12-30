@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -lm -Wall -Wextra
+CXXFLAGS = -g -lm -funsigned-char
 
 SOURCES = main.cpp mem.cpp cpu.cpp
 

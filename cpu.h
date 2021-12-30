@@ -24,7 +24,7 @@
 #define VEC_RST 0xFFFC
 #define VEC_IRQ 0xFFFE
 
-enum AddressingMode { addr_acc, addr_abs, add_absx, add_absy, addr_imm, addr_imp, addr_ind, add_xind, add_indy, addr_rel, addr_zpg, add_zpgx, add_zpgy,
+enum AddressingMode { addr_acc, addr_abs, add_absx, add_absy, addr_imm, add_immw, addr_imp, addr_ind, add_xind, add_indy, addr_rel, addr_zpg, add_zpgx, add_zpgy,
                       auxreg_a, auxreg_x, auxreg_y, auxre_sp, auxre_sr /* some auxiliary modes */ };
 enum AluOp { alu_add, alu_sub, alu_mul, alu_div, alu_asl, alu_lsr, alu_rol, alu_ror, alu_and, alu_ora, alu_eor };
 
@@ -35,15 +35,20 @@ enum AluOp { alu_add, alu_sub, alu_mul, alu_div, alu_asl, alu_lsr, alu_rol, alu_
 //#endif
 class Emu6502 {
     //using opcode = void (Emu6502::*)(void*);
-    typedef struct instruction {
-        void (Emu6502::*func)(void*);
-        char mode;
-    } instruction;
     public:
-        Emu6502();
+        typedef struct instruction {
+            void (Emu6502::*func)(void*);
+            char mode;
+            char length;
+        } instruction;
+        instruction opcodes[256];
+
+        //char *cur_byte;
+        instruction *cur_opc;
+
+        Emu6502(bool *irq, bool *nmi);
 
         //typedef void (Emu6502::*opcode)(void*);
-        Emu6502(bool *irq, bool *nmi) { _irq = irq; _nmi = nmi; }
 
         bool* _irq, _nmi;
 
@@ -56,11 +61,10 @@ class Emu6502 {
                 reg_y  = 0;
         char current_opcode;
         
-        void run();
         void do_instruction();
+        void RESET();
 
     private:
-        instruction opcodes[256];
         //static opcode inst_map[];
 
         void* get_target(char addrMode);
@@ -74,6 +78,7 @@ class Emu6502 {
 
         void comp(const char op1, const char op2);
         void copy(void* src, void* dst);
+        void copy(void* src, void* dst, char flag_mask);
         void push(void* src);
         void pull(void* dst);
         void push(void* src, size_t count);
@@ -125,6 +130,7 @@ class Emu6502 {
         void CPY(void* op);
         
         void JMP(void *loc);
+        void JMP(ushort loc);
         void BCC(void *loc);
         void BCS(void *loc);
         void BVC(void *loc);
@@ -139,6 +145,5 @@ class Emu6502 {
         void NMI(void *ign);
         void BRK(void *ign);
         void RTI(void *ign);
-        void RESET();
 };
 //#endif
