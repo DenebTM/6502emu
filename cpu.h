@@ -1,7 +1,3 @@
-//#ifndef CPU_H
-//#define CPU_H
-//#ifndef BASICLIBS
-//#define BASICLIBS
 #include <iostream>
 #include <list>
 
@@ -24,7 +20,7 @@
 #define VEC_RST 0xFFFC
 #define VEC_IRQ 0xFFFE
 
-enum AddressingMode { addr_acc, addr_abs, add_absx, add_absy, addr_imm, add_immw, addr_imp, addr_ind, add_xind, add_indy, addr_rel, addr_zpg, add_zpgx, add_zpgy,
+enum AddressingMode { addr_acc, addr_abs, add_absx, add_absy, addr_imm, addr_imp, addr_ind, add_xind, add_indy, addr_rel, addr_zpg, add_zpgx, add_zpgy,
                       auxreg_a, auxreg_x, auxreg_y, auxre_sp, auxre_sr /* some auxiliary modes */ };
 enum AluOp { alu_add, alu_sub, alu_mul, alu_div, alu_asl, alu_lsr, alu_rol, alu_ror, alu_and, alu_ora, alu_eor };
 
@@ -141,9 +137,8 @@ class Emu6502 {
         void BMI(void *loc);
         void JSR(void *loc);
         void RTS(void *ign);
-        void IRQ(void *ign);
-        void NMI(void *ign);
         void BRK(void *ign);
         void RTI(void *ign);
+        void IRQ();
+        void NMI();
 };
-//#endif

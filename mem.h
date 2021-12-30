@@ -1,10 +1,5 @@
-//#ifndef MEM_H
-//#define MEM_H
-//#ifndef BASICLIBS
-//#define BASICLIBS
 #include <iostream>
 #include <list>
-//#endif
 
 class OutChar {
     public:
@@ -53,4 +48,3 @@ class AddressSpace {
         bool *is_mapped;
         void init_ram();
 };
-//#endif

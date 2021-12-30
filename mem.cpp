@@ -82,7 +82,7 @@ void AddressSpace::init_ram() {
 }
 
 void AddressSpace::clear() {
-    delete mapped_mem;
-    delete is_mapped;
-    delete ram;
+    delete[] mapped_mem;
+    delete[] is_mapped;
+    delete[] ram;
 }

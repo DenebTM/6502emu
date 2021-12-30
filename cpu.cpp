@@ -54,7 +54,7 @@ Emu6502::Emu6502(bool *irq, bool *nmi) {
     /* SBC zpg   */ opcodes[0xE5] = { &Emu6502::SBC, addr_zpg, 2 };     /* INC zpg   */ opcodes[0xE6] = { &Emu6502::INC, addr_zpg, 2 };
     /* SBC zpg,x */ opcodes[0xF5] = { &Emu6502::SBC, add_zpgx, 2 };     /* INC zpg,x */ opcodes[0xF6] = { &Emu6502::INC, add_zpgx, 2 };
 
-    // done but to be revised
+    // done
     /* PHP impl  */ opcodes[0x08] = { &Emu6502::push,auxre_sr, 1 };     /* ORA #     */ opcodes[0x09] = { &Emu6502::ORA, addr_imm, 2 };
     /* CLC impl  */ opcodes[0x18] = { &Emu6502::CLC, addr_imp, 1 };     /* ORA abs,y */ opcodes[0x19] = { &Emu6502::ORA, add_absy, 3 };
     /* PLP impl  */ opcodes[0x28] = { &Emu6502::pull,auxre_sr, 1 };     /* AND #     */ opcodes[0x29] = { &Emu6502::AND, addr_imm, 2 };
@@ -75,7 +75,7 @@ Emu6502::Emu6502(bool *irq, bool *nmi) {
     // done
     /* ASL acc   */ opcodes[0x0A] = { &Emu6502::ASL, addr_acc, 2 };
     /* ROL acc   */ opcodes[0x2A] = { &Emu6502::ROL, addr_imp, 2 };     /* BIT abs   */ opcodes[0x2C] = { &Emu6502::BIT, addr_abs, 3 };
-    /* LSR acc   */ opcodes[0x4A] = { &Emu6502::LSR, addr_imp, 2 };     /* JMP abs   */ opcodes[0x4C] = { &Emu6502::JMP, add_immw, 0 }; // addr_abs (duct tape fix)
+    /* LSR acc   */ opcodes[0x4A] = { &Emu6502::LSR, addr_imp, 2 };     /* JMP abs   */ opcodes[0x4C] = { &Emu6502::JMP, addr_imm, 0 }; // addr_abs (duct tape fix)
     /* ROR acc   */ opcodes[0x6A] = { &Emu6502::ROR, addr_imp, 2 };     /* JMP ind   */ opcodes[0x6C] = { &Emu6502::JMP, addr_abs, 0 }; // addr_ind (same, but in anticipation)
     /* TXA impl  */ opcodes[0x8A] = { &Emu6502::STX, auxreg_a, 1 };     /* STY abs   */ opcodes[0x9C] = { &Emu6502::STY, addr_abs, 3 };
     /* TXS impl  */ opcodes[0x9A] = { &Emu6502::STX, auxre_sp, 1 };                                                 
@@ -111,25 +111,6 @@ void Emu6502::do_instruction() {
     reg_pc += cur_opc->length;
 }
 
-/*Emu6502::opcode Emu6502::inst_map[] = {
-    BRK,ORA,  0,  0,  0,ORA,ASL,  0,PHP,ORA,ASL,  0,  0,ORA,ASL,  0,
-    BPL,ORA,  0,  0,  0,ORA,ASL,  0,CLC,ORA,  0,  0,  0,ORA,ASL,  0,
-    JSR,AND,  0,  0,BIT,AND,ROL,  0,PLP,AND,ROL,  0,BIT,AND,ROL,  0,
-    BMI,AND,  0,  0,  0,AND,ROL,  0,SEC,AND,  0,  0,  0,AND,ROL,  0,
-    RTI,EOR,  0,  0,  0,EOR,LSR,  0,PHA,EOR,LSR,  0,JMP,EOR,LSR,  0,
-    BVC,EOR,  0,  0,  0,EOR,LSR,  0,CLI,EOR,  0,  0,  0,EOR,LSR,  0,
-    RTS,ADC,  0,  0,  0,ADC,ROR,  0,PLA,ADC,ROR,  0,JMP,ADC,ROR,  0,
-    BVS,ADC,  0,  0,  0,ADC,ROR,  0,SEI,ADC,  0,  0,  0,ADC,ROR,  0,
-      0,STA,  0,  0,STY,STA,STX,  0,DEY,  0,TXA,  0,STY,STA,STX,  0,
-    BCC,STA,  0,  0,STY,STA,STX,  0,TYA,STA,TXS,  0,  0,STA,  0,  0,
-    LDY,LDA,LDX,  0,LDY,LDA,LDX,  0,TAY,LDA,TAX,  0,LDY,LDA,LDX,  0,
-    BCS,LDA,  0,  0,LDY,LDA,LDX,  0,CLV,LDA,TSX,  0,LDY,LDA,LDX,  0,
-    CPY,CMP,  0,  0,CPY,CMP,DEC,  0,INY,CMP,DEX,  0,LDY,CMP,DEC,  0,
-    BNE,CMP,  0,  0,  0,CMP,DEC,  0,CLD,CMP,  0,  0,  0,CMP,DEC,  0,
-    CPX,SBC,  0,  0,CPX,SBC,INC,  0,INX,SBC,NOP,  0,CPX,SBC,INC,  0,
-    BEQ,SBC,  0,  0,  0,SBC,INC,  0,SED,SBC,  0,  0,  0,SBC,INC,  0,
-};*/
-
 /**
  * Addressing Modes
  *  0: A       -> Accumulator
@@ -164,44 +145,41 @@ void* Emu6502::get_target(char addrMode) {
     switch (addrMode) {
         case addr_acc:
             addr = *add_spc[reg_pc+1];
-            return add_spc[*add_spc[reg_pc+1]];
+            return add_spc[addr];
         case addr_abs:
             addr = *(ushort*)add_spc[reg_pc+1];
-            return add_spc[*(ushort*)add_spc[reg_pc+1]];
+            return add_spc[addr];
         case add_absx:
             addr = *(ushort*)add_spc[reg_pc+1] + reg_x;
-            return add_spc[*(ushort*)add_spc[reg_pc+1] + reg_x];
+            return add_spc[addr];
         case add_absy:
             addr = *(ushort*)add_spc[reg_pc+1] + reg_y;
-            return add_spc[*(ushort*)add_spc[reg_pc+1] + reg_y];
+            return add_spc[addr];
         case addr_imm:
         case addr_rel:
             addr = reg_pc+1;
-            return add_spc[reg_pc+1];
-        case add_immw:
-            addr = reg_pc+1;
-            return add_spc[reg_pc+1];
+            return add_spc[addr];
         case addr_ind:
             // TODO: wrap page boundary on outer lookup
             addr = *(ushort*)add_spc[*(ushort*)add_spc[reg_pc+1]];
-            return add_spc[*(ushort*)add_spc[*(ushort*)add_spc[reg_pc+1]]];
+            return add_spc[addr];
         case add_xind:
             // TODO: wrap page boundary on outer lookup
             addr = *(ushort*)add_spc[*add_spc[reg_pc+1] + reg_x];
-            return add_spc[*(ushort*)add_spc[*add_spc[reg_pc+1] + reg_x]];
+            return add_spc[addr];
         case add_indy:
             // TODO: wrap page boundary on outer lookup
             addr = *(ushort*)add_spc[*add_spc[reg_pc+1]] + reg_y;
-            return add_spc[*(ushort*)add_spc[*add_spc[reg_pc+1]] + reg_y];
+            return add_spc[addr];
         case addr_zpg:
             addr = *add_spc[reg_pc+1];
-            return add_spc[*add_spc[reg_pc+1]];
+            return add_spc[addr];
         case add_zpgx:
             addr = *add_spc[reg_pc+1 + reg_x];
-            return add_spc[*add_spc[reg_pc+1 + reg_x]];
+            return add_spc[addr];
         case add_zpgy:
             addr = *add_spc[reg_pc+1 + reg_y];
-            return add_spc[*add_spc[reg_pc+1 + reg_y]];
+            return add_spc[addr];
 
         case auxreg_a:
             return &reg_a;
@@ -214,7 +192,6 @@ void* Emu6502::get_target(char addrMode) {
         case auxre_sr:
             return &reg_sr;
 
-        case addr_imp:
         default:
             return NULL;
     }
@@ -337,9 +314,7 @@ void Emu6502::incdec(char *op, char inc) {
     reg_sr &= ~flag_c; reg_sr |= carrybak;
 }
 
-void Emu6502::NOP(void* ign) {
-    reg_pc++;
-}
+void Emu6502::NOP(void* ign) { }
 
 void Emu6502::ADC(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_add); }
 void Emu6502::SBC(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_sub); }
@@ -352,10 +327,6 @@ void Emu6502::ORA(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_ora); }
 void Emu6502::EOR(void* op) { alu_op(reg_a, *(char*)op, &reg_a, alu_eor); }
 void Emu6502::INC(void* op) { incdec((char*)op, 1); }
 void Emu6502::DEC(void* op) { incdec((char*)op, -1); }
-/*void Emu6502::INX() { incdec(&reg_x, 1); }
-  void Emu6502::DEX() { incdec(&reg_x, -1); }
-  void Emu6502::INY() { incdec(&reg_y, 1); }
-  void Emu6502::DEY() { incdec(&reg_y, -1); }*/
 
 void Emu6502::LDA(void* src) { copy(src, &reg_a, flag_n|flag_z); }
 void Emu6502::LDX(void* src) { copy(src, &reg_x, flag_n|flag_z); }
@@ -363,17 +334,6 @@ void Emu6502::LDY(void* src) { copy(src, &reg_y, flag_n|flag_z); }
 void Emu6502::STA(void* dst) { copy(&reg_a, dst); }
 void Emu6502::STX(void* dst) { copy(&reg_x, dst); }
 void Emu6502::STY(void* dst) { copy(&reg_y, dst); }
-/*void Emu6502::TSX() { copy(&reg_sp, &reg_x); }
-  void Emu6502::TSY() { copy(&reg_sp, &reg_y); }
-  void Emu6502::TXS() { copy(&reg_y, &reg_sp); }
-  void Emu6502::TXA() { copy(&reg_x, &reg_a); }
-  void Emu6502::TYA() { copy(&reg_y, &reg_a); }
-  void Emu6502::TAX() { copy(&reg_a, &reg_y); }
-  void Emu6502::TAY() { copy(&reg_a, &reg_y); }
-  void Emu6502::PHA() { push(&reg_a); }
-  void Emu6502::PLA() { pull(&reg_a); }
-  void Emu6502::PHP() { push(&reg_sr); }
-  void Emu6502::PLP() { pull(&reg_sr); }*/
 
 void Emu6502::BIT(void* op) {
     CLZ(); CLN(); CLV();
@@ -406,28 +366,28 @@ void Emu6502::RTS(void *ign) {
     reg_pc++;
 }
 
-void Emu6502::IRQ(void* ign) {
+void Emu6502::BRK(void* ign) {
+    reg_pc += 2;
+    IRQ();
+}
+
+void Emu6502::RTI(void* ign) {
+    pull(&reg_sr);
+    pull(&reg_pc, 2);
+}
+
+void Emu6502::IRQ() {
     push(&reg_pc, 2);
     push(&reg_sr);
     SEI();
     reg_pc = add_spc.read_word(VEC_IRQ);
 }
 
-void Emu6502::NMI(void* ign) {
+void Emu6502::NMI() {
     push(&reg_pc, 2);
     push(&reg_sr);
     SEI();
     reg_pc = add_spc.read_word(VEC_NMI);
-}
-
-void Emu6502::BRK(void* ign) {
-    reg_pc += 2;
-    IRQ(ign);
-}
-
-void Emu6502::RTI(void* ign) {
-    pull(&reg_sr);
-    pull(&reg_pc, 2);
 }
 
 void Emu6502::RESET() {

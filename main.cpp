@@ -17,6 +17,9 @@ void signal_callback_handler(int signum) {
     if(signum == SIGINT) {
         std::cout << "\nCaught SIGINT, exiting.\n";
         add_spc.clear();
+        for (ROM r : rom_list)
+            delete[] r.content;
+        rom_list.clear();
         exit(0);
     }
 }
