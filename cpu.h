@@ -21,16 +21,10 @@
 #define VEC_IRQ 0xFFFE
 
 enum AddressingMode { addr_acc, addr_abs, add_absx, add_absy, addr_imm, addr_imp, addr_ind, add_xind, add_indy, addr_rel, addr_zpg, add_zpgx, add_zpgy,
-                      auxreg_a, auxreg_x, auxreg_y, auxre_sp, auxre_sr /* some auxiliary modes */ };
-enum AluOp { alu_add, alu_sub, alu_mul, alu_div, alu_asl, alu_lsr, alu_rol, alu_ror, alu_and, alu_ora, alu_eor };
+                      auxreg_a, auxreg_x, auxreg_y, auxre_sp, auxsr_ph, auxsr_pl /* some auxiliary modes */ };
+enum AluOp { alu_adc, alu_sbc, alu_add, alu_cmp, alu_mul, alu_div, alu_asl, alu_lsr, alu_rol, alu_ror, alu_and, alu_ora, alu_eor };
 
-//using opcode = void(Emu6502::*)(void*);
-
-//typedef void (*opcode)(void* op);
-
-//#endif
 class Emu6502 {
-    //using opcode = void (Emu6502::*)(void*);
     public:
         typedef struct instruction {
             void (Emu6502::*func)(void*);
@@ -39,18 +33,15 @@ class Emu6502 {
         } instruction;
         instruction opcodes[256];
 
-        //char *cur_byte;
         instruction *cur_opc;
 
         Emu6502(bool *irq, bool *nmi);
-
-        //typedef void (Emu6502::*opcode)(void*);
 
         bool* _irq, _nmi;
 
         // Registers
         ushort  reg_pc = 0;
-        char    reg_sp = 0xFF,
+        char    reg_sp = 0x00,
                 reg_sr = 0x20,
                 reg_a  = 0,
                 reg_x  = 0,
@@ -61,6 +52,7 @@ class Emu6502 {
         void RESET();
 
     private:
+        char __reg_sr = 0x20;
         //static opcode inst_map[];
 
         void* get_target(char addrMode);
@@ -72,9 +64,7 @@ class Emu6502 {
         void SEZ(); void CLZ();  void SEZ(void* ign); void CLZ(void* ign);
         void SEC(); void CLC();  void SEC(void* ign); void CLC(void* ign);
 
-        void comp(const char op1, const char op2);
         void copy(void* src, void* dst);
-        void copy(void* src, void* dst, char flag_mask);
         void push(void* src);
         void pull(void* dst);
         void push(void* src, size_t count);
@@ -82,10 +72,7 @@ class Emu6502 {
         void alu_op(const char op1, const char op2, char *dest, char op_id);
         void set_flags(const ushort res, const char flag_mask);
         void set_flags(const char op1, const char op2, const ushort res, const char flag_mask);
-        void incdec(char* op, char inc);
 
-        void NOP(void* ign);
-        
         void ADC(void* op);
         void SBC(void* op);
         void ASL(void* op);
@@ -97,10 +84,6 @@ class Emu6502 {
         void EOR(void* op);
         void INC(void* op);
         void DEC(void* op);
-        /*void INX();
-        void DEX();
-        void INY();
-        void DEY();*/
         
         void LDA(void* src);
         void LDX(void* src);
@@ -108,25 +91,14 @@ class Emu6502 {
         void STA(void* dst);
         void STX(void* dst);
         void STY(void* dst);
-        /*void TSX();
-        void TSY();
-        void TXA();
-        void TXS();
-        void TYA();
-        void TAX();
-        void TAY();
-        void PHA();
-        void PLA();
-        void PHP();
-        void PLP();*/
         
         void BIT(void* op);
         void CMP(void* op);
         void CPX(void* op);
         void CPY(void* op);
         
-        void JMP(void *loc);
         void JMP(ushort loc);
+        void JMP(void *loc);
         void BCC(void *loc);
         void BCS(void *loc);
         void BVC(void *loc);
