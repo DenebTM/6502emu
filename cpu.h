@@ -1,5 +1,5 @@
-#include <iostream>
-#include <list>
+#include "common.h"
+#include "mem.h"
 
 #define flag_n 0x80
 #define flag_v 0x40
@@ -27,9 +27,10 @@ enum AluOp { alu_adc, alu_sbc, alu_add, alu_cmp, alu_mul, alu_div, alu_asl, alu_
 class Emu6502 {
     public:
         typedef struct instruction {
+            Byte name[16];
             void (Emu6502::*func)(void*);
-            char mode;
-            char length;
+            Byte mode;
+            Byte length;
         } instruction;
         instruction opcodes[256];
 
@@ -41,21 +42,21 @@ class Emu6502 {
 
         // Registers
         ushort  reg_pc = 0;
-        char    reg_sp = 0x00,
+        Byte    reg_sp = 0x00,
                 reg_sr = 0x20,
                 reg_a  = 0,
                 reg_x  = 0,
                 reg_y  = 0;
-        char current_opcode;
+        Byte current_opcode;
         
         void do_instruction();
         void RESET();
 
     private:
-        char __reg_sr = 0x20;
+        Byte __reg_sr = 0x20;
         //static opcode inst_map[];
 
-        void* get_target(char addrMode);
+        void* get_target(Byte addrMode);
 
         void SEN(); void CLN();  void SEN(void* ign); void CLN(void* ign);
         void SEV(); void CLV();  void SEV(void* ign); void CLV(void* ign);
@@ -69,9 +70,9 @@ class Emu6502 {
         void pull(void* dst);
         void push(void* src, size_t count);
         void pull(void* dst, size_t count);
-        void alu_op(const char op1, const char op2, char *dest, char op_id);
-        void set_flags(const ushort res, const char flag_mask);
-        void set_flags(const char op1, const char op2, const ushort res, const char flag_mask);
+        void alu_op(const Byte op1, const Byte op2, Byte *dest, Byte op_id);
+        void set_flags(const ushort res, const Byte flag_mask);
+        void set_flags(const Byte op1, const Byte op2, const ushort res, const Byte flag_mask);
 
         void ADC(void* op);
         void SBC(void* op);

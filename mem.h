@@ -1,50 +1,67 @@
+#pragma once
+#include "common.h"
 #include <iostream>
 #include <list>
+#include <ncurses.h>
 
-class OutChar {
-    public:
-        OutChar() { val = 0; lastVal = 0;}
-        char val;
-        void check_changed();
-    private:
-        char lastVal;
+struct MemoryMappedDevice {
+    MemoryMappedDevice(bool ro, SByte mapc):
+        read_only(ro), num_mapped_regs(mapc) {
+            mapped_regs = new Byte*[mapc];
+        }
+    const bool read_only = false;
+    const SByte num_mapped_regs;
+    Byte** mapped_regs;
+
+    virtual int pre_update() = 0;
+    virtual int post_update() = 0;
 };
 
-class ROM {
-    public:
-        char *content;
-        uint size;
-        uint start_address;
-        ROM(uint rom_size, char* rom_content);
-        ROM(uint rom_size, char* rom_content, uint start_addr);
-        
-        char* operator[](uint i);
+struct ROM {
+    ROM(DWord rom_size, Byte* rom_content);
+    ROM(DWord rom_size, Byte* rom_content, DWord start_addr);
+    const Byte* operator[](DWord i);
+
+    const Byte *content;
+    const DWord size;
+    const DWord start_address;
 };
 
 class AddressSpace {
     public:
         AddressSpace();
-        AddressSpace(uint mSize);
-        AddressSpace(uint mSize, std::list<ROM> roms);
+        AddressSpace(DWord mSize);
+        AddressSpace(DWord mSize, std::list<ROM> roms);
 
-        ushort read_word(uint addr);
-        ushort read_word(uint addr, bool wrap_page);
-        void write_word(uint addr, ushort val);
+        Byte* operator[](DWord i);
+
+        Byte* get(DWord i);
+        ushort read_word(DWord addr);
+        ushort read_word(DWord addr, bool wrap_page);
+        void write_word(DWord addr, ushort val);
         void clear_ram();
         void map_roms(std::list<ROM> roms);
+        void map_mem(MemoryMappedDevice* dev, DWord addr);
         void map_mem(ROM rom);
-        void map_mem(void* bytes, uint size, uint start_addr);
-        void map_mem(void* bytes, uint size, uint start_addr, bool mask);
-        void unmap_mem(uint size, uint start_addr);
+        void map_mem(const void* bytes, DWord size, DWord start_addr);
+        void map_mem(void* bytes, DWord size, DWord start_addr);
+        void map_mem(void* bytes, DWord size, DWord start_addr, bool mask, bool read_only);
+        void unmap_mem(DWord size, DWord start_addr);
 
-        char* operator[](uint i);
-
-        void clear();
+        void free();
 
     private:
-        uint mem_size;
-        char *ram;
-        void **mapped_mem;
-        bool *is_mapped;
+        typedef struct mem_addr {
+            void* memory;
+            bool is_mapped;
+            bool read_only;
+            SByte dev_regidx;
+        } MemAddr;
+        DWord mem_size;
+        DWord tmpval;
+        Byte *ram;
+        DWord last_addr;
+
+        MemAddr* mapped_mem;
         void init_ram();
 };

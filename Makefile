@@ -1,7 +1,7 @@
 CXX = g++
-CXXFLAGS = -g -lm -funsigned-char
+CXXFLAGS = -g -funsigned-char -lm -lncurses
 
-SOURCES = main.cpp mem.cpp cpu.cpp
+SOURCES = main.cpp mem.cpp cpu.cpp emu-stdio.cpp
 
 6502: $(SOURCES)
 	$(CXX) $(CXXFLAGS) -o $@ $^
