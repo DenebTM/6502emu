@@ -9,12 +9,11 @@ const Byte* ROM::operator[](DWord i) {
     return NULL;
 }
 
-AddressSpace::AddressSpace() : AddressSpace(0x10000, std::list<ROM>()) { }
-AddressSpace::AddressSpace(DWord mSize) : AddressSpace(mSize, std::list<ROM>()) { }
-AddressSpace::AddressSpace(DWord mSize, std::list<ROM> roms) {
+AddressSpace::AddressSpace() : AddressSpace(0x10000, std::list<ROM*>()) { }
+AddressSpace::AddressSpace(DWord mSize) : AddressSpace(mSize, std::list<ROM*>()) { }
+AddressSpace::AddressSpace(DWord mSize, std::list<ROM*> roms) {
     mem_size = mSize;
     mapped_mem = new MemAddr[mem_size];
-    last_addr = 0;
     init_ram();
     map_roms(roms);
 }
@@ -24,8 +23,8 @@ Byte* AddressSpace::get(DWord i) {
     // Make sure index isn't out of range
     if (i >= mem_size) return NULL;
 
-    // Handling of memory mapped devices
     MemAddr* mem = mapped_mem + last_addr;
+    // Handling of memory mapped devices
     // Make sure a memory access has occurred before
        // if so, and the memory address points to a device register,
        //   execute that device's post-update function
@@ -70,13 +69,13 @@ void AddressSpace::write_word(DWord addr, ushort val) {
     *get(addr+1) = val>>8;
 }
 
-void AddressSpace::map_roms(std::list<ROM> roms) { for (ROM r : roms) map_mem(r); }
+void AddressSpace::map_roms(std::list<ROM*> roms) { for (ROM* r : roms) map_mem(r); }
+void AddressSpace::map_mem(ROM* rom) { map_mem(rom->content, rom->size, rom->start_address); }
 
 void AddressSpace::map_mem(MemoryMappedDevice* dev, DWord addr) {
     for (SByte i = 0; i < dev->num_mapped_regs && i < mem_size; i++)
         mapped_mem[addr] = { dev, true, dev->read_only, i };
 }
-void AddressSpace::map_mem(ROM rom) { map_mem(rom.content, rom.size, rom.start_address); }
 void AddressSpace::map_mem(const void* bytes, DWord size, DWord start_addr) {
     map_mem((void*)bytes, size, start_addr, true, true);
 }

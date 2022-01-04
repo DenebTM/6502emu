@@ -17,5 +17,5 @@
 #include "emu-stdio.h"
 
 void signal_callback_handler(int signum);
-std::list<ROM> load_roms();
+std::list<ROM*> load_roms();
 int main(void);

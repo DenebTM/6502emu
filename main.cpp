@@ -10,15 +10,19 @@ AddressSpace add_spc;
 Emu6502 cpu(&_irq, &_nmi);
 OutChar emu_out;
 InChar  emu_in;
-std::list<ROM> rom_list;
+std::list<ROM*> rom_list;
 
 void signal_callback_handler(int signum) {
     if(signum == SIGINT) {
         endwin();
         std::cout << "\nCaught SIGINT, exiting.\n";
+        delete[] emu_out.mapped_regs;
+        delete[] emu_in.mapped_regs;
         add_spc.free();
-        for (ROM r : rom_list)
-            delete[] r.content;
+        for (ROM* r : rom_list) {
+            delete[] r->content;
+            delete r;
+        }
         rom_list.clear();
         exit(0);
     }
@@ -44,7 +48,7 @@ int main(void) {
     keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
 
-    // Start execution
+    // Start execution loop
     cpu.RESET();
     while(1) {
         cpu.do_instruction();
@@ -57,10 +61,10 @@ int main(void) {
     return 0;
 }
 
-std::list<ROM> load_roms() {
-    std::list rom_list = std::list<ROM>();
+std::list<ROM*> load_roms() {
+    std::list rom_list = std::list<ROM*>();
     std::string fname = "";
-    while (true) {
+    while (1) {
         std::cout << "Enter path of a ROM to be mapped, or press Return when done: ";
         getline(std::cin, fname);
         if (fname.empty()) return rom_list;
@@ -86,9 +90,8 @@ std::list<ROM> load_roms() {
                 std::cout << "Invalid input\n0x";
             }
         } while (!valid);
-        ROM* rom = new ROM(size, bytes, start_addr);
 
-        rom_list.push_back(*rom);
-        delete rom;
+        ROM* rom = new ROM(size, bytes, start_addr);
+        rom_list.push_back(rom);
     }
 }
