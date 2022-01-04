@@ -902,7 +902,7 @@ pass_intrp:
 	LDA #$FF
 	STA $60
 	BRK
-	.byte 69
+	.Byte 69
 	INC $60
 	
 ; CHECK test14
@@ -936,4 +936,4 @@ theend:
 
 succtext:
 .text "All tests passed!"
-.byte $0A
+.Byte $0A

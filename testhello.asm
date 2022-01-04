@@ -1,16 +1,21 @@
-outloc = 0xF001
-string = 0xc010
-*=string
-.text "Hello world"
-.byte 0
+stdout = $f001
+start = $ff00
 
-.org 0xc000
-LDX #0xFF
+*=$fffc
+.word start
+.word start
+
+*=start
+LDX #$ff
 print:
 INX
 LDA string,X
-STA outloc
+STA stdout
 BNE print
 
-exit:
-JMP exit 
+done:
+JMP done
+
+string:
+.text "Hello world"
+.byte 0

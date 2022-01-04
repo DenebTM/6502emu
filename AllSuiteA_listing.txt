@@ -806,7 +806,7 @@
  903                         ;pass_intrp:
  904                         ;LDA #$FF
  905                         ;STA $60
- 906                         ;BRK (two bytes)
+ 906                         ;BRK (two Bytes)
  907  45A5                   INC $60
  909                         ; CHECK test14
  910  45A7                   LDA $60
