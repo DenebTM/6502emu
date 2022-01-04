@@ -3,6 +3,7 @@
 
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
+extern QWord cycle;
 
 Emu6502::Emu6502(bool *irq, bool *nmi) { 
     _irq = irq;
@@ -104,6 +105,8 @@ void Emu6502::do_instruction() {
     void* tgt = get_target(cur_opc->mode);
     if (fun) (this->*fun)(tgt);
     reg_pc += cur_opc->length;
+
+    cycle++;
 }
 
 /**
@@ -138,56 +141,70 @@ void Emu6502::do_instruction() {
 void* Emu6502::get_target(Byte addrMode) {
     ushort addr = 0;
     switch (addrMode) {
-        case addr_acc:
-            addr = *add_spc[reg_pc+1];
-            return add_spc[addr];
         case addr_abs:
             addr = *(ushort*)add_spc[reg_pc+1];
+            cycle += 3;
             return add_spc[addr];
         case add_absx:
             addr = *(ushort*)add_spc[reg_pc+1] + reg_x;
+            cycle += 3;
             return add_spc[addr];
         case add_absy:
             addr = *(ushort*)add_spc[reg_pc+1] + reg_y;
+            cycle += 3;
             return add_spc[addr];
         case addr_imm:
         case addr_rel:
             addr = reg_pc+1;
+            cycle += 1;
             return add_spc[addr];
-        case addr_ind:
+        /*case addr_ind:
             // TODO: wrap page boundary on outer lookup
             addr = *(ushort*)add_spc[*(ushort*)add_spc[reg_pc+1]];
-            return add_spc[addr];
+            cycle += 4;
+            return add_spc[addr];*/
         case add_xind:
             // TODO: wrap page boundary on outer lookup
             addr = *(ushort*)add_spc[*add_spc[reg_pc+1] + reg_x];
+            cycle += 5;
             return add_spc[addr];
         case add_indy:
             // TODO: wrap page boundary on outer lookup
             addr = *(ushort*)add_spc[*add_spc[reg_pc+1]] + reg_y;
+            cycle += 4;
             return add_spc[addr];
         case addr_zpg:
             addr = *add_spc[reg_pc+1];
+            cycle += 2;
             return add_spc[addr];
         case add_zpgx:
             addr = *add_spc[reg_pc+1] + reg_x;
+            cycle += 3;
             return add_spc[addr];
         case add_zpgy:
             addr = *add_spc[reg_pc+1] + reg_y;
+            cycle += 3;
             return add_spc[addr];
 
+        case addr_acc:
         case auxreg_a:
+            cycle += 1;
             return &reg_a;
         case auxreg_x:
+            cycle += 1;
             return &reg_x;
         case auxreg_y:
+            cycle += 1;
             return &reg_y;
         case auxre_sp:
+            cycle += 1;
             return &reg_sp;
         case auxsr_ph:
+            cycle += 1;
             __reg_sr = reg_sr | flag_b|0x20;
             return &__reg_sr;
         case auxsr_pl:
+            cycle += 1;
             return &__reg_sr;
 
         default:
@@ -212,11 +229,17 @@ void Emu6502::SEC() { reg_sr |=  flag_c; } void Emu6502::SEC(void* ign) { SEC();
 void Emu6502::CLC() { reg_sr &= ~flag_c; } void Emu6502::CLC(void* ign) { CLC(); }
 
 void Emu6502::copy(void* src, void *dst) { *(Byte*)dst = *(Byte*)src; }
-void Emu6502::push(void *src) { copy(src, add_spc[0x100+(reg_sp++)]); }
+void Emu6502::push(void *src) {
+    copy(src, add_spc[0x100+(reg_sp++)]);
+
+    cycle += 1;
+}
 void Emu6502::pull(void *dst) {
     copy(add_spc[0x100+(--reg_sp)], dst);
     if (dst == &__reg_sr)
         reg_sr = (__reg_sr&~(flag_b|0x20)) | (reg_sr&(flag_b|0x20));
+
+    cycle += 2;
 }
 void Emu6502::push(void *src, size_t count) {
     for (size_t i = 0; i < count; i++)
@@ -331,8 +354,13 @@ void Emu6502::CMP(void* op) { alu_op(reg_a, *(Byte*)op, NULL, alu_cmp); }
 void Emu6502::CPX(void* op) { alu_op(reg_x, *(Byte*)op, NULL, alu_cmp); }
 void Emu6502::CPY(void* op) { alu_op(reg_y, *(Byte*)op, NULL, alu_cmp); }
 
-void Emu6502::JMP(ushort loc){ memcpy(&reg_pc,&loc, 2); }
-void Emu6502::JMP(void *loc) { memcpy(&reg_pc, loc, 2); }
+void Emu6502::JMP(ushort loc){
+    reg_pc = loc;
+    cycle += 1;
+}
+void Emu6502::JMP(void *loc) {
+    memcpy(&reg_pc, loc, 2);
+}
 void Emu6502::BCC(void *loc) { if (!SR_C) JMP(reg_pc+*(SByte*)loc); }
 void Emu6502::BCS(void *loc) { if ( SR_C) JMP(reg_pc+*(SByte*)loc); }
 void Emu6502::BVC(void *loc) { if (!SR_V) JMP(reg_pc+*(SByte*)loc); }
@@ -367,6 +395,7 @@ void Emu6502::IRQ() {
     push(&reg_sr);
     SEI();
     reg_pc = add_spc.read_word(VEC_IRQ);
+    cycle += 6;
 }
 
 void Emu6502::NMI() {
@@ -383,4 +412,6 @@ void Emu6502::RESET() {
     reg_y = 0;
     reg_sr = 0x20;
     reg_pc = add_spc.read_word(VEC_RST);
+
+    cycle += 6;
 }

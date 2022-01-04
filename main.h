@@ -3,7 +3,12 @@
 #include <fstream>
 #include <list>
 #include <limits>
+// For delays
+#include <chrono>
+#include <thread>
+// To catch SIGINT
 #include <signal.h>
+// Emulator I/O
 #include <ncurses.h>
 
 #include "common.h"

@@ -25,17 +25,17 @@ void signal_callback_handler(int signum) {
 }
 
 int main(void) {
+    using namespace std::this_thread;
+    using namespace std::chrono;
     signal(SIGINT, signal_callback_handler);
-    std::cout << "hewwo\n";
 
     add_spc.map_mem(&emu_out, 0xF001);
     add_spc.map_mem(&emu_in, 0xF004);
-    /*add_spc.map_mem(&emu_out.val, 1, 0xF001);
-    add_spc.map_mem(&emu_in.val, 1, 0xF004);*/
     rom_list = load_roms();
     add_spc.map_roms(rom_list);
 
-    std::cout << "Beginning execution! Output follows.\n";
+    std::cout << "Beginning execution in 1 second! Press Ctrl+C to quit at any point.\n";
+    sleep_for(seconds(1));
 
     // Initialize ncurses
     initscr();
@@ -48,8 +48,10 @@ int main(void) {
     cpu.RESET();
     while(1) {
         cpu.do_instruction();
-        //emu_out.update();
-        //emu_in.update();
+        if (cycle > 300) {
+            cycle = 0;
+            sleep_for(nanoseconds(833333));
+        }
     }
 
     return 0;
