@@ -65,31 +65,31 @@ ushort AddressSpace::read_word(DWord addr, bool wrap_page) {
 }
 
 void AddressSpace::write_word(DWord addr, ushort val) {
-    *get(addr) = val;
+    *get(addr)   = val;
     *get(addr+1) = val>>8;
 }
 
 void AddressSpace::map_roms(std::list<ROM*> roms) { for (ROM* r : roms) map_mem(r); }
 void AddressSpace::map_mem(ROM* rom) { map_mem(rom->content, rom->size, rom->start_address); }
 
-void AddressSpace::map_mem(MemoryMappedDevice* dev, DWord addr) {
-    for (SByte i = 0; i < dev->num_mapped_regs && i < mem_size; i++)
-        mapped_mem[addr] = { dev, true, dev->read_only, i };
+void AddressSpace::map_mem(MemoryMappedDevice* dev, DWord start_addr) {
+    for (SByte i = 0; i < dev->num_mapped_regs && (start_addr+i) < mem_size; i++)
+        mapped_mem[start_addr] = { dev, true, dev->read_only, i };
 }
 void AddressSpace::map_mem(const void* bytes, DWord size, DWord start_addr) {
-    map_mem((void*)bytes, size, start_addr, true, true);
+    map_mem((void*)bytes, size, start_addr, true, false);
 }
 void AddressSpace::map_mem(void* bytes, DWord size, DWord start_addr) {
     map_mem(bytes, size, start_addr, true, false);
 }
 void AddressSpace::map_mem(void* bytes, DWord size, DWord start_addr, bool mask, bool read_only) {
-    for (size_t i = 0; i < size && i < mem_size; i++)
+    for (size_t i = 0; i < size && (start_addr+i) < mem_size; i++)
         if (!mapped_mem[start_addr + i].is_mapped)
             mapped_mem[start_addr + i] = { (Byte*)bytes+i, mask, read_only, -1 };
 }
 
 void AddressSpace::unmap_mem(DWord size, DWord start_addr) {
-    for (size_t i = 0; i < size && i < mem_size; i++)
+    for (size_t i = 0; i < size && (start_addr+i) < mem_size; i++)
         mapped_mem[start_addr+i].is_mapped = false;
 }
 

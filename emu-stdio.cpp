@@ -13,21 +13,17 @@ int OutChar::post_update() {
     val = 0;
     return 0;
 }
-/*Byte* OutChar::getval() {
-    return &(MemoryMappedDevice::val);
-}*/
 
 InChar::InChar() : MemoryMappedDevice(true, 1) {
     mapped_regs[0] = &val;
 }
 int InChar::pre_update() {
-    //Byte* valptr = getval();
     int ch = getch();
+#ifdef EHBASIC
+    if (ch == 4) emu_exit(0); // Ctrl+D
+#endif
     if (ch == ERR) { val = 0; return ERR; }
     val = (Byte)ch;
     return ch;
 }
 int InChar::post_update() { return 0; }
-/*Byte* InChar::getval() {
-    return &(MemoryMappedDevice::val);
-}*/

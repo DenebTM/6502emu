@@ -230,14 +230,16 @@ void Emu6502::CLC() { reg_sr &= ~flag_c; } void Emu6502::CLC(void* ign) { CLC();
 
 void Emu6502::copy(void* src, void *dst) { *(Byte*)dst = *(Byte*)src; }
 void Emu6502::push(void *src) {
-    copy(src, add_spc[0x100+(reg_sp++)]);
+    copy(src, add_spc[0x100+(reg_sp--)]);
 
     cycle += 1;
 }
 void Emu6502::pull(void *dst) {
-    copy(add_spc[0x100+(--reg_sp)], dst);
+    copy(add_spc[0x100+(++reg_sp)], dst);
     if (dst == &__reg_sr)
         reg_sr = (__reg_sr&~(flag_b|0x20)) | (reg_sr&(flag_b|0x20));
+    else if (dst == &reg_a)
+        set_flags(reg_a, flag_n|flag_z);
 
     cycle += 2;
 }
@@ -267,7 +269,8 @@ void Emu6502::alu_op(const Byte op1, const Byte op2, Byte *dest, Byte op_id) {
             break;
         case alu_cmp:
             res = op1 - op2;
-            set_flags(op1, op2, res, flag_n|flag_z|flag_c);
+            set_flags(op1, op2, res, flag_n|flag_z);
+            CLC(); if (op1>=op2) SEC();
             break;
         case alu_asl:
             res = op1 << 1;
@@ -311,19 +314,19 @@ void Emu6502::set_flags(const ushort res, const Byte flag_mask) {
 void Emu6502::set_flags(const Byte op1, const Byte op2,
                         const ushort res,
                         const Byte flag_mask) {
-    // Backup flags that should not be set
-    const Byte flags_tmp = reg_sr & ~flag_mask;
+    // Temporary value that holds the new flags
+    Byte flags_tmp = 0;
     // Carry
-    CLC(); reg_sr |= res >> 8;
+    flags_tmp |= (res&0x100) >> 8;
     // Negative
-    CLN(); reg_sr |= res & flag_n;
+    flags_tmp |= res & flag_n;
     // Zero
-    CLZ(); reg_sr |= flag_z * ((res&0xFF) == 0);
+    flags_tmp |= flag_z * ((res&0xFF) == 0);
     // Arithmetic overflow
-    CLV(); reg_sr |= flag_v * ((op1&flag_n) == (op2&flag_n) && (op1&flag_n) != (res&flag_n));
-    // Restore flags that should not be set
-    reg_sr &= flag_mask;
-    reg_sr |= flags_tmp;
+    flags_tmp |= flag_v * ((op1&flag_n) == (op2&flag_n) && (op1&flag_n) != (res&flag_n));
+    // Apply the new flags
+    reg_sr &= ~flag_mask;
+    reg_sr |= (flags_tmp & flag_mask);
 }
 
 void Emu6502::ADC(void* op) { alu_op(reg_a, *(Byte*)op, &reg_a, alu_adc); }
@@ -406,12 +409,15 @@ void Emu6502::NMI() {
 }
 
 void Emu6502::RESET() {
-    reg_sp = 0x00;
     reg_a = 0;
     reg_x = 0;
     reg_y = 0;
     reg_sr = 0x20;
+    reg_sp = 0xff;
     reg_pc = add_spc.read_word(VEC_RST);
+#ifdef FUNCTEST
+    reg_pc = 0x400;
+#endif
 
     cycle += 6;
 }

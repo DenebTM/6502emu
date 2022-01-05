@@ -12,20 +12,25 @@ OutChar emu_out;
 InChar  emu_in;
 std::list<ROM*> rom_list;
 
-void signal_callback_handler(int signum) {
-    if(signum == SIGINT) {
-        endwin();
-        std::cout << "\nCaught SIGINT, exiting.\n";
-        delete[] emu_out.mapped_regs;
-        delete[] emu_in.mapped_regs;
-        add_spc.free();
-        for (ROM* r : rom_list) {
-            delete[] r->content;
-            delete r;
-        }
-        rom_list.clear();
-        exit(0);
+void emu_exit(int code) {
+    endwin();
+    std::cout << "\nExiting.\n";
+    delete[] emu_out.mapped_regs;
+    delete[] emu_in.mapped_regs;
+    add_spc.free();
+    for (ROM* r : rom_list) {
+        delete[] r->content;
+        delete r;
     }
+    rom_list.clear();
+    exit(code);
+}
+
+void signal_callback_handler(int signum) {
+#ifndef EHBASIC
+    if(signum == SIGINT)
+        emu_exit(0);
+#endif
 }
 
 int main(void) {
@@ -33,10 +38,11 @@ int main(void) {
     using namespace std::chrono;
     signal(SIGINT, signal_callback_handler);
 
-    add_spc.map_mem(&emu_out, 0xF001);
-    add_spc.map_mem(&emu_in, 0xF004);
     rom_list = load_roms();
     add_spc.map_roms(rom_list);
+#ifndef FUNCTEST
+    add_spc.map_mem(&emu_out, 0xF001);
+    add_spc.map_mem(&emu_in, 0xF004);
 
     std::cout << "Beginning execution in 1 second! Press Ctrl+C to quit at any point.\n";
     sleep_for(seconds(1));
@@ -47,15 +53,18 @@ int main(void) {
     noecho();
     keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
+#endif
 
     // Start execution loop
     cpu.RESET();
     while(1) {
         cpu.do_instruction();
+#ifndef FUNCTEST
         if (cycle > 300) {
             cycle = 0;
             sleep_for(nanoseconds(833333));
         }
+#endif
     }
 
     return 0;
@@ -64,10 +73,13 @@ int main(void) {
 std::list<ROM*> load_roms() {
     std::list rom_list = std::list<ROM*>();
     std::string fname = "";
+                fname = "roms/6502_functional_test.bin";
     while (1) {
+#ifndef FUNCTEST
         std::cout << "Enter path of a ROM to be mapped, or press Return when done: ";
         getline(std::cin, fname);
         if (fname.empty()) return rom_list;
+#endif
 
         std::ifstream file(fname, std::ios::binary | std::ios::ate);
         std::streamsize size = file.tellg();
@@ -75,9 +87,11 @@ std::list<ROM*> load_roms() {
         Byte *bytes = new Byte[size];
         file.read(bytes, size);
 
-        std::cout << "Where should this ROM be mapped? (Enter in hex, default 0xC000): 0x";
-        std::string inAddr;
+        DWord start_addr = 0;
+#ifndef FUNCTEST
         DWord start_addr = 0xC000;
+        std::cout << "Where should this ROM be mapped? (Enter in hex, default 0xC000): 0x";
+        std::string inAddr = "";
         bool valid = false;
         do {
             try {
@@ -90,8 +104,12 @@ std::list<ROM*> load_roms() {
                 std::cout << "Invalid input\n0x";
             }
         } while (!valid);
+#endif
 
         ROM* rom = new ROM(size, bytes, start_addr);
         rom_list.push_back(rom);
+#ifdef FUNCTEST
+        return rom_list;
+#endif
     }
 }
