@@ -23,6 +23,7 @@ Byte* AddressSpace::get(DWord i) {
     // Make sure index isn't out of range
     if (i >= mem_size) return NULL;
 
+#ifndef FUNCTEST
     MemAddr* mem = mapped_mem + last_addr;
     // Handling of memory mapped devices
     // Make sure a memory access has occurred before
@@ -49,6 +50,9 @@ Byte* AddressSpace::get(DWord i) {
         tmpval = *(DWord*)mem->memory;
         return (Byte*)&tmpval;
     }
+#else
+    MemAddr* mem = mapped_mem + i;
+#endif
     // If the memory address is read-write, return a pointer to it
     return (Byte*)mem->memory;
 }

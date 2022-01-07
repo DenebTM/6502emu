@@ -21,7 +21,7 @@
 #define VEC_IRQ 0xFFFE
 
 enum AddressingMode { addr_acc, addr_abs, add_absx, add_absy, addr_imm, addr_imp, addr_ind, add_xind, add_indy, addr_rel, addr_zpg, add_zpgx, add_zpgy,
-                      auxreg_a, auxreg_x, auxreg_y, auxre_sp, auxsr_ph, auxsr_pl /* some auxiliary modes */ };
+                      anone, auxreg_a, auxreg_x, auxreg_y, auxre_sp, auxsr_ph, auxsr_pl /* some auxiliary modes */ };
 enum AluOp { alu_adc, alu_sbc, alu_add, alu_cmp, alu_mul, alu_div, alu_asl, alu_lsr, alu_rol, alu_ror, alu_and, alu_ora, alu_eor };
 
 class Emu6502 {
@@ -70,6 +70,8 @@ class Emu6502 {
         void pull(void* dst);
         void push(void* src, size_t count);
         void pull(void* dst, size_t count);
+        void push_sr(void* ign);
+        void pull_sr(void* ign);
         void alu_op(const Byte op1, const Byte op2, Byte *dest, Byte op_id);
         void set_flags(const ushort res, const Byte flag_mask);
         void set_flags(const Byte op1, const Byte op2, const ushort res, const Byte flag_mask);

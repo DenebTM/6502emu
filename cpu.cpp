@@ -52,9 +52,9 @@ Emu6502::Emu6502(bool *irq, bool *nmi) {
     opcodes[0xE5] = { "SBC zpg  ", &Emu6502::SBC, addr_zpg, 2 };        opcodes[0xE6] = { "INC zpg  ", &Emu6502::INC, addr_zpg, 2 };
     opcodes[0xF5] = { "SBC zpg,x", &Emu6502::SBC, add_zpgx, 2 };        opcodes[0xF6] = { "INC zpg,x", &Emu6502::INC, add_zpgx, 2 };
 
-    opcodes[0x08] = { "PHP impl ", &Emu6502::push,auxsr_ph, 1 };        opcodes[0x09] = { "ORA #    ", &Emu6502::ORA, addr_imm, 2 };
+    opcodes[0x08] = { "PHP impl ", &Emu6502::push_sr,anone, 1 };        opcodes[0x09] = { "ORA #    ", &Emu6502::ORA, addr_imm, 2 };
     opcodes[0x18] = { "CLC impl ", &Emu6502::CLC, addr_imp, 1 };        opcodes[0x19] = { "ORA abs,y", &Emu6502::ORA, add_absy, 3 };
-    opcodes[0x28] = { "PLP impl ", &Emu6502::pull,auxsr_pl, 1 };        opcodes[0x29] = { "AND #    ", &Emu6502::AND, addr_imm, 2 };
+    opcodes[0x28] = { "PLP impl ", &Emu6502::pull_sr,anone, 1 };        opcodes[0x29] = { "AND #    ", &Emu6502::AND, addr_imm, 2 };
     opcodes[0x38] = { "SEC impl ", &Emu6502::SEC, addr_imp, 1 };        opcodes[0x39] = { "AND abs,y", &Emu6502::AND, add_absy, 3 };
     opcodes[0x48] = { "PHA impl ", &Emu6502::push,auxreg_a, 1 };        opcodes[0x49] = { "EOR #    ", &Emu6502::EOR, addr_imm, 2 };
     opcodes[0x58] = { "CLI impl ", &Emu6502::CLI, addr_imp, 1 };        opcodes[0x59] = { "EOR abs,y", &Emu6502::EOR, add_absy, 3 };
@@ -236,9 +236,7 @@ void Emu6502::push(void *src) {
 }
 void Emu6502::pull(void *dst) {
     copy(add_spc[0x100+(++reg_sp)], dst);
-    if (dst == &__reg_sr)
-        reg_sr = (__reg_sr&~(flag_b|0x20)) | (reg_sr&(flag_b|0x20));
-    else if (dst == &reg_a)
+    if (dst == &reg_a)
         set_flags(reg_a, flag_n|flag_z);
 
     cycle += 2;
@@ -250,6 +248,14 @@ void Emu6502::push(void *src, size_t count) {
 void Emu6502::pull(void *dst, size_t count) {
     for (size_t i = 0; i < count; i++)
         pull(((Byte*)dst+i));
+}
+void Emu6502::push_sr(void* none) {
+    __reg_sr = reg_sr | (flag_b|0x20);
+    copy(&__reg_sr, add_spc[0x100+(reg_sp--)]);
+}
+void Emu6502::pull_sr(void* none) {
+    copy(add_spc[0x100+(++reg_sp)], &__reg_sr);
+    reg_sr = (__reg_sr&~(flag_b|0x20)) | (reg_sr&(flag_b|0x20));
 }
 
 void Emu6502::alu_op(const Byte op1, const Byte op2, Byte *dest, Byte op_id) {
@@ -385,11 +391,15 @@ void Emu6502::RTS(void *ign) {
 
 void Emu6502::BRK(void* ign) {
     reg_pc += 2;
-    IRQ();
+    push(&reg_pc, 2);
+    push_sr(NULL);
+    SEI();
+    reg_pc = add_spc.read_word(VEC_IRQ);
+    cycle += 6;
 }
 
 void Emu6502::RTI(void* ign) {
-    pull(&reg_sr);
+    pull_sr(NULL);
     pull(&reg_pc, 2);
 }
 
@@ -406,6 +416,7 @@ void Emu6502::NMI() {
     push(&reg_sr);
     SEI();
     reg_pc = add_spc.read_word(VEC_NMI);
+    cycle += 6;
 }
 
 void Emu6502::RESET() {
