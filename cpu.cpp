@@ -61,8 +61,8 @@ Emu6502::Emu6502(bool *irq, bool *nmi) {
     opcodes[0x68] = { "PLA impl ", &Emu6502::pull,auxreg_a, 1 };        opcodes[0x69] = { "ADC #    ", &Emu6502::ADC, addr_imm, 2 };
     opcodes[0x78] = { "SEI impl ", &Emu6502::SEI, addr_imp, 1 };        opcodes[0x79] = { "ADC abs,y", &Emu6502::ADC, add_absy, 3 };
     opcodes[0x88] = { "DEY impl ", &Emu6502::DEC, auxreg_y, 1 };
-    opcodes[0x98] = { "TYA impl ", &Emu6502::STY, auxreg_a, 1 };        opcodes[0x99] = { "STA abs,y", &Emu6502::STA, add_absy, 3 };
-    opcodes[0xA8] = { "TAY impl ", &Emu6502::STA, auxreg_y, 1 };        opcodes[0xA9] = { "LDA #    ", &Emu6502::LDA, addr_imm, 2 };
+    opcodes[0x98] = { "TYA impl ", &Emu6502::LDA, auxreg_y, 1 };        opcodes[0x99] = { "STA abs,y", &Emu6502::STA, add_absy, 3 };
+    opcodes[0xA8] = { "TAY impl ", &Emu6502::LDY, auxreg_a, 1 };        opcodes[0xA9] = { "LDA #    ", &Emu6502::LDA, addr_imm, 2 };
     opcodes[0xB8] = { "CLV impl ", &Emu6502::CLV, addr_imp, 1 };        opcodes[0xB9] = { "LDA abs,y", &Emu6502::LDA, add_absy, 3 };
     opcodes[0xC8] = { "INY impl ", &Emu6502::INC, auxreg_y, 1 };        opcodes[0xC9] = { "CMP #    ", &Emu6502::CMP, addr_imm, 2 };
     opcodes[0xD8] = { "CLD impl ", &Emu6502::CLD, addr_imp, 1 };        opcodes[0xD9] = { "CMP abs,y", &Emu6502::CMP, add_absy, 3 };
@@ -73,9 +73,9 @@ Emu6502::Emu6502(bool *irq, bool *nmi) {
     opcodes[0x2A] = { "ROL acc  ", &Emu6502::ROL, auxreg_a, 1 };        opcodes[0x2C] = { "BIT abs  ", &Emu6502::BIT, addr_abs, 3 };
     opcodes[0x4A] = { "LSR acc  ", &Emu6502::LSR, auxreg_a, 1 };        opcodes[0x4C] = { "JMP abs  ", &Emu6502::JMP, addr_imm, 0 }; // addr_abs (duct tape fix)
     opcodes[0x6A] = { "ROR acc  ", &Emu6502::ROR, auxreg_a, 1 };        opcodes[0x6C] = { "JMP ind  ", &Emu6502::JMP, addr_abs, 0 }; // addr_ind (same, but in anticipation)
-    opcodes[0x8A] = { "TXA impl ", &Emu6502::STX, auxreg_a, 1 };        opcodes[0x8C] = { "STY abs  ", &Emu6502::STY, addr_abs, 3 };
+    opcodes[0x8A] = { "TXA impl ", &Emu6502::LDA, auxreg_x, 1 };        opcodes[0x8C] = { "STY abs  ", &Emu6502::STY, addr_abs, 3 };
     opcodes[0x9A] = { "TXS impl ", &Emu6502::STX, auxre_sp, 1 };
-    opcodes[0xAA] = { "TAX impl ", &Emu6502::STA, auxreg_x, 1 };        opcodes[0xAC] = { "LDY abs  ", &Emu6502::LDY, addr_abs, 3 };
+    opcodes[0xAA] = { "TAX impl ", &Emu6502::LDX, auxreg_a, 1 };        opcodes[0xAC] = { "LDY abs  ", &Emu6502::LDY, addr_abs, 3 };
     opcodes[0xBA] = { "TSX impl ", &Emu6502::LDX, auxre_sp, 1 };        opcodes[0xBC] = { "LDY abs,x", &Emu6502::LDY, add_absx, 3 };
     opcodes[0xCA] = { "DEX impl ", &Emu6502::DEC, auxreg_x, 1 };        opcodes[0xCC] = { "CPY abs  ", &Emu6502::CPY, addr_abs, 3 };
     opcodes[0xEA] = { "NOP impl ",          NULL, addr_imp, 1 };        opcodes[0xEC] = { "CPX abs  ", &Emu6502::CPX, addr_abs, 3 };
