@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 
-#define FUNCTEST
+//#define FUNCTEST
 //#define EHBASIC
 
 typedef char Byte;

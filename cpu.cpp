@@ -139,18 +139,19 @@ void Emu6502::do_instruction() {
  *     Operand is address (1-byte) + Y with carry
  */
 void* Emu6502::get_target(Byte addrMode) {
-    ushort addr = 0;
+    Word addr = 0,
+         addr1= 0;
     switch (addrMode) {
         case addr_abs:
-            addr = *(ushort*)add_spc[reg_pc+1];
+            addr = *(Word*)add_spc[reg_pc+1];
             cycle += 3;
             return add_spc[addr];
         case add_absx:
-            addr = *(ushort*)add_spc[reg_pc+1] + reg_x;
+            addr = *(Word*)add_spc[reg_pc+1] + reg_x;
             cycle += 3;
             return add_spc[addr];
         case add_absy:
-            addr = *(ushort*)add_spc[reg_pc+1] + reg_y;
+            addr = *(Word*)add_spc[reg_pc+1] + reg_y;
             cycle += 3;
             return add_spc[addr];
         case addr_imm:
@@ -160,17 +161,17 @@ void* Emu6502::get_target(Byte addrMode) {
             return add_spc[addr];
         /*case addr_ind:
             // TODO: wrap page boundary on outer lookup
-            addr = *(ushort*)add_spc[*(ushort*)add_spc[reg_pc+1]];
+            addr = *(Word*)add_spc[*(ushort*)add_spc[reg_pc+1]];
             cycle += 4;
             return add_spc[addr];*/
         case add_xind:
-            // TODO: wrap page boundary on outer lookup
-            addr = *(ushort*)add_spc[*add_spc[reg_pc+1] + reg_x];
+            addr1= (Byte)(*add_spc[reg_pc+1]+reg_x);
+            addr = add_spc.read_word(addr1, true);
             cycle += 5;
             return add_spc[addr];
         case add_indy:
-            // TODO: wrap page boundary on outer lookup
-            addr = *(ushort*)add_spc[*add_spc[reg_pc+1]] + reg_y;
+            addr1= (Byte)(*add_spc[reg_pc+1]);
+            addr = add_spc.read_word(addr1, true) + reg_y;
             cycle += 4;
             return add_spc[addr];
         case addr_zpg:
@@ -178,11 +179,11 @@ void* Emu6502::get_target(Byte addrMode) {
             cycle += 2;
             return add_spc[addr];
         case add_zpgx:
-            addr = *add_spc[reg_pc+1] + reg_x;
+            addr = (Byte)(*add_spc[reg_pc+1] + reg_x);
             cycle += 3;
             return add_spc[addr];
         case add_zpgy:
-            addr = *add_spc[reg_pc+1] + reg_y;
+            addr = (Byte)(*add_spc[reg_pc+1] + reg_y);
             cycle += 3;
             return add_spc[addr];
 
@@ -259,7 +260,7 @@ void Emu6502::pull_sr(void* none) {
 }
 
 void Emu6502::alu_op(const Byte op1, const Byte op2, Byte *dest, Byte op_id) {
-    ushort res = 0;
+    Word res = 0;
     if (dest) res = *dest;
     switch (op_id) {
         case alu_adc:
@@ -313,12 +314,12 @@ void Emu6502::alu_op(const Byte op1, const Byte op2, Byte *dest, Byte op_id) {
     if(dest) *dest = (Byte)res;
 }
 
-void Emu6502::set_flags(const ushort res, const Byte flag_mask) {
+void Emu6502::set_flags(const Word res, const Byte flag_mask) {
     set_flags(0x0, 0x80, res, flag_mask);
 }
 
 void Emu6502::set_flags(const Byte op1, const Byte op2,
-                        const ushort res,
+                        const Word res,
                         const Byte flag_mask) {
     // Temporary value that holds the new flags
     Byte flags_tmp = 0;
@@ -363,7 +364,7 @@ void Emu6502::CMP(void* op) { alu_op(reg_a, *(Byte*)op, NULL, alu_cmp); }
 void Emu6502::CPX(void* op) { alu_op(reg_x, *(Byte*)op, NULL, alu_cmp); }
 void Emu6502::CPY(void* op) { alu_op(reg_y, *(Byte*)op, NULL, alu_cmp); }
 
-void Emu6502::JMP(ushort loc){
+void Emu6502::JMP(Word loc){
     reg_pc = loc;
     cycle += 1;
 }

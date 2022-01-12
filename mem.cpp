@@ -20,8 +20,8 @@ AddressSpace::AddressSpace(DWord mSize, std::list<ROM*> roms) {
 
 Byte* AddressSpace::operator[](DWord i) { return get(i); }
 Byte* AddressSpace::get(DWord i) {
-    // Make sure index isn't out of range
-    if (i >= mem_size) return NULL;
+    // Wrap around to beginning of memory space if out of range.
+    i %= mem_size;
 
 #ifndef FUNCTEST
     MemAddr* mem = mapped_mem + last_addr;
@@ -56,8 +56,8 @@ Byte* AddressSpace::get(DWord i) {
     // If the memory address is read-write, return a pointer to it
     return (Byte*)mem->memory;
 }
-ushort AddressSpace::read_word(DWord addr) { return read_word(addr, false); }
-ushort AddressSpace::read_word(DWord addr, bool wrap_page) {
+Word AddressSpace::read_word(DWord addr) { return read_word(addr, false); }
+Word AddressSpace::read_word(DWord addr, bool wrap_page) {
     Byte loByte, hiByte;
     loByte = *get(addr);
     if (!wrap_page || (addr&0xFF) != 0xFF)
@@ -65,10 +65,10 @@ ushort AddressSpace::read_word(DWord addr, bool wrap_page) {
     else
         hiByte = *get(addr&0xFF00);
 
-    return (ushort)(hiByte<<8) | loByte;
+    return (Word)(hiByte<<8) | loByte;
 }
 
-void AddressSpace::write_word(DWord addr, ushort val) {
+void AddressSpace::write_word(DWord addr, Word val) {
     *get(addr)   = val;
     *get(addr+1) = val>>8;
 }
@@ -81,7 +81,7 @@ void AddressSpace::map_mem(MemoryMappedDevice* dev, DWord start_addr) {
         mapped_mem[start_addr] = { dev, true, dev->read_only, i };
 }
 void AddressSpace::map_mem(const void* bytes, DWord size, DWord start_addr) {
-    map_mem((void*)bytes, size, start_addr, true, false);
+    map_mem((void*)bytes, size, start_addr, true, true);
 }
 void AddressSpace::map_mem(void* bytes, DWord size, DWord start_addr) {
     map_mem(bytes, size, start_addr, true, false);

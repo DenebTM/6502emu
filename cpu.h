@@ -41,7 +41,7 @@ class Emu6502 {
         bool* _irq, _nmi;
 
         // Registers
-        ushort  reg_pc = 0;
+        Word  reg_pc = 0;
         Byte    reg_sp = 0x00,
                 reg_sr = 0x20,
                 reg_a  = 0,
@@ -73,8 +73,8 @@ class Emu6502 {
         void push_sr(void* ign);
         void pull_sr(void* ign);
         void alu_op(const Byte op1, const Byte op2, Byte *dest, Byte op_id);
-        void set_flags(const ushort res, const Byte flag_mask);
-        void set_flags(const Byte op1, const Byte op2, const ushort res, const Byte flag_mask);
+        void set_flags(const Word res, const Byte flag_mask);
+        void set_flags(const Byte op1, const Byte op2, const Word res, const Byte flag_mask);
 
         void ADC(void* op);
         void SBC(void* op);
@@ -100,7 +100,7 @@ class Emu6502 {
         void CPX(void* op);
         void CPY(void* op);
         
-        void JMP(ushort loc);
+        void JMP(Word loc);
         void JMP(void *loc);
         void BCC(void *loc);
         void BCS(void *loc);

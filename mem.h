@@ -36,9 +36,9 @@ class AddressSpace {
         Byte* operator[](DWord i);
 
         Byte* get(DWord i);
-        ushort read_word(DWord addr);
-        ushort read_word(DWord addr, bool wrap_page);
-        void write_word(DWord addr, ushort val);
+        Word read_word(DWord addr);
+        Word read_word(DWord addr, bool wrap_page);
+        void write_word(DWord addr, Word val);
         void clear_ram();
         void map_roms(std::list<ROM*> roms);
         void map_mem(ROM* rom);

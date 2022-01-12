@@ -73,22 +73,23 @@ int main(void) {
 std::list<ROM*> load_roms() {
     std::list rom_list = std::list<ROM*>();
     std::string fname = "";
-                fname = "roms/6502_functional_test.bin";
     while (1) {
 #ifndef FUNCTEST
         std::cout << "Enter path of a ROM to be mapped, or press Return when done: ";
         getline(std::cin, fname);
         if (fname.empty()) return rom_list;
+#else
+        fname = "roms/6502_functional_test.bin";
 #endif
-
         std::ifstream file(fname, std::ios::binary | std::ios::ate);
         std::streamsize size = file.tellg();
         file.seekg(0, std::ios::beg);
         Byte *bytes = new Byte[size];
         file.read(bytes, size);
 
+#ifdef FUNCTEST
         DWord start_addr = 0;
-#ifndef FUNCTEST
+#else
         DWord start_addr = 0xC000;
         std::cout << "Where should this ROM be mapped? (Enter in hex, default 0xC000): 0x";
         std::string inAddr = "";
@@ -105,7 +106,6 @@ std::list<ROM*> load_roms() {
             }
         } while (!valid);
 #endif
-
         ROM* rom = new ROM(size, bytes, start_addr);
         rom_list.push_back(rom);
 #ifdef FUNCTEST
