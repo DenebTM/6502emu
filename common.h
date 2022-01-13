@@ -1,8 +1,7 @@
-#pragma once
 #include <iostream>
 
 //#define FUNCTEST
-//#define EHBASIC
+#define EHBASIC
 
 typedef char Byte;
 typedef signed char SByte;

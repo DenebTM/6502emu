@@ -27,16 +27,16 @@ void emu_exit(int code) {
 }
 
 void signal_callback_handler(int signum) {
-#ifndef EHBASIC
     if(signum == SIGINT)
         emu_exit(0);
-#endif
 }
 
 int main(void) {
     using namespace std::this_thread;
     using namespace std::chrono;
+#ifndef EHBASIC
     signal(SIGINT, signal_callback_handler);
+#endif
 
     rom_list = load_roms();
     add_spc.map_roms(rom_list);
@@ -53,6 +53,15 @@ int main(void) {
     noecho();
     keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
+    scrollok(stdscr, TRUE);
+    setlocale(LC_ALL, "de_DE.UTF-8");
+    int max_x = getmaxx(stdscr),
+        max_y = getmaxy(stdscr);
+    if (max_x > 80) max_x = 80;
+    resizeterm(max_y, max_x);
+#ifdef EHBASIC
+    raw();
+#endif
 #endif
 
     // Start execution loop
@@ -60,7 +69,7 @@ int main(void) {
     while(1) {
         cpu.do_instruction();
 #ifndef FUNCTEST
-        if (cycle > 300) {
+        if (cycle > 3000) {
             cycle = 0;
             sleep_for(nanoseconds(833333));
         }
