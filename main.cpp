@@ -44,7 +44,11 @@ int main(void) {
     add_spc.map_mem(&emu_out, 0xF001);
     add_spc.map_mem(&emu_in, 0xF004);
 
+#ifdef EHBASIC
+    std::cout << "Beginning execution in 1 second! Press Ctrl+D to quit at any point.\n";
+#else
     std::cout << "Beginning execution in 1 second! Press Ctrl+C to quit at any point.\n";
+#endif
     sleep_for(seconds(1));
 
     // Initialize ncurses
