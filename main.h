@@ -1,8 +1,8 @@
 #pragma once
-#include <iostream>
 #include <fstream>
-#include <list>
+#include <iostream>
 #include <limits>
+#include <list>
 // For delays
 #include <chrono>
 #include <thread>
@@ -12,10 +12,10 @@
 #include <ncurses.h>
 
 #include "common.h"
-#include "mem.h"
 #include "cpu.h"
 #include "emu-stdio.h"
+#include "mem.h"
 
 void signal_callback_handler(int signum);
-std::list<ROM*> load_roms();
+std::list<ROM *> load_roms();
 int main(void);

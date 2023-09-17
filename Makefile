@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -funsigned-char -lm -lncurses
+CXXFLAGS = -g -funsigned-char -lm -lncurses -std=c++23
 
 SOURCES = main.cpp common.h mem.cpp cpu.cpp emu-stdio.cpp
 
