@@ -1,5 +1,6 @@
-#include "common.h"
-#include "mem.h"
+#pragma once
+#include "common.hpp"
+#include "mem-dev.hpp"
 #include <ncurses.h>
 
 #define SC_EOF 4    // Ctrl+D

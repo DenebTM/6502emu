@@ -2,4 +2,4 @@
 !/.gitignore
 6502
 opcodes.h
-cpu-new.*
+cpu-old.*

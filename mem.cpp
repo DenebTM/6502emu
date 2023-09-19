@@ -1,17 +1,7 @@
-#include "mem.h"
-
-ROM::ROM(DWord rom_size, Byte *rom_content) : ROM(rom_size, rom_content, 0) {}
-ROM::ROM(DWord rom_size, Byte *rom_content, DWord start_addr)
-    : size(rom_size), content(rom_content), start_address(start_addr) {}
-const Byte *ROM::operator[](DWord i) {
-  if (i < size)
-    return content + i;
-  return NULL;
-}
+#include "mem.hpp"
 
 AddressSpace::AddressSpace() : AddressSpace(0x10000, std::list<ROM *>()) {}
-AddressSpace::AddressSpace(DWord mSize)
-    : AddressSpace(mSize, std::list<ROM *>()) {}
+AddressSpace::AddressSpace(DWord mSize) : AddressSpace(mSize, std::list<ROM *>()) {}
 AddressSpace::AddressSpace(DWord mSize, std::list<ROM *> roms) {
   mem_size = mSize;
   mapped_mem = new MemAddr[mem_size];
@@ -78,23 +68,17 @@ void AddressSpace::map_roms(std::list<ROM *> roms) {
   for (ROM *r : roms)
     map_mem(r);
 }
-void AddressSpace::map_mem(ROM *rom) {
-  map_mem(rom->content, rom->size, rom->start_address);
-}
+void AddressSpace::map_mem(ROM *rom) { map_mem(rom->content, rom->size, rom->start_address); }
 
 void AddressSpace::map_mem(MemoryMappedDevice *dev, DWord start_addr) {
-  for (SByte i = 0; i < dev->num_mapped_regs && (start_addr + i) < mem_size;
-       i++)
-    mapped_mem[start_addr] = {dev, true, dev->read_only, i};
+  for (SByte i = 0; i < dev->num_mapped_regs && (start_addr + i) < mem_size; i++)
+    mapped_mem[start_addr + i] = {dev, true, dev->read_only, i};
 }
 void AddressSpace::map_mem(const void *bytes, DWord size, DWord start_addr) {
   map_mem((void *)bytes, size, start_addr, true, true);
 }
-void AddressSpace::map_mem(void *bytes, DWord size, DWord start_addr) {
-  map_mem(bytes, size, start_addr, true, false);
-}
-void AddressSpace::map_mem(void *bytes, DWord size, DWord start_addr, bool mask,
-                           bool read_only) {
+void AddressSpace::map_mem(void *bytes, DWord size, DWord start_addr) { map_mem(bytes, size, start_addr, true, false); }
+void AddressSpace::map_mem(void *bytes, DWord size, DWord start_addr, bool mask, bool read_only) {
   for (size_t i = 0; i < size && (start_addr + i) < mem_size; i++)
     if (!mapped_mem[start_addr + i].is_mapped)
       mapped_mem[start_addr + i] = {(Byte *)bytes + i, mask, read_only, -1};

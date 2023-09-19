@@ -1,10 +1,11 @@
+#include <cstdint>
 #include <iostream>
 
 // #define FUNCTEST
-#define EHBASIC
+// #define EHBASIC
 
-typedef char Byte;
-typedef signed char SByte;
+typedef uint8_t Byte;
+typedef int8_t SByte;
 typedef uint16_t Word;
 typedef uint32_t DWord;
 typedef uint64_t QWord;

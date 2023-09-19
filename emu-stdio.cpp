@@ -1,6 +1,30 @@
-#include "emu-stdio.h"
+#include "emu-stdio.hpp"
 
-OutChar::OutChar() : MemoryMappedDevice(false, 1) { mapped_regs[0] = &val; }
+bool ncurses_initialized = false;
+void init_ncurses() {
+  if (ncurses_initialized)
+    return;
+
+  initscr();
+  cbreak();
+  noecho();
+  keypad(stdscr, TRUE);
+  nodelay(stdscr, TRUE);
+  scrollok(stdscr, TRUE);
+  setlocale(LC_ALL, "de_DE.UTF-8");
+  // #ifdef EHBASIC
+  //   raw();
+  // #else
+  //   signal(SIGINT, signal_callback_handler);
+  // #endif
+
+  ncurses_initialized = true;
+}
+
+OutChar::OutChar() : MemoryMappedDevice(false, 1) {
+  init_ncurses();
+  mapped_regs[0] = &val;
+}
 int OutChar::pre_update() { return 0; }
 int OutChar::post_update() {
   switch (val) {
@@ -29,7 +53,10 @@ int OutChar::post_update() {
   return 0;
 }
 
-InChar::InChar() : MemoryMappedDevice(true, 1) { mapped_regs[0] = &val; }
+InChar::InChar() : MemoryMappedDevice(true, 1) {
+  init_ncurses();
+  mapped_regs[0] = &val;
+}
 int InChar::pre_update() {
   int ch = getch();
   switch (ch) {
@@ -74,21 +101,21 @@ int InChar::pre_update() {
       val = SC_CR;
       break;
 
-#ifdef EHBASIC
+      // #ifdef EHBASIC
     case SC_EOF:
       emu_exit(0);
       break;
-#endif
+      // #endif
     case ERR:
       val = 0;
       return ERR;
     default:
-#ifdef EHBASIC
+      // #ifdef EHBASIC
       // swap upper- and lowercase because EHBasic does not recognise lowercase
       // commands
       if ((ch | 0x20) >= 'a' && (ch | 0x20) <= 'z')
         ch ^= 32;
-#endif
+      // #endif
       val = (Byte)ch;
   }
   return ch;
