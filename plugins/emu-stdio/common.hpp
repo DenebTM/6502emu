@@ -1,6 +1,4 @@
 #pragma once
-#include "common.hpp"
-#include "mem-dev.hpp"
 #include <ncurses.h>
 
 #define SC_EOF 4    // Ctrl+D
@@ -18,18 +16,5 @@
 #define NUMCOLS getmaxx(stdscr)
 #define NOCHAR 0
 
-struct OutChar : public MemoryMappedDevice {
-  OutChar();
-  Byte val;
-
-  int pre_update();
-  int post_update();
-};
-
-struct InChar : public MemoryMappedDevice {
-  InChar();
-  Byte val;
-
-  int pre_update();
-  int post_update();
-};
+extern bool ncurses_initialized;
+void init_ncurses();

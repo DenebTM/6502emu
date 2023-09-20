@@ -3,3 +3,5 @@
 6502
 opcodes.h
 cpu-old.*
+roms/*.bin
+roms/*.lst

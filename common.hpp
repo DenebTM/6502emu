@@ -10,4 +10,4 @@ typedef uint16_t Word;
 typedef uint32_t DWord;
 typedef uint64_t QWord;
 
-void emu_exit(int code);
+extern "C" void emu_exit(int code);
