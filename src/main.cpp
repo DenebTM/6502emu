@@ -142,7 +142,7 @@ std::list<ROM *> load_roms() {
 }
 
 void signal_callback_handler(int signum) {
-  if (signum == SIGINT)
+  if (signum == SIGINT || signum == SIGTERM)
     emu_exit(0);
 }
 
@@ -151,7 +151,6 @@ void emu_exit(int code) {
     plug_destroy_func();
 
   std::cout << "\nExiting.\n";
-  add_spc.free();
   for (ROM *r : rom_list) {
     delete[] r->content;
     delete r;

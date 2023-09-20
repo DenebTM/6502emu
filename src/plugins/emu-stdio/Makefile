@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -shared -fPIC
+CXXFLAGS = -g -O3 -std=c++17 -shared -fPIC
 LDFLAGS = -lncurses
 
 emu-stdio.so: main.cpp emu-stdin.cpp emu-stdout.cpp

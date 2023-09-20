@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -funsigned-char -std=c++17
+CXXFLAGS = -g -O3 -funsigned-char -std=c++17
 LDFLAGS = -lm -ldl -lreadline
 
 SOURCES = main.cpp mem.cpp cpu.cpp

@@ -11,6 +11,8 @@ public:
   AddressSpace(DWord mSize);
   AddressSpace(DWord mSize, std::list<ROM *> roms);
 
+  ~AddressSpace();
+
   Byte *operator[](DWord i);
 
   Byte *get(DWord i);
@@ -25,8 +27,6 @@ public:
   void map_mem(void *bytes, DWord size, DWord start_addr);
   void map_mem(void *bytes, DWord size, DWord start_addr, bool mask, bool read_only);
   void unmap_mem(DWord size, DWord start_addr);
-
-  void free();
 
 private:
   typedef struct mem_addr {

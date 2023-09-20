@@ -99,7 +99,7 @@ void AddressSpace::init_ram() {
   map_mem(ram, mem_size, 0, false, false);
 }
 
-void AddressSpace::free() {
+AddressSpace::~AddressSpace() {
   delete[] mapped_mem;
   delete[] ram;
 }
