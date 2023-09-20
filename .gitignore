@@ -1,7 +1,8 @@
-.*
-!/.gitignore
-6502
-opcodes.h
-cpu-old.*
+**/.*
+!**/.clang-format
+!**/.gitignore
+**/6502
+**/*.so
+**/cpu-old.*
 roms/*.bin
 roms/*.lst

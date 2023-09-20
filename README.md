@@ -2,8 +2,9 @@
 
 ## Build dependencies
 
-- gcc supporting C++17 or higher
-- readline
+- GCC supporting C++17 or higher
+- GNU Make
+- libreadline
 
 ## Building
 
@@ -15,8 +16,9 @@ Run `make rebuild` to perform a clean rebuild.
 
 ### Build dependencies
 
-- gcc supporting C++17 or higher
-- ncurses
+- GCC supporting C++17 or higher
+- GNU Make
+- libncurses
 
 Intended for use with Jeff Tranter's [Enhanced 6502 BASIC](https://github.com/jefftranter/6502/tree/master/asm/ehbasic).
 
@@ -29,5 +31,4 @@ Intended for use with Jeff Tranter's [Enhanced 6502 BASIC](https://github.com/je
 - support decimal mode
 - fix cycle counting
 - improve memory-mapping process
-- more plugins
-- ImGUI?
+- more plugins - VIC-20 emulation as potential goal

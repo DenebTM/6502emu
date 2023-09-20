@@ -1,26 +1,12 @@
-CXX = g++
-CXXFLAGS = -g -funsigned-char -std=c++17
-LDFLAGS = -lm -ldl -lreadline
-
-SOURCES = main.cpp mem.cpp cpu.cpp
-
-.PHONY: clean rebuild plugins
+.PHONY: all clean 6502 plugins
 
 all: 6502 plugins
 
-6502: $(SOURCES)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+6502:
+	$(MAKE) -C ./src $@
+	mv ./src/$@ .
 
 plugins:
-	$(MAKE) -C plugins all
-
-functest: $(SOURCES)
-	$(CXX) $(CXXFLAGS) -DFUNCTEST -o 6502 $^ $(LDFLAGS)
-
-run: 6502
-	./6502
-
-rebuild: clean all
-
-clean:
-	$(RM) -f 6502 plugins/*.so
+	$(MAKE) -C ./src/plugins all
+	mkdir -p ./plugins
+	bash -c 'mv ./src/plugins/*.so ./plugins/'
