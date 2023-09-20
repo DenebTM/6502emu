@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -g -funsigned-char -std=c++23
-LDFLAGS = -lncurses -lm -ldl
+LDFLAGS = -lncurses -lm -ldl -lreadline
 
 SOURCES = main.cpp mem.cpp cpu.cpp
 

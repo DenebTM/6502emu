@@ -4,6 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <list>
+#include <readline/readline.h>
 #include <signal.h>
 #include <thread>
 #include <tuple>
@@ -96,10 +97,11 @@ std::list<ROM *> load_roms() {
   std::string fname = "";
   while (1) {
 #ifndef FUNCTEST
-    std::cout << "Enter path of a ROM to be mapped, or press Return when done: ";
-    getline(std::cin, fname);
-    if (fname.empty())
+    char *fname = readline("Enter path of a ROM to be mapped, or press Return when done: ");
+    if (strlen(fname) == 0)
       return rom_list;
+    if (char *fname_first = strtok(fname, " "))
+      fname = fname_first;
 #else
     fname = "roms/6502_functional_test.bin";
 #endif
