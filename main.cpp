@@ -94,7 +94,6 @@ int main(void) {
 
 std::list<ROM *> load_roms() {
   std::list rom_list = std::list<ROM *>();
-  std::string fname = "";
   while (1) {
 #ifndef FUNCTEST
     char *fname = readline("Enter path of a ROM to be mapped, or press Return when done: ");
