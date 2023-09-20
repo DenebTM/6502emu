@@ -17,14 +17,10 @@ extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *d
 }
 
 extern "C" int plugin_destroy() {
-  if (emu_out) {
-    delete emu_out->mapped_regs;
+  if (emu_out)
     delete emu_out;
-  }
-  if (emu_in) {
-    delete emu_in->mapped_regs;
+  if (emu_in)
     delete emu_in;
-  }
   if (ncurses_initialized)
     endwin();
 
