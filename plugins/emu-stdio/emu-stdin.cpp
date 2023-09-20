@@ -50,7 +50,7 @@ int InChar::pre_update() {
 
       // #ifdef EHBASIC
     case SC_EOF:
-      emu_exit(0);
+      // emu_exit(0);
       break;
       // #endif
     case ERR:

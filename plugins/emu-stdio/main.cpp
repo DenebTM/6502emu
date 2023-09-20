@@ -38,15 +38,10 @@ void init_ncurses() {
   keypad(stdscr, TRUE);
   nodelay(stdscr, TRUE);
   scrollok(stdscr, TRUE);
-  // setlocale(LC_ALL, "de_DE.UTF-8");
-  // #ifdef EHBASIC
-  raw();
-  // #else
-  //   signal(SIGINT, signal_callback_handler);
-  // #endif
 
-  addstr("# Intercepting Ctrl+C; press Ctrl+D to exit instead.\n");
-  refresh();
+  // raw();
+  // addstr("# Intercepting Ctrl+C; press Ctrl+D to exit instead.\n");
+  // refresh();
 
   ncurses_initialized = true;
 }

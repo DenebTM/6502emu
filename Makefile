@@ -1,14 +1,18 @@
 CXX = g++
-CXXFLAGS = -g -funsigned-char -std=c++23
-LDFLAGS = -lncurses -lm -ldl -lreadline
+CXXFLAGS = -g -funsigned-char -std=c++17
+LDFLAGS = -lm -ldl -lreadline
 
 SOURCES = main.cpp mem.cpp cpu.cpp
 
-6502: $(SOURCES) plugins/emu-stdio.so
+.PHONY: clean rebuild plugins
+
+all: 6502 plugins
+
+6502: $(SOURCES)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-plugins/emu-stdio.so:
-	$(MAKE) -C plugins/emu-stdio emu-stdio.so
+plugins:
+	$(MAKE) -C plugins all
 
 functest: $(SOURCES)
 	$(CXX) $(CXXFLAGS) -DFUNCTEST -o 6502 $^ $(LDFLAGS)
@@ -16,8 +20,7 @@ functest: $(SOURCES)
 run: 6502
 	./6502
 
-.PHONY: rebuild
-rebuild: clean 6502
+rebuild: clean all
 
 clean:
-	rm -f 6502 plugins/*.so
+	$(RM) -f 6502 plugins/*.so

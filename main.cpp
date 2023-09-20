@@ -26,12 +26,17 @@ AddressSpace add_spc;
 Emu6502 cpu;
 std::list<ROM *> rom_list;
 
-int (*plug_init_func)(std::vector<std::pair<MemoryMappedDevice *, Word>> *);
-int (*plug_destroy_func)();
+typedef int (*plug_init)(std::vector<std::pair<MemoryMappedDevice *, Word>> *);
+typedef int (*plug_destroy)(void);
+
+plug_init plug_init_func;
+plug_destroy plug_destroy_func;
 
 int main(void) {
   using namespace std::this_thread;
   using namespace std::chrono;
+
+  signal(SIGINT, signal_callback_handler);
 
   // load plugins
   // TODO: enumerate and load all plugins
@@ -42,13 +47,13 @@ int main(void) {
       break;
     }
 
-    plug_init_func = (int (*)(std::vector<std::pair<MemoryMappedDevice *, Word>> *))dlsym(plugin, "plugin_init");
+    plug_init_func = (plug_init)dlsym(plugin, "plugin_init");
     if (!plug_init_func) {
       std::cerr << dlerror() << "\n";
       break;
     }
 
-    plug_destroy_func = (int (*)())dlsym(plugin, "plugin_destroy");
+    plug_destroy_func = (plug_destroy)dlsym(plugin, "plugin_destroy");
     if (!plug_destroy_func) {
       std::cerr << dlerror() << "\n";
       break;
@@ -136,7 +141,12 @@ std::list<ROM *> load_roms() {
   }
 }
 
-extern "C" void emu_exit(int code) {
+void signal_callback_handler(int signum) {
+  if (signum == SIGINT)
+    emu_exit(0);
+}
+
+void emu_exit(int code) {
   if (plug_destroy_func)
     plug_destroy_func();
 
@@ -148,9 +158,4 @@ extern "C" void emu_exit(int code) {
   }
   rom_list.clear();
   exit(code);
-}
-
-void signal_callback_handler(int signum) {
-  if (signum == SIGINT)
-    emu_exit(0);
 }

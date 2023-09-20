@@ -2,7 +2,7 @@
 #include "common.hpp"
 
 struct MemoryMappedDevice {
-  MemoryMappedDevice(bool ro, SByte mapc) : read_only(ro), num_mapped_regs(mapc) { mapped_regs = new Byte *[mapc]; }
+  MemoryMappedDevice(bool ro, SByte mapc) : read_only(ro), num_mapped_regs(mapc), mapped_regs(new Byte *[mapc]) {}
   virtual ~MemoryMappedDevice() { delete[] mapped_regs; }
 
   const bool read_only = false;
