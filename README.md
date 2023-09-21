@@ -25,9 +25,22 @@ Intended for use with Jeff Tranter's [Enhanced 6502 BASIC](https://github.com/je
 - To write a character to `stdout`, store it at address `0xF001`.
 - To read a character from `stdin`, read from address `0xF004` (non-blocking, returns `0` if there is none).
 
+## Character display (`chardev.so`)
+
+### Build dependencies
+
+- GCC supporting C++17 or higher
+- GNU Make
+- libsdl2
+
+Provides a 40x25 character display, mapped to `0x8000-0x8FFF` (mirrored four times).
+Requires a 2k PETSCII character ROM to be present at `roms/char_rom.bin`.
+
 ## TODO
 
 - support decimal mode
 - fix cycle counting
 - improve memory-mapping process
-- more plugins - VIC-20 emulation as potential goal
+- more plugins - CBM PET or VIC-20 emulation as potential goal
+- UI for debugging
+- documentation
