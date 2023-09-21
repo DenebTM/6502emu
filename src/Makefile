@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -O3 -funsigned-char -std=c++17
+CXXFLAGS = -g -funsigned-char -std=c++17
 LDFLAGS = -lm -ldl -lreadline
 
 INCLUDE = include

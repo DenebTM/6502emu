@@ -1,5 +1,6 @@
 #include <chrono>
 #include <dlfcn.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -15,6 +16,8 @@
 #include "mem.hpp"
 
 std::list<ROM *> load_roms();
+void load_plugins();
+void init_plugins();
 void signal_callback_handler(int signum);
 extern "C" void emu_exit(int code);
 
@@ -26,11 +29,11 @@ AddressSpace add_spc;
 Emu6502 cpu;
 std::list<ROM *> rom_list;
 
-typedef int (*plug_init)(std::vector<std::pair<MemoryMappedDevice *, Word>> *);
-typedef int (*plug_destroy)(void);
+typedef int (*plug_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> *);
+typedef int (*plug_destroy_t)(void);
 
-plug_init plug_init_func;
-plug_destroy plug_destroy_func;
+std::vector<plug_init_t> plug_init_funcs;
+std::vector<plug_destroy_t> plug_destroy_funcs;
 
 int main(void) {
   using namespace std::this_thread;
@@ -38,44 +41,14 @@ int main(void) {
 
   signal(SIGINT, signal_callback_handler);
 
-  // load plugins
-  // TODO: enumerate and load all plugins
-  do {
-    void *plugin = dlopen("plugins/emu-stdio.so", RTLD_NOW | RTLD_GLOBAL);
-    if (!plugin) {
-      std::cerr << dlerror() << "\n";
-      break;
-    }
-
-    plug_init_func = (plug_init)dlsym(plugin, "plugin_init");
-    if (!plug_init_func) {
-      std::cerr << dlerror() << "\n";
-      break;
-    }
-
-    plug_destroy_func = (plug_destroy)dlsym(plugin, "plugin_destroy");
-    if (!plug_destroy_func) {
-      std::cerr << dlerror() << "\n";
-      break;
-    }
-  } while (0);
-
+  load_plugins();
   rom_list = load_roms();
   add_spc.map_roms(rom_list);
 #ifndef FUNCTEST
-  std::cout << "Beginning execution in 1 second! Press Ctrl+C to quit.\n";
+  std::cout << "Beginning execution in 1 second! Press Ctrl+C to quit." << std::endl;
   sleep_for(seconds(1));
 
-  // initialize plugins
-  std::vector<std::pair<MemoryMappedDevice *, Word>> plugin_devs;
-  do {
-    // TODO: initialize all plugins
-    plug_init_func(&plugin_devs);
-
-    for (auto [dev, addr] : plugin_devs) {
-      add_spc.map_mem(dev, addr);
-    }
-  } while (0);
+  init_plugins();
 #endif
 
   // Start execution loop
@@ -129,7 +102,7 @@ std::list<ROM *> load_roms() {
           start_addr = stoi(inAddr, NULL, 16);
         valid = true;
       } catch (const std::exception &e) {
-        std::cout << "Invalid input\n0x";
+        std::cout << "Invalid input" << std::endl << "0x";
       }
     } while (!valid);
 #endif
@@ -141,16 +114,52 @@ std::list<ROM *> load_roms() {
   }
 }
 
+void load_plugins() {
+  std::string plugin_path = "./plugins";
+  for (auto &entry : std::filesystem::directory_iterator(plugin_path, {})) {
+    if (entry.is_regular_file() || entry.is_symlink() && entry.path().extension().string() == "so") {
+      void *plugin = dlopen(entry.path().c_str(), RTLD_NOW | RTLD_GLOBAL);
+      if (!plugin) {
+        std::cerr << dlerror() << std::endl;
+        break;
+      }
+
+      auto plug_init_func = (plug_init_t)dlsym(plugin, "plugin_init");
+      if (!plug_init_func) {
+        std::cerr << dlerror() << std::endl;
+        break;
+      }
+      plug_init_funcs.push_back(plug_init_func);
+
+      auto plug_destroy_func = (plug_destroy_t)dlsym(plugin, "plugin_destroy");
+      if (!plug_destroy_func) {
+        std::cerr << dlerror() << std::endl;
+        break;
+      }
+      plug_destroy_funcs.push_back(plug_destroy_func);
+    }
+  }
+}
+
+void init_plugins() {
+  std::vector<std::pair<MemoryMappedDevice *, Word>> plugin_devs;
+  for (auto plug_init_func : plug_init_funcs)
+    plug_init_func(&plugin_devs);
+  for (auto [dev, addr] : plugin_devs) {
+    add_spc.map_mem(dev, addr);
+  }
+}
+
 void signal_callback_handler(int signum) {
   if (signum == SIGINT || signum == SIGTERM)
     emu_exit(0);
 }
 
 void emu_exit(int code) {
-  if (plug_destroy_func)
+  for (auto plug_destroy_func : plug_destroy_funcs)
     plug_destroy_func();
 
-  std::cout << "\nExiting.\n";
+  std::cout << std::endl << "Exiting." << std::endl;
   for (ROM *r : rom_list) {
     delete[] r->content;
     delete r;
