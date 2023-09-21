@@ -14,12 +14,15 @@
 #include "cpu.hpp"
 #include "emu-common.hpp"
 #include "mem.hpp"
+#include "plugin-callback.hpp"
 
 std::list<ROM *> load_roms();
 void load_plugins();
 void init_plugins();
 void signal_callback_handler(int signum);
-extern "C" void emu_exit(int code);
+void emu_exit(int code);
+
+extern void plugin_callback_handler(PluginCallbackType, void *);
 
 bool is_running = false, init_mode = true;
 
@@ -29,14 +32,14 @@ AddressSpace add_spc;
 Emu6502 cpu;
 std::list<ROM *> rom_list;
 
-typedef int (*plug_load_t)(void);
-typedef int (*plug_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> *);
-typedef int (*plug_destroy_t)(void);
-typedef int (*plug_update_t)(void);
+typedef int (*plugin_load_t)(void);
+typedef int (*plugin_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> *, plugin_callback_t);
+typedef int (*plugin_destroy_t)(void);
+typedef int (*plugin_update_t)(void);
 
-std::vector<plug_init_t> plug_init_funcs;
-std::vector<plug_destroy_t> plug_destroy_funcs;
-std::vector<plug_update_t> plug_update_funcs;
+std::vector<plugin_init_t> plugin_init_funcs;
+std::vector<plugin_destroy_t> plugin_destroy_funcs;
+std::vector<plugin_update_t> plugin_update_funcs;
 
 int main(void) {
   using namespace std::this_thread;
@@ -68,8 +71,8 @@ int main(void) {
       cycle = 0;
       sleep_for(nanoseconds(833333));
 
-      for (auto plug_update_func : plug_update_funcs) {
-        plug_update_func();
+      for (auto plugin_update_func : plugin_update_funcs) {
+        plugin_update_func();
       }
     }
 #endif
@@ -132,37 +135,37 @@ void load_plugins() {
         break;
       }
 
-      auto plug_load_func = (plug_load_t)dlsym(plugin, "plugin_load");
-      if (plug_load_func && plug_load_func() == -1) {
+      auto plugin_load_func = (plugin_load_t)dlsym(plugin, "plugin_load");
+      if (plugin_load_func && plugin_load_func() == -1) {
         std::cerr << "Plugin " << entry.path().filename() << " failed to load." << std::endl;
         continue;
       }
 
-      auto plug_init_func = (plug_init_t)dlsym(plugin, "plugin_init");
-      if (!plug_init_func) {
+      auto plugin_init_func = (plugin_init_t)dlsym(plugin, "plugin_init");
+      if (!plugin_init_func) {
         std::cerr << dlerror() << std::endl;
         continue;
       }
-      plug_init_funcs.push_back(plug_init_func);
+      plugin_init_funcs.push_back(plugin_init_func);
 
-      auto plug_destroy_func = (plug_destroy_t)dlsym(plugin, "plugin_destroy");
-      if (!plug_destroy_func) {
+      auto plugin_destroy_func = (plugin_destroy_t)dlsym(plugin, "plugin_destroy");
+      if (!plugin_destroy_func) {
         std::cerr << dlerror() << std::endl;
         continue;
       }
-      plug_destroy_funcs.push_back(plug_destroy_func);
+      plugin_destroy_funcs.push_back(plugin_destroy_func);
 
-      auto plug_update_func = (plug_update_t)dlsym(plugin, "plugin_update");
-      if (plug_update_func)
-        plug_update_funcs.push_back(plug_update_func);
+      auto plugin_update_func = (plugin_update_t)dlsym(plugin, "plugin_update");
+      if (plugin_update_func)
+        plugin_update_funcs.push_back(plugin_update_func);
     }
   }
 }
 
 void init_plugins() {
   std::vector<std::pair<MemoryMappedDevice *, Word>> plugin_devs;
-  for (auto plug_init_func : plug_init_funcs)
-    plug_init_func(&plugin_devs);
+  for (auto plugin_init_func : plugin_init_funcs)
+    plugin_init_func(&plugin_devs, &plugin_callback_handler);
   for (auto [dev, addr] : plugin_devs) {
     add_spc.map_mem(dev, addr);
   }
@@ -174,8 +177,8 @@ void signal_callback_handler(int signum) {
 }
 
 void emu_exit(int code) {
-  for (auto plug_destroy_func : plug_destroy_funcs)
-    plug_destroy_func();
+  for (auto plugin_destroy_func : plugin_destroy_funcs)
+    plugin_destroy_func();
 
   std::cout << std::endl << "Exiting." << std::endl;
   for (ROM *r : rom_list) {

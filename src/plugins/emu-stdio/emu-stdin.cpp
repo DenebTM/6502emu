@@ -1,5 +1,8 @@
 #include "emu-stdin.hpp"
 #include "emu-stdio-common.hpp"
+#include "plugin-callback.hpp"
+
+extern plugin_callback_t plugin_callback;
 
 InChar::InChar() : MemoryMappedDevice(true, 1) {
   init_ncurses();
@@ -51,7 +54,7 @@ int InChar::pre_read() {
 
       // #ifdef EHBASIC
     case SC_EOF:
-      // emu_exit(0);
+      plugin_callback(EMU_EXIT, (void *)0);
       break;
       // #endif
     case ERR:

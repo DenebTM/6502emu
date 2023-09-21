@@ -4,11 +4,16 @@
 #include "emu-stdin.hpp"
 #include "emu-stdio-common.hpp"
 #include "emu-stdout.hpp"
+#include "plugin-callback.hpp"
 
 OutChar *emu_out;
 InChar *emu_in;
 
-extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *devs) {
+plugin_callback_t plugin_callback;
+
+extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *devs, plugin_callback_t callback) {
+  plugin_callback = callback;
+
   emu_out = new OutChar();
   emu_in = new InChar();
 
@@ -41,9 +46,9 @@ void init_ncurses() {
   nodelay(stdscr, TRUE);
   scrollok(stdscr, TRUE);
 
-  // raw();
-  // addstr("# Intercepting Ctrl+C; press Ctrl+D to exit instead.\n");
-  // refresh();
+  raw();
+  addstr("# Intercepting Ctrl+C; press Ctrl+D to exit instead.\n");
+  refresh();
 
   ncurses_initialized = true;
 }

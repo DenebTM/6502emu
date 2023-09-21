@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "cpu.hpp"
 
 extern AddressSpace add_spc;

@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "chardev.hpp"
+#include "plugin-callback.hpp"
 
 #define COL_WIDTH 8
 #define ROW_HEIGHT 8
@@ -12,6 +13,8 @@
 #define RENDER_SCALE 2.
 constexpr int RENDER_WIDTH = COL_WIDTH * COLS * RENDER_SCALE;
 constexpr int RENDER_HEIGHT = ROW_HEIGHT * ROWS * RENDER_SCALE;
+
+extern plugin_callback_t plugin_callback;
 
 Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
   screen_mem = new Byte[1024];
@@ -66,7 +69,11 @@ int Chardev::init_sdl() {
 void Chardev::handle_events() {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
-    switch (event.type) {}
+    switch (event.type) {
+      case SDL_QUIT:
+        plugin_callback(EMU_EXIT, (void *)0);
+        break;
+    }
   }
 }
 

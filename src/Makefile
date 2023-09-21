@@ -1,9 +1,9 @@
 CXX = g++
-CXXFLAGS = -g -funsigned-char -std=c++17
+CXXFLAGS = -g -funsigned-char -fpermissive -std=c++17
 LDFLAGS = -lm -ldl -lreadline
 
 INCLUDE = include
-SOURCES = main.cpp mem.cpp cpu.cpp
+SOURCES = main.cpp mem.cpp cpu.cpp plugin-callback.cpp
 
 .PHONY: clean rebuild plugins
 
