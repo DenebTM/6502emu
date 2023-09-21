@@ -3,8 +3,8 @@
 
 struct InChar : public MemoryMappedDevice {
   InChar();
-  Byte val;
+  Byte *val;
 
-  int pre_update();
-  int post_update();
+  int pre_read();
+  int post_write();
 };

@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <list>
+#include <optional>
+#include <tuple>
 
 #include "emu-common.hpp"
 #include "mem-dev.hpp"
@@ -14,33 +16,31 @@ public:
 
   ~AddressSpace();
 
-  Byte *operator[](DWord i);
+  Byte read(DWord addr);
+  Word read_word(DWord addr_lo);
+  Word read_word(DWord addr_lo, bool wrap_page);
 
-  Byte *get(DWord i);
-  Word read_word(DWord addr);
-  Word read_word(DWord addr, bool wrap_page);
-  void write_word(DWord addr, Word val);
+  void write(DWord addr, Byte val);
+  void write_word(DWord addr_lo, Word val);
+  void write_word(DWord addr_lo, Word val, bool wrap_page);
+
   void clear_ram();
   void map_roms(std::list<ROM *> roms);
   void map_mem(ROM *rom);
   void map_mem(MemoryMappedDevice *dev, DWord addr);
-  void map_mem(const void *bytes, DWord size, DWord start_addr);
-  void map_mem(void *bytes, DWord size, DWord start_addr);
-  void map_mem(void *bytes, DWord size, DWord start_addr, bool mask, bool read_only);
+  void map_mem(const Byte *bytes, DWord size, DWord start_addr);
+  void map_mem(Byte *bytes, DWord size, DWord start_addr);
+  void map_mem(Byte *bytes, DWord size, DWord start_addr, bool read_only);
   void unmap_mem(DWord size, DWord start_addr);
 
 private:
-  typedef struct mem_addr {
-    void *memory = NULL;
-    bool is_mapped = false;
-    bool read_only = false;
-    SByte dev_regidx = -1;
-  } MemAddr;
   DWord mem_size;
-  DWord tmpval;
-  Byte *ram;
-  DWord last_addr = -1;
+  // DWord last_addr = -1;
 
-  MemAddr *mapped_mem;
-  void init_ram();
+  Byte *memory;
+
+  struct AddressInfo {
+    std::optional<std::pair<MemoryMappedDevice *, size_t>> dev = std::nullopt;
+    bool read_only = false;
+  } *mem_info;
 };

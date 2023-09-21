@@ -3,11 +3,11 @@
 
 OutChar::OutChar() : MemoryMappedDevice(false, 1) {
   init_ncurses();
-  mapped_regs[0] = &val;
+  val = mapped_regs;
 }
-int OutChar::pre_update() { return 0; }
-int OutChar::post_update() {
-  switch (val) {
+int OutChar::pre_read() { return 0; }
+int OutChar::post_write() {
+  switch (*val) {
     case NOCHAR:
       return 1;
     case SC_BKSP: {
@@ -26,9 +26,9 @@ int OutChar::post_update() {
       break;
 
     default:
-      addch(val);
+      addch(*val);
       refresh();
   }
-  val = NOCHAR;
+  *val = NOCHAR;
   return 0;
 }

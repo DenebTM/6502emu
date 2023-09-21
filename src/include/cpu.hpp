@@ -49,10 +49,9 @@ private:
   Word get_target(AddressingMode mode);
 
   Byte read(Word addr);
-  Word read_word(Word addr);
-  Word read_word(Word addr, bool wrap_page);
+  Word read_word(Word addr_lo);
+  Word read_word(Word addr_lo, bool wrap_page);
   void write(Word addr, Byte val);
-  void write_word(Word addr, Word val);
 
   void move(Byte val, Byte *target);
 

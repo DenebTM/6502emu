@@ -3,9 +3,9 @@
 
 InChar::InChar() : MemoryMappedDevice(true, 1) {
   init_ncurses();
-  mapped_regs[0] = &val;
+  val = mapped_regs;
 }
-int InChar::pre_update() {
+int InChar::pre_read() {
   int ch = getch();
   switch (ch) {
     case ARR_D:
@@ -36,17 +36,17 @@ int InChar::pre_update() {
         x = 0;
       }
       move(y, x);
-      val = NOCHAR;
+      *val = NOCHAR;
       break;
     }
     case KEY_BACKSPACE:
     case SC_BKSP:
     case SC_DEL:
-      val = SC_BKSP;
+      *val = SC_BKSP;
       break;
     case SC_LF:
       addch(SC_LF);
-      val = SC_CR;
+      *val = SC_CR;
       break;
 
       // #ifdef EHBASIC
@@ -55,7 +55,7 @@ int InChar::pre_update() {
       break;
       // #endif
     case ERR:
-      val = 0;
+      *val = 0;
       return ERR;
     default:
       // #ifdef EHBASIC
@@ -64,8 +64,8 @@ int InChar::pre_update() {
       if ((ch | 0x20) >= 'a' && (ch | 0x20) <= 'z')
         ch ^= 32;
       // #endif
-      val = (Byte)ch;
+      *val = (Byte)ch;
   }
   return ch;
 }
-int InChar::post_update() { return 0; }
+int InChar::post_write() { return 0; }

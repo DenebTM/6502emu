@@ -507,33 +507,29 @@ void Emu6502::set_reg(Byte *reg, Byte val, Byte flags) {
   }
 }
 
-Byte Emu6502::read(Word addr) {
+inline Byte Emu6502::read(Word addr) {
   cycle++;
-  return *add_spc[addr];
+  return add_spc.read(addr);
 }
-Word Emu6502::read_word(Word addr) { return read_word(addr, false); }
-Word Emu6502::read_word(Word addr, bool wrap_page) {
-  auto addr_1 = addr + 1;
+inline Word Emu6502::read_word(Word addr_lo) { return read_word(addr_lo, false); }
+inline Word Emu6502::read_word(Word addr_lo, bool wrap_page) {
+  auto addr_hi = addr_lo + 1;
   if (wrap_page) {
-    addr_1 &= 0x00ff;
-    addr_1 |= addr & 0xff00;
-  } else if (addr & 0xFF00 != addr_1 & 0xFF00) {
+    addr_hi &= 0x00ff;
+    addr_hi |= addr_lo & 0xff00;
+  } else if (addr_lo & 0xFF00 != addr_hi & 0xFF00) {
     cycle++;
   }
 
-  return (Word)read(addr) + ((Word)read(addr_1) << 8);
+  return (Word)read(addr_lo) + ((Word)read(addr_hi) << 8);
 }
 
-void Emu6502::write(Word addr, Byte val) {
+inline void Emu6502::write(Word addr, Byte val) {
   cycle++;
-  *add_spc[addr] = val;
-}
-void Emu6502::write_word(Word addr, Word val) {
-  write(addr, (Byte)(val & 0xFF));
-  write(addr, (Byte)(val >> 8));
+  add_spc.write(addr, val);
 }
 
-void Emu6502::move(Byte val, Byte *target) { *target = val; }
+inline void Emu6502::move(Byte val, Byte *target) { *target = val; }
 
 void Emu6502::push(Byte val) { write(0x100 + (reg_sp--), val); }
 void Emu6502::push_word(Word data) {

@@ -3,8 +3,8 @@
 
 struct OutChar : public MemoryMappedDevice {
   OutChar();
-  Byte val;
+  Byte *val;
 
-  int pre_update();
-  int post_update();
+  int pre_read();
+  int post_write();
 };
