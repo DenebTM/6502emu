@@ -1,7 +1,5 @@
 #pragma once
-// #include "../../mem.hpp"
-#include "../../mem-dev.hpp"
-#include "common.hpp"
+#include "mem-dev.hpp"
 
 struct InChar : public MemoryMappedDevice {
   InChar();

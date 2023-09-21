@@ -10,8 +10,8 @@
 #include <tuple>
 #include <vector>
 
-#include "common.hpp"
 #include "cpu.hpp"
+#include "emu-common.hpp"
 #include "mem.hpp"
 
 std::list<ROM *> load_roms();

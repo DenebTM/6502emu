@@ -1,4 +1,5 @@
 #include "emu-stdout.hpp"
+#include "emu-stdio-common.hpp"
 
 OutChar::OutChar() : MemoryMappedDevice(false, 1) {
   init_ncurses();

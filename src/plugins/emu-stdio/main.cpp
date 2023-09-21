@@ -1,7 +1,9 @@
-#include "emu-stdin.hpp"
-#include "emu-stdout.hpp"
 #include <tuple>
 #include <vector>
+
+#include "emu-stdin.hpp"
+#include "emu-stdio-common.hpp"
+#include "emu-stdout.hpp"
 
 OutChar *emu_out;
 InChar *emu_in;

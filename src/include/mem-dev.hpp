@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "emu-common.hpp"
 
 struct MemoryMappedDevice {
   MemoryMappedDevice(bool ro, SByte mapc) : read_only(ro), num_mapped_regs(mapc), mapped_regs(new Byte *[mapc]) {}

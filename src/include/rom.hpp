@@ -1,4 +1,4 @@
-#include "common.hpp"
+#include "emu-common.hpp"
 
 struct ROM {
   ROM(DWord rom_size, Byte *rom_content) : ROM(rom_size, rom_content, 0) {}

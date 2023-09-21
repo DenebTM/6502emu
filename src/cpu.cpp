@@ -1,5 +1,6 @@
-#include "cpu.hpp"
 #include <string.h>
+
+#include "cpu.hpp"
 
 extern AddressSpace add_spc;
 extern Emu6502 cpu;

@@ -1,4 +1,5 @@
 #include "emu-stdin.hpp"
+#include "emu-stdio-common.hpp"
 
 InChar::InChar() : MemoryMappedDevice(true, 1) {
   init_ncurses();

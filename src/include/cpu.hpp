@@ -1,6 +1,7 @@
-#include "common.hpp"
-#include "mem.hpp"
 #include <string>
+
+#include "emu-common.hpp"
+#include "mem.hpp"
 
 #define FLAG_N 0x80
 #define FLAG_V 0x40
