@@ -30,9 +30,6 @@ public:
 
   Emu6502();
 
-  bool irq;
-  bool nmi;
-
   Word reg_pc = 0;
   Byte reg_sp = 0x00;
   Byte reg_sr = 0x20;
@@ -43,7 +40,9 @@ public:
   Byte current_opcode;
 
   void do_instruction();
-  void RESET();
+  void reset();
+
+  void assert_interrupt(bool nmi);
 
 private:
   Word get_target(AddressingMode mode);
@@ -68,4 +67,8 @@ private:
 
   void alu_add(Byte operand, Byte flags);
   void alu_add(Byte op1, Byte op2, Byte *target, Byte flags, Byte carry_in);
+
+  void handle_interrupt();
+  bool got_irq;
+  bool got_nmi;
 };

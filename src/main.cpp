@@ -56,7 +56,7 @@ int main(void) {
 
   // Start execution loop
 #ifndef FUNCTEST
-  cpu.RESET();
+  cpu.reset();
 #else
   cpu.reg_pc = 0x0400;
 #endif

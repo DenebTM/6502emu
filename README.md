@@ -27,7 +27,6 @@ Intended for use with Jeff Tranter's [Enhanced 6502 BASIC](https://github.com/je
 
 ## TODO
 
-- interrupts
 - support decimal mode
 - fix cycle counting
 - improve memory-mapping process

@@ -49,6 +49,11 @@ Word Emu6502::get_target(AddressingMode mode) {
 }
 
 void Emu6502::do_instruction() {
+  if (got_irq || got_nmi) {
+    got_irq = got_nmi = false;
+    handle_interrupt();
+  }
+
   current_opcode = read(reg_pc++);
 
   char opc_a = (current_opcode & 0xe0) >> 5;
@@ -480,10 +485,7 @@ void Emu6502::do_instruction() {
     // BRK
     case 0x00:
     default:
-      push_word(reg_pc + 1);
-      push(get_sr());
-      reg_sr |= FLAG_I;
-      reg_pc = read_word(VEC_IRQ);
+      assert_interrupt(false);
       break;
   }
 }
@@ -551,7 +553,7 @@ void Emu6502::alu_add(Byte op1, Byte op2, Byte *target, Byte flags, Byte carry_i
   set_reg(target, (Byte)res, flags & ~(FLAG_C | FLAG_V));
 }
 
-void Emu6502::RESET() {
+void Emu6502::reset() {
   reg_a = 0;
   reg_x = 0;
   reg_y = 0;
@@ -559,4 +561,18 @@ void Emu6502::RESET() {
   reg_sp = 0xff;
   reg_pc = read_word(VEC_RST);
   cycle += 4;
+}
+
+void Emu6502::assert_interrupt(bool nmi) {
+  if (nmi)
+    got_nmi = true;
+  else if (!SR_I)
+    got_irq = true;
+}
+
+void Emu6502::handle_interrupt() {
+  push_word(reg_pc + 1);
+  push(get_sr());
+  reg_sr |= FLAG_I;
+  reg_pc = read_word(got_nmi ? VEC_NMI : VEC_IRQ);
 }
