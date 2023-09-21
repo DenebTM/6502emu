@@ -31,9 +31,11 @@ std::list<ROM *> rom_list;
 
 typedef int (*plug_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> *);
 typedef int (*plug_destroy_t)(void);
+typedef int (*plug_update_t)(void);
 
 std::vector<plug_init_t> plug_init_funcs;
 std::vector<plug_destroy_t> plug_destroy_funcs;
+std::vector<plug_update_t> plug_update_funcs;
 
 int main(void) {
   using namespace std::this_thread;
@@ -59,10 +61,15 @@ int main(void) {
 #endif
   while (1) {
     cpu.do_instruction();
+
 #ifndef FUNCTEST
     if (cycle > 3000) {
       cycle = 0;
       sleep_for(nanoseconds(833333));
+
+      for (auto plug_update_func : plug_update_funcs) {
+        plug_update_func();
+      }
     }
 #endif
   }
@@ -137,6 +144,10 @@ void load_plugins() {
         break;
       }
       plug_destroy_funcs.push_back(plug_destroy_func);
+
+      auto plug_update_func = (plug_update_t)dlsym(plugin, "plugin_update");
+      if (plug_update_func)
+        plug_update_funcs.push_back(plug_update_func);
     }
   }
 }

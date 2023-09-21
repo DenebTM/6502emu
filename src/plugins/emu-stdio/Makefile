@@ -5,5 +5,5 @@ LDFLAGS = -lncurses
 INCLUDE = ../../include
 SOURCES = main.cpp emu-stdin.cpp emu-stdout.cpp
 
-emu-stdio.so: main.cpp emu-stdin.cpp emu-stdout.cpp
+emu-stdio.so: $(SOURCES)
 	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -o ../$@ $^ $(LDFLAGS)
