@@ -29,6 +29,7 @@ AddressSpace add_spc;
 Emu6502 cpu;
 std::list<ROM *> rom_list;
 
+typedef int (*plug_load_t)(void);
 typedef int (*plug_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> *);
 typedef int (*plug_destroy_t)(void);
 typedef int (*plug_update_t)(void);
@@ -131,17 +132,23 @@ void load_plugins() {
         break;
       }
 
+      auto plug_load_func = (plug_load_t)dlsym(plugin, "plugin_load");
+      if (plug_load_func && plug_load_func() == -1) {
+        std::cerr << "Plugin " << entry.path().filename() << " failed to load." << std::endl;
+        continue;
+      }
+
       auto plug_init_func = (plug_init_t)dlsym(plugin, "plugin_init");
       if (!plug_init_func) {
         std::cerr << dlerror() << std::endl;
-        break;
+        continue;
       }
       plug_init_funcs.push_back(plug_init_func);
 
       auto plug_destroy_func = (plug_destroy_t)dlsym(plugin, "plugin_destroy");
       if (!plug_destroy_func) {
         std::cerr << dlerror() << std::endl;
-        break;
+        continue;
       }
       plug_destroy_funcs.push_back(plug_destroy_func);
 
