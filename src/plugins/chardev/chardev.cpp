@@ -25,6 +25,9 @@ Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
 }
 
 Chardev::~Chardev() {
+  render_thread_exit = true;
+  render_thread.join();
+
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
 
@@ -52,7 +55,7 @@ int Chardev::init_sdl() {
     return -2;
   }
 
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   if (!renderer) {
     std::cerr << "Failed to create SDL2 renderer" << std::endl;
     return -3;
@@ -62,6 +65,7 @@ int Chardev::init_sdl() {
 
   SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
   SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
+  render_thread = std::thread(&Chardev::render_thread_func, this);
 
   return 0;
 }
@@ -92,6 +96,13 @@ void Chardev::render() {
   }
 
   SDL_RenderPresent(renderer);
+}
+
+void Chardev::render_thread_func() {
+  while (!render_thread_exit) {
+    handle_events();
+    render();
+  }
 }
 
 int Chardev::load_char_rom() {

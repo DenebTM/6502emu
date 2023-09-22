@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include <thread>
 
 #include "mem-dev.hpp"
 
@@ -26,6 +27,10 @@ private:
 
   char *char_rom;
   SDL_Texture **characters;
+
+  bool render_thread_exit = false;
+  std::thread render_thread;
+  void render_thread_func();
 
   int load_char_rom();
   void create_char_textures();
