@@ -115,9 +115,10 @@ int Chardev::load_char_rom() {
 }
 
 void Chardev::create_char_textures() {
-  SDL_Color colors[2] = {{255, 255, 255, 255}, {0, 0, 0, 255}};
+  SDL_Color colors[2] = {{0, 0, 0, 255}, {255, 255, 255, 255}};
   for (int i = 0; i < 256; i++) {
     SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(char_rom + 8 * i, 8, 8, 1, 1, SDL_PIXELFORMAT_INDEX1MSB);
+    SDL_SetPaletteColors(surface->format->palette, colors, 0, 2);
     characters[i] = SDL_CreateTextureFromSurface(renderer, surface);
     delete surface;
   }

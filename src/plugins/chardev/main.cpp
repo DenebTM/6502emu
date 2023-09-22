@@ -1,5 +1,7 @@
+#include <chrono>
 #include <tuple>
 #include <vector>
+using namespace std::chrono_literals;
 
 #include "chardev.hpp"
 #include "mem-dev.hpp"
@@ -38,9 +40,17 @@ extern "C" int plugin_destroy() {
 }
 
 extern "C" int plugin_update() {
+  static auto min_render_interval = 8.333ms;
+  static auto last_render = std::chrono::system_clock::now();
+
   if (chardev) {
     chardev->handle_events();
-    chardev->render();
+
+    auto now = std::chrono::system_clock::now();
+    if ((now - last_render) >= min_render_interval) {
+      chardev->render();
+      last_render = now;
+    }
   }
 
   return 0;
