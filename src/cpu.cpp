@@ -483,7 +483,7 @@ void Emu6502::do_instruction() {
     // BRK
     case 0x00:
     default:
-      assert_interrupt(false);
+      handle_interrupt();
       break;
   }
 }
@@ -573,4 +573,6 @@ void Emu6502::handle_interrupt() {
   push(get_sr());
   reg_sr |= FLAG_I;
   reg_pc = read_word(got_nmi ? VEC_NMI : VEC_IRQ);
+
+  (got_nmi ? got_nmi : got_irq) = false;
 }
