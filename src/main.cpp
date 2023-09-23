@@ -91,7 +91,7 @@ std::list<ROM *> load_roms() {
     if (char *fname_first = strtok(fname, " "))
       fname = fname_first;
 #else
-    fname = "roms/6502_functional_test.bin";
+    std::string fname = "roms/6502_functional_test.bin";
 #endif
     std::ifstream file(fname, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();
@@ -127,6 +127,9 @@ std::list<ROM *> load_roms() {
 
 void load_plugins() {
   std::string plugin_path = "./plugins";
+  if (!std::filesystem::exists(plugin_path))
+    return;
+
   for (auto &entry : std::filesystem::directory_iterator(plugin_path, {})) {
     if (entry.is_regular_file() || entry.is_symlink() && entry.path().extension().string() == "so") {
       void *plugin = dlopen(entry.path().c_str(), RTLD_NOW | RTLD_GLOBAL);

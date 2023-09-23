@@ -10,6 +10,10 @@ clean:
 	$(MAKE) -C ./src $@
 	cp ./src/$@ .
 
+functest:
+	$(MAKE) -C ./src $@
+	cp ./src/6502 .
+
 plugins:
 	$(MAKE) -C ./src/plugins all
 	mkdir -p ./plugins

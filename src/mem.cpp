@@ -65,7 +65,14 @@ void AddressSpace::map_roms(std::list<ROM *> roms) {
   for (ROM *r : roms)
     map_mem(r);
 }
-void AddressSpace::map_mem(ROM *rom) { map_mem(rom->content, rom->size, rom->start_address); }
+void AddressSpace::map_mem(ROM *rom) {
+  map_mem(
+#ifdef FUNCTEST // functional test takes up 64k, but needs memory to be R/W
+      (Byte *)
+#endif
+          rom->content,
+      rom->size, rom->start_address);
+}
 
 void AddressSpace::map_mem(MemoryMappedDevice *dev, DWord start_addr) {
   for (size_t i = 0; i < dev->num_mapped_regs && (start_addr + i) < mem_size; i++) {
@@ -80,7 +87,7 @@ void AddressSpace::map_mem(Byte *bytes, DWord size, DWord start_addr) { map_mem(
 void AddressSpace::map_mem(Byte *bytes, DWord size, DWord start_addr, bool read_only) {
   for (size_t i = 0; i < size && (start_addr + i) < mem_size; i++) {
     memory[start_addr + i] = bytes[i];
-    mem_info[start_addr + i].read_only = true;
+    mem_info[start_addr + i].read_only = read_only;
   }
 }
 
