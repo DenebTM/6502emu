@@ -1,14 +1,16 @@
 // #include <chrono>
 #include <tuple>
 #include <vector>
-// using namespace std::chrono_literals;
 
 #include "chardev.hpp"
 #include "mem-dev.hpp"
+#include "pia1.hpp"
 #include "plugin-callback.hpp"
 
 Chardev *chardev;
 plugin_callback_t plugin_callback;
+
+Pia1 *pia1;
 
 extern "C" int plugin_load() {
   chardev = new Chardev();
@@ -17,6 +19,8 @@ extern "C" int plugin_load() {
     return -1;
   }
 
+  pia1 = new Pia1();
+
   return 0;
 }
 
@@ -24,11 +28,13 @@ extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *d
   plugin_callback = callback;
 
   chardev->init_sdl();
-
   devs->push_back({chardev, 0x8000});
   devs->push_back({chardev, 0x8400});
   devs->push_back({chardev, 0x8800});
   devs->push_back({chardev, 0x8c00});
+
+  pia1->start();
+  devs->push_back({pia1, 0xe810});
 
   return 0;
 }
@@ -36,6 +42,10 @@ extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *d
 extern "C" int plugin_destroy() {
   if (chardev)
     delete chardev;
+
+  if (pia1)
+    delete pia1;
+
   return 0;
 }
 
