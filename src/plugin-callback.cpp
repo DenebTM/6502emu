@@ -1,17 +1,18 @@
-#include "plugin-callback.hpp"
+#include <atomic>
+
 #include "cpu.hpp"
+#include "plugin-callback.hpp"
 
-extern void emu_exit(int exit_code);
-
+extern std::atomic_bool is_running;
+extern int exit_code;
 extern Emu6502 cpu;
 
 void plugin_callback_handler(PluginCallbackType type, void *arg) {
   switch (type) {
-    case EMU_EXIT: {
-      int exit_code = (int)arg;
-      emu_exit(exit_code);
+    case EMU_EXIT:
+      exit_code = (int)arg;
+      is_running.store(false);
       break;
-    }
 
     case CPU_INTERRUPT: {
       bool nmi = (bool)arg;

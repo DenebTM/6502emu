@@ -1,3 +1,4 @@
+#include <atomic>
 #include <chrono>
 #include <dlfcn.h>
 #include <filesystem>
@@ -24,7 +25,8 @@ void emu_exit(int code);
 
 extern void plugin_callback_handler(PluginCallbackType, void *);
 
-bool is_running = false, init_mode = true;
+int exit_code = 0;
+std::atomic_bool is_running = true;
 
 QWord cyclesToRun = -1, cycle = 0;
 
@@ -63,7 +65,7 @@ int main(void) {
 #else
   cpu.reg_pc = 0x0400;
 #endif
-  while (1) {
+  while (is_running.load()) {
     cpu.do_instruction();
 
 #ifndef FUNCTEST
@@ -78,7 +80,7 @@ int main(void) {
 #endif
   }
 
-  return 0;
+  emu_exit(exit_code);
 }
 
 std::list<ROM *> load_roms() {

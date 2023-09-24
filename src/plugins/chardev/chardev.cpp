@@ -25,12 +25,14 @@ Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
 }
 
 Chardev::~Chardev() {
-  render_thread_exit = true;
-  if (render_thread.joinable())
-    render_thread.join();
+  if (sdl_initialized) {
+    render_thread_exit = true;
+    if (render_thread.joinable())
+      render_thread.join();
 
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+  }
 
   if (characters) {
     delete[] characters;
@@ -68,6 +70,7 @@ int Chardev::init_sdl() {
   SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
   render_thread = std::thread(&Chardev::render_thread_func, this);
 
+  sdl_initialized = true;
   return 0;
 }
 

@@ -28,6 +28,8 @@ private:
   char *char_rom;
   SDL_Texture **characters;
 
+  bool sdl_initialized = false;
+
   bool render_thread_exit = false;
   std::thread render_thread;
   void render_thread_func();
