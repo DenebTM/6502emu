@@ -8,7 +8,7 @@ InChar::InChar() : MemoryMappedDevice(true, 1) {
   init_ncurses();
   val = mapped_regs;
 }
-int InChar::pre_read() {
+int InChar::pre_read(Word offset) {
   int ch = getch();
   switch (ch) {
     case ARR_D:
@@ -71,4 +71,4 @@ int InChar::pre_read() {
   }
   return ch;
 }
-int InChar::post_write() { return 0; }
+int InChar::post_write(Word offset) { return 0; }

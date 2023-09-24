@@ -5,8 +5,8 @@ OutChar::OutChar() : MemoryMappedDevice(false, 1) {
   init_ncurses();
   val = mapped_regs;
 }
-int OutChar::pre_read() { return 0; }
-int OutChar::post_write() {
+int OutChar::pre_read(Word offset) { return 0; }
+int OutChar::post_write(Word offset) {
   switch (*val) {
     case NOCHAR:
       return 1;

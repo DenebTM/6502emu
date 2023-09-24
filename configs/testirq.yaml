@@ -1,0 +1,14 @@
+cpu:
+  init_pc: reset
+  clock_speed: 1000000
+
+ram:
+  - start: 0x0000
+    size: 65536
+
+roms:
+  - file: roms/testirq.bin
+    start: 0xff00
+
+plugins:
+  enumerate: true

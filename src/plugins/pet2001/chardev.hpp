@@ -9,8 +9,8 @@ public:
   Chardev();
   ~Chardev();
 
-  int pre_read();
-  int post_write();
+  int pre_read(Word offset);
+  int post_write(Word offset);
 
   int init_sdl();
 

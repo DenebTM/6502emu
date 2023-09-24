@@ -6,11 +6,13 @@
 #include "mem-dev.hpp"
 #include "pia1.hpp"
 #include "plugin-callback.hpp"
+#include "via.hpp"
 
-Chardev *chardev;
 plugin_callback_t plugin_callback;
 
+Chardev *chardev;
 Pia1 *pia1;
+Via *via;
 
 extern "C" int plugin_load() {
   chardev = new Chardev();
@@ -20,6 +22,8 @@ extern "C" int plugin_load() {
   }
 
   pia1 = new Pia1();
+
+  via = new Via();
 
   return 0;
 }
@@ -35,6 +39,8 @@ extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *d
 
   pia1->start();
   devs->push_back({pia1, 0xe810});
+
+  devs->push_back({via, 0xe840});
 
   return 0;
 }

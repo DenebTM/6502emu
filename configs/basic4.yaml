@@ -1,0 +1,33 @@
+cpu:
+  init_pc: reset
+  clock_speed: 1000000
+
+ram:
+  - start: 0x0000
+    size: 16384
+
+  - start: 0x4000
+    size: 16384
+
+roms:
+  - file: roms/basic4/b000-basicexp.bin
+    start: 0xb000
+
+  - file: roms/basic4/c000-basic1.bin
+    start: 0xc000
+
+  - file: roms/basic4/d000-basic2.bin
+    start: 0xd000
+
+  - file: roms/basic4/e000-editor.bin
+    start: 0xe000
+
+  - file: roms/basic4/f000-kernal.bin
+    start: 0xf000
+
+plugins:
+  enumerate: true
+
+  override:
+    emu-stdio.so:
+      load: false

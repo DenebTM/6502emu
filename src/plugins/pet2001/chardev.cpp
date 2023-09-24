@@ -41,9 +41,9 @@ Chardev::~Chardev() {
     delete[] char_rom;
 }
 
-int Chardev::pre_read() { return 0; }
+int Chardev::pre_read(Word offset) { return 0; }
 
-int Chardev::post_write() { return 0; }
+int Chardev::post_write(Word offset) { return 0; }
 
 int Chardev::init_sdl() {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {

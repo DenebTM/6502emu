@@ -17,7 +17,7 @@ Byte AddressSpace::read(DWord addr) {
   AddressInfo info = mem_info[addr];
   if (info.dev.has_value()) {
     auto [dev, dev_idx] = info.dev.value();
-    dev->pre_read();
+    dev->pre_read(dev_idx);
     return dev->mapped_regs[dev_idx];
   }
 
@@ -40,7 +40,7 @@ void AddressSpace::write(DWord addr, Byte val) {
     auto [dev, dev_idx] = info.dev.value();
     if (!info.read_only)
       dev->mapped_regs[dev_idx] = val;
-    dev->post_write();
+    dev->post_write(dev_idx);
   }
 
   else if (!info.read_only) {
@@ -68,7 +68,7 @@ void AddressSpace::map_roms(std::vector<ROM> roms) {
 void AddressSpace::map_mem(ROM rom) { map_mem((Byte *)rom.content, rom.size, rom.start_addr, rom.read_only); }
 
 void AddressSpace::map_mem(MemoryMappedDevice *dev, DWord start_addr) {
-  for (size_t i = 0; i < dev->num_mapped_regs && (start_addr + i) < mem_size; i++) {
+  for (size_t i = 0; i < dev->mapped_regs_count && (start_addr + i) < mem_size; i++) {
     mem_info[start_addr + i].dev.emplace<std::pair<MemoryMappedDevice *, size_t>>({dev, i});
     mem_info[start_addr + i].read_only = dev->read_only;
   }

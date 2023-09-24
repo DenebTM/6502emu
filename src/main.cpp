@@ -58,6 +58,10 @@ int main(int argc, char **argv) {
   } else {
     config_file_name = readline("Enter config filename: ");
   }
+  if (!config_file_name || strlen(config_file_name) == 0) {
+    return 0;
+  }
+
   config_file_name = strtok(config_file_name, " ");
   config = new EmuConfig(config_file_name);
 

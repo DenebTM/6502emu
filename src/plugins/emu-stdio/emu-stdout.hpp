@@ -5,6 +5,6 @@ struct OutChar : public MemoryMappedDevice {
   OutChar();
   Byte *val;
 
-  int pre_read();
-  int post_write();
+  int pre_read(Word offset);
+  int post_write(Word offset);
 };

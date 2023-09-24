@@ -3,6 +3,10 @@ stdin = $f004
 
 *=$ff00
 start:
+; enable CB1 IRQ
+  LDA #$90
+  STA $e84e
+
   LDX -1
 loop:
   INX
@@ -16,6 +20,8 @@ end:
 irq:
   LDA #'A
   STA stdout
+  LDA #1
+  STA $e84d
   CLI
   RTI
 

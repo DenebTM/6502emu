@@ -40,7 +40,7 @@ private:
   Byte *memory;
 
   struct AddressInfo {
-    std::optional<std::pair<MemoryMappedDevice *, size_t>> dev = std::nullopt;
+    std::optional<std::tuple<MemoryMappedDevice *, size_t>> dev = std::nullopt;
     bool read_only = false;
   } *mem_info;
 };
