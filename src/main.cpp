@@ -30,8 +30,7 @@ extern void plugin_callback_handler(PluginCallbackType, void *);
 int exit_code = 0;
 std::atomic_bool is_running = true;
 
-#define CYCLES_PER_SECOND 1000000
-#define CYCLES_UNTIL_PAUSE 1000
+#define CYCLES_UNTIL_PAUSE 100
 QWord cyclesToRun = -1, cycle = 0;
 
 AddressSpace add_spc;

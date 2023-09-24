@@ -1,11 +1,12 @@
 #pragma once
-#include <string.h>
+#include <algorithm>
 
 #include "emu-common.hpp"
 
 struct MemoryMappedDevice {
-  MemoryMappedDevice(bool ro, DWord mapc) : read_only(ro), mapped_regs_count(mapc), mapped_regs(new Byte[mapc]) {
-    memset(mapped_regs, 0xff, mapped_regs_count);
+  MemoryMappedDevice(bool ro, Word mapped_regs_count)
+      : read_only(ro), mapped_regs_count(mapped_regs_count), mapped_regs(new Byte[mapped_regs_count]) {
+    std::fill_n(mapped_regs, mapped_regs_count, 0xff);
   }
   virtual ~MemoryMappedDevice() { delete[] mapped_regs; }
 
