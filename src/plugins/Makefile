@@ -1,10 +1,9 @@
-all: emu-stdio.so chardev.so
+PLUGINS = $(shell find * -maxdepth 0 -type d)
 
-emu-stdio.so: $(wildcard emu-stdio/*.cpp)
+all: $(PLUGINS)
+
+$(PLUGINS).so: $(wildcard $@/*.cpp)
 	$(MAKE) -C emu-stdio $@
 
-chardev.so: $(wildcard chardev/*.cpp)
-	$(MAKE) -C chardev $@
-
 clean:
-	$(RM) -f *.so
+	$(RM) *.so
