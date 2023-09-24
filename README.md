@@ -4,7 +4,8 @@
 
 - GCC supporting C++17 or higher
 - GNU Make
-- libreadline
+- readline
+- yaml-cpp
 
 ## Building
 
@@ -18,7 +19,7 @@ Run `make rebuild` to perform a clean rebuild.
 
 - GCC supporting C++17 or higher
 - GNU Make
-- libncurses
+- ncurses
 
 Intended for use with Jeff Tranter's [Enhanced 6502 BASIC](https://github.com/jefftranter/6502/tree/master/asm/ehbasic).
 
@@ -31,7 +32,7 @@ Intended for use with Jeff Tranter's [Enhanced 6502 BASIC](https://github.com/je
 
 - GCC supporting C++17 or higher
 - GNU Make
-- libsdl2
+- SDL2
 
 Provides a 40x25 character display, mapped to `0x8000-0x8FFF` (mirrored four times).
 Requires a 2k PETSCII character ROM to be present at `roms/char_rom.bin`.

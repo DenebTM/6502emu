@@ -1,8 +1,8 @@
 #include "mem.hpp"
 
-AddressSpace::AddressSpace() : AddressSpace(0x10000, std::list<ROM *>()) {}
-AddressSpace::AddressSpace(DWord mSize) : AddressSpace(mSize, std::list<ROM *>()) {}
-AddressSpace::AddressSpace(DWord mSize, std::list<ROM *> roms) {
+AddressSpace::AddressSpace() : AddressSpace(0x10000, std::vector<ROM>()) {}
+AddressSpace::AddressSpace(DWord mSize) : AddressSpace(mSize, std::vector<ROM>()) {}
+AddressSpace::AddressSpace(DWord mSize, std::vector<ROM> roms) {
   mem_size = mSize;
   memory = new Byte[mem_size];
   mem_info = new AddressInfo[mem_size];
@@ -61,18 +61,11 @@ void AddressSpace::write_word(DWord addr_lo, Word val, bool wrap_page) {
   write(addr_hi, val >> 8);
 }
 
-void AddressSpace::map_roms(std::list<ROM *> roms) {
-  for (ROM *r : roms)
+void AddressSpace::map_roms(std::vector<ROM> roms) {
+  for (ROM r : roms)
     map_mem(r);
 }
-void AddressSpace::map_mem(ROM *rom) {
-  map_mem(
-#ifdef FUNCTEST // functional test takes up 64k, but needs memory to be R/W
-      (Byte *)
-#endif
-          rom->content,
-      rom->size, rom->start_address);
-}
+void AddressSpace::map_mem(ROM rom) { map_mem((Byte *)rom.content, rom.size, rom.start_addr, rom.read_only); }
 
 void AddressSpace::map_mem(MemoryMappedDevice *dev, DWord start_addr) {
   for (size_t i = 0; i < dev->num_mapped_regs && (start_addr + i) < mem_size; i++) {

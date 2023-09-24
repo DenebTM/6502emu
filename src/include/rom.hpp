@@ -1,16 +1,14 @@
+#pragma once
 #include "emu-common.hpp"
 
 struct ROM {
-  ROM(DWord rom_size, Byte *rom_content) : ROM(rom_size, rom_content, 0) {}
-  ROM(DWord rom_size, Byte *rom_content, DWord start_addr)
-      : size(rom_size), content(rom_content), start_address(start_addr) {}
-  const Byte *operator[](DWord i) {
-    if (i < size)
-      return content + i;
-    return NULL;
-  }
+  ROM(DWord rom_size, const Byte *content) : ROM(rom_size, content, 0) {}
+  ROM(DWord rom_size, const Byte *content, DWord start_addr) : ROM(rom_size, content, start_addr, true) {}
+  ROM(DWord rom_size, const Byte *content, DWord start_addr, bool read_only)
+      : size(rom_size), content(content), start_addr(start_addr), read_only(read_only) {}
 
   const Byte *content;
   const DWord size;
-  const DWord start_address;
+  const DWord start_addr;
+  bool read_only = true;
 };

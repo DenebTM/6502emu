@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
-#include <list>
 #include <optional>
 #include <tuple>
+#include <vector>
 
 #include "emu-common.hpp"
 #include "mem-dev.hpp"
@@ -12,7 +12,7 @@ class AddressSpace {
 public:
   AddressSpace();
   AddressSpace(DWord mSize);
-  AddressSpace(DWord mSize, std::list<ROM *> roms);
+  AddressSpace(DWord mSize, std::vector<ROM> roms);
 
   ~AddressSpace();
 
@@ -25,8 +25,8 @@ public:
   void write_word(DWord addr_lo, Word val, bool wrap_page);
 
   void clear_ram();
-  void map_roms(std::list<ROM *> roms);
-  void map_mem(ROM *rom);
+  void map_roms(std::vector<ROM> roms);
+  void map_mem(ROM rom);
   void map_mem(MemoryMappedDevice *dev, DWord addr);
   void map_mem(const Byte *bytes, DWord size, DWord start_addr);
   void map_mem(Byte *bytes, DWord size, DWord start_addr);

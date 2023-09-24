@@ -1,0 +1,15 @@
+cpu:
+  init_pc: 0x400
+  clock_speed: 100000000
+
+ram:
+  - start: 0x0000
+    size: 65536
+
+roms:
+  - file: roms/6502_functional_test.bin
+    start: 0x0000
+    ro: false
+
+plugins:
+  enumerate: false

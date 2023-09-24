@@ -1,9 +1,9 @@
 CXX = g++
 CXXFLAGS = -g -funsigned-char -fpermissive -std=c++17
-LDFLAGS = -lm -ldl -lreadline
+LDFLAGS = -lm -ldl -lreadline -lyaml-cpp
 
 INCLUDE = include
-SOURCES = main.cpp mem.cpp cpu.cpp plugin-callback.cpp
+SOURCES = main.cpp mem.cpp cpu.cpp plugin-callback.cpp emu-config.cpp
 
 .PHONY: clean rebuild plugins
 
@@ -14,9 +14,6 @@ all: 6502 plugins
 
 plugins:
 	$(MAKE) -C plugins all
-
-functest: $(SOURCES)
-	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -DFUNCTEST -o 6502 $^ $(LDFLAGS)
 
 run: 6502
 	./6502

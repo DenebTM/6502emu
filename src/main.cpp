@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <dlfcn.h>
@@ -5,19 +6,20 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-#include <list>
 #include <readline/readline.h>
 #include <signal.h>
 #include <thread>
 #include <tuple>
 #include <vector>
+using namespace std::chrono_literals;
 
 #include "cpu.hpp"
 #include "emu-common.hpp"
+#include "emu-config.hpp"
 #include "mem.hpp"
 #include "plugin-callback.hpp"
 
-std::list<ROM *> load_roms();
+void load_roms();
 void load_plugins();
 void init_plugins();
 void signal_callback_handler(int signum);
@@ -28,11 +30,14 @@ extern void plugin_callback_handler(PluginCallbackType, void *);
 int exit_code = 0;
 std::atomic_bool is_running = true;
 
+#define CYCLES_PER_SECOND 1000000
+#define CYCLES_UNTIL_PAUSE 1000
 QWord cyclesToRun = -1, cycle = 0;
 
 AddressSpace add_spc;
 Emu6502 cpu;
-std::list<ROM *> rom_list;
+
+EmuConfig *config;
 
 typedef int (*plugin_load_t)(void);
 typedef int (*plugin_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> *, plugin_callback_t);
@@ -43,87 +48,67 @@ std::vector<plugin_init_t> plugin_init_funcs;
 std::vector<plugin_destroy_t> plugin_destroy_funcs;
 std::vector<plugin_update_t> plugin_update_funcs;
 
-int main(void) {
+int main(int argc, char **argv) {
   using namespace std::this_thread;
   using namespace std::chrono;
 
+  char *config_file_name;
+  if (argc >= 2) {
+    config_file_name = argv[1];
+  } else {
+    config_file_name = readline("Enter config filename: ");
+  }
+  config_file_name = strtok(config_file_name, " ");
+  config = new EmuConfig(config_file_name);
+
+  const auto sleep_time = 1000000000ns / (config->clock_speed / CYCLES_UNTIL_PAUSE);
+
   signal(SIGINT, signal_callback_handler);
 
-  load_plugins();
-  rom_list = load_roms();
-  add_spc.map_roms(rom_list);
-#ifndef FUNCTEST
-  std::cout << "Beginning execution in 1 second! Press Ctrl+C to quit." << std::endl;
-  sleep_for(seconds(1));
+  load_roms();
+  if (config->enumerate_plugins) {
+    load_plugins();
+  }
+
+  std::cout << "Press Ctrl+C to quit." << std::endl;
 
   init_plugins();
-#endif
 
   // Start execution loop
-#ifndef FUNCTEST
-  cpu.reset();
-#else
-  cpu.reg_pc = 0x0400;
-#endif
+  if (config->init_reset) {
+    cpu.reset();
+  } else {
+    cpu.reg_pc = config->init_pc;
+  }
+
   while (is_running.load()) {
     cpu.do_instruction();
 
-#ifndef FUNCTEST
-    if (cycle > 3000) {
+    if (cycle > CYCLES_UNTIL_PAUSE) {
       cycle = 0;
-      sleep_for(nanoseconds(833333));
+      sleep_for(sleep_time);
 
       for (auto plugin_update_func : plugin_update_funcs) {
         plugin_update_func();
       }
     }
-#endif
   }
 
   emu_exit(exit_code);
 }
 
-std::list<ROM *> load_roms() {
-  std::list rom_list = std::list<ROM *>();
-  while (1) {
-#ifndef FUNCTEST
-    char *fname = readline("Enter path of a ROM to be mapped, or press Return when done: ");
-    if (strlen(fname) == 0)
-      return rom_list;
-    if (char *fname_first = strtok(fname, " "))
-      fname = fname_first;
-#else
-    std::string fname = "roms/6502_functional_test.bin";
-#endif
-    std::ifstream file(fname, std::ios::binary | std::ios::ate);
+void load_roms() {
+  for (auto [file_name, start_addr, read_only] : config->roms) {
+    std::ifstream file(file_name, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
     char *bytes = new char[size];
     file.read(bytes, size);
 
-#ifdef FUNCTEST
-    DWord start_addr = 0;
-#else
-    DWord start_addr = 0xC000;
-    std::cout << "Where should this ROM be mapped? (Enter in hex, default 0xC000): 0x";
-    std::string inAddr = "";
-    bool valid = false;
-    do {
-      try {
-        getline(std::cin, inAddr);
-        if (!inAddr.empty())
-          start_addr = stoi(inAddr, NULL, 16);
-        valid = true;
-      } catch (const std::exception &e) {
-        std::cout << "Invalid input" << std::endl << "0x";
-      }
-    } while (!valid);
-#endif
-    ROM *rom = new ROM(size, (Byte *)bytes, start_addr);
-    rom_list.push_back(rom);
-#ifdef FUNCTEST
-    return rom_list;
-#endif
+    ROM rom = ROM(size, (const Byte *)bytes, start_addr, read_only);
+    add_spc.map_mem(rom);
+
+    delete bytes;
   }
 }
 
@@ -134,6 +119,12 @@ void load_plugins() {
 
   for (auto &entry : std::filesystem::directory_iterator(plugin_path, {})) {
     if (entry.is_regular_file() || entry.is_symlink() && entry.path().extension().string() == "so") {
+
+      std::string filename = entry.path().filename().string();
+      if (std::find(config->disabled_plugins.begin(), config->disabled_plugins.end(), filename) !=
+          config->disabled_plugins.end())
+        continue;
+
       void *plugin = dlopen(entry.path().c_str(), RTLD_NOW | RTLD_GLOBAL);
       if (!plugin) {
         std::cerr << dlerror() << std::endl;
@@ -142,7 +133,7 @@ void load_plugins() {
 
       auto plugin_load_func = (plugin_load_t)dlsym(plugin, "plugin_load");
       if (plugin_load_func && plugin_load_func() == -1) {
-        std::cerr << "Plugin " << entry.path().filename() << " failed to load." << std::endl;
+        std::cerr << "Plugin " << filename << " failed to load." << std::endl;
         continue;
       }
 
@@ -182,14 +173,12 @@ void signal_callback_handler(int signum) {
 }
 
 void emu_exit(int code) {
+  std::cout << std::endl << "Exiting." << std::endl;
+
   for (auto plugin_destroy_func : plugin_destroy_funcs)
     plugin_destroy_func();
 
-  std::cout << std::endl << "Exiting." << std::endl;
-  for (ROM *r : rom_list) {
-    delete[] r->content;
-    delete r;
-  }
-  rom_list.clear();
+  delete config;
+
   exit(code);
 }

@@ -1,0 +1,14 @@
+cpu:
+  init_pc: reset
+  clock_speed: 1000000
+
+ram:
+  - start: 0x0000
+    size: 49152
+
+roms:
+  - file: roms/ehbasic.bin
+    start: 0xc000
+
+plugins:
+  enumerate: true
