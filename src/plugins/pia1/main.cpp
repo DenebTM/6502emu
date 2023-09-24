@@ -15,8 +15,9 @@ plugin_callback_t plugin_callback;
 std::thread pia1_thread;
 bool pia1_running = true;
 void thread_func() {
+  std::this_thread::sleep_for(2s);
   while (pia1_running) {
-    std::this_thread::sleep_for((1. / 60) s);
+    std::this_thread::sleep_for(1000000us / 60);
     plugin_callback(CPU_INTERRUPT, (void *)false);
   }
 }

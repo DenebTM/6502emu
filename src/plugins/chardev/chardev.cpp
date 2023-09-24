@@ -26,6 +26,8 @@ Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
 
 Chardev::~Chardev() {
   render_thread_exit = true;
+  if (render_thread.joinable())
+    render_thread.join();
 
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
@@ -65,7 +67,6 @@ int Chardev::init_sdl() {
   SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
   SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
   render_thread = std::thread(&Chardev::render_thread_func, this);
-  render_thread.detach();
 
   return 0;
 }

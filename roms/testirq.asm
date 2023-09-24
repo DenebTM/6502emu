@@ -1,4 +1,5 @@
 stdout = $f001
+stdin = $f004
 
 *=$ff00
 start:
@@ -9,6 +10,7 @@ loop:
   STA stdout
   BNE loop
 end:
+  LDA stdin
   JMP end
 
 irq:
