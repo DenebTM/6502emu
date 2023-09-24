@@ -67,6 +67,7 @@ private:
 
   void alu_add(Byte operand, Byte flags);
   void alu_add(Byte op1, Byte op2, Byte *target, Byte flags, Byte carry_in);
+  void alu_bcd(Byte operand, Byte flags, bool sub);
 
   void handle_interrupt();
   bool got_irq;

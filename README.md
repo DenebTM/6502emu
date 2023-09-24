@@ -38,7 +38,6 @@ Requires a 2k PETSCII character ROM to be present at `roms/char_rom.bin`.
 
 ## TODO
 
-- support decimal mode
 - fix cycle counting
 - improve memory-mapping process
 - more plugins - CBM PET or VIC-20 emulation as potential goal

@@ -225,7 +225,10 @@ void Emu6502::do_instruction() {
     case 0x61:
     case 0x71: {
       auto operand = read(get_target(mode));
-      alu_add(operand, FLAG_N | FLAG_Z | FLAG_C | FLAG_V);
+      if (SR_D)
+        alu_bcd(operand, FLAG_N | FLAG_Z | FLAG_C | FLAG_V, false);
+      else
+        alu_add(operand, FLAG_N | FLAG_Z | FLAG_C | FLAG_V);
       break;
     }
 
@@ -239,7 +242,10 @@ void Emu6502::do_instruction() {
     case 0xe1:
     case 0xf1: {
       auto operand = read(get_target(mode));
-      alu_add(~operand, FLAG_N | FLAG_Z | FLAG_C | FLAG_V);
+      if (SR_D)
+        alu_bcd(operand, FLAG_N | FLAG_Z | FLAG_C | FLAG_V, true);
+      else
+        alu_add(~operand, FLAG_N | FLAG_Z | FLAG_C | FLAG_V);
       break;
     }
 
@@ -549,6 +555,24 @@ void Emu6502::alu_add(Byte op1, Byte op2, Byte *target, Byte flags, Byte carry_i
   reg_sr |= (flags & FLAG_V) * ((op1 & FLAG_N) == (op2 & FLAG_N) && (op1 & FLAG_N) != (res & FLAG_N));
 
   set_reg(target, (Byte)res, flags & ~(FLAG_C | FLAG_V));
+}
+
+void Emu6502::alu_bcd(Byte operand, Byte flags, bool sub) {
+  if (sub) // use 9's complement for subtraction
+    operand = (9 - (operand & 0x0f)) | ((9 - (operand >> 4)) << 4);
+
+  Byte op1_bcd = (reg_a & 0x0f) + 10 * (reg_a >> 4);
+  signed char op2_bcd = (operand & 0x0f) + 10 * (operand >> 4);
+  short res_bcd = (short)op1_bcd + op2_bcd + SR_C;
+  bool carry_out = res_bcd > 99 | res_bcd < 0;
+  res_bcd %= 100;
+  Byte res = (res_bcd % 10) | ((res_bcd / 10) << 4);
+
+  reg_sr &= ~flags;
+  reg_sr |= (flags & FLAG_C) & carry_out;
+  reg_sr |= (flags & FLAG_V) * ((reg_a & FLAG_N) == (operand & FLAG_N) && (reg_a & FLAG_N) != (res & FLAG_N));
+
+  set_reg(&reg_a, (Byte)res, flags & ~(FLAG_C | FLAG_V));
 }
 
 void Emu6502::reset() {
