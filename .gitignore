@@ -4,5 +4,5 @@
 **/6502
 **/*.so
 **/cpu-old.*
-roms/*.bin
-roms/*.lst
+roms/**/*.bin
+roms/**/*.lst
