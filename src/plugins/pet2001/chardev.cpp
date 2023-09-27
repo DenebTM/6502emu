@@ -110,8 +110,6 @@ void Chardev::render_thread_func() {
 }
 
 int Chardev::load_char_rom() {
-  characters = new SDL_Texture *[256];
-
   std::string fname = "roms/char_rom.bin";
   if (!std::filesystem::exists(fname)) {
     std::cerr << "Chardev: Missing character ROM (" << fname << ")" << std::endl;
@@ -130,11 +128,29 @@ int Chardev::load_char_rom() {
 }
 
 void Chardev::create_char_textures() {
+  characters = new SDL_Texture *[512];
+
   SDL_Color colors[2] = {{0, 0, 0, 255}, {255, 255, 255, 255}};
-  for (int i = 0; i < 256; i++) {
+  SDL_Color colors_inv[2] = {{255, 255, 255, 255}, {0, 0, 0, 255}};
+  for (int i = 0; i < 128; i++) {
+    // character set 1
     SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(char_rom + 8 * i, 8, 8, 1, 1, SDL_PIXELFORMAT_INDEX1MSB);
+
     SDL_SetPaletteColors(surface->format->palette, colors, 0, 2);
     characters[i] = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_SetPaletteColors(surface->format->palette, colors_inv, 0, 2);
+    characters[i + 128] = SDL_CreateTextureFromSurface(renderer, surface);
+
+    delete surface;
+
+    // character set 2
+    surface = SDL_CreateRGBSurfaceWithFormatFrom(char_rom + 8 * (i + 128), 8, 8, 1, 1, SDL_PIXELFORMAT_INDEX1MSB);
+
+    SDL_SetPaletteColors(surface->format->palette, colors, 0, 2);
+    characters[i + 256] = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_SetPaletteColors(surface->format->palette, colors_inv, 0, 2);
+    characters[i + 256 + 128] = SDL_CreateTextureFromSurface(renderer, surface);
+
     delete surface;
   }
 }
