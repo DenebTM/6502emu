@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "chardev.hpp"
+#include "pia1.hpp"
 #include "plugin-callback.hpp"
 
 #define COL_WIDTH 8
@@ -15,6 +16,8 @@ constexpr int RENDER_WIDTH = COL_WIDTH * COLS * RENDER_SCALE;
 constexpr int RENDER_HEIGHT = ROW_HEIGHT * ROWS * RENDER_SCALE;
 
 extern plugin_callback_t plugin_callback;
+
+extern Pia1 *pia1;
 
 Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
   screen_mem = new Byte[1024];
@@ -80,6 +83,15 @@ void Chardev::handle_events() {
     switch (event.type) {
       case SDL_QUIT:
         plugin_callback(EMU_EXIT, (void *)0);
+        break;
+
+      case SDL_KEYDOWN:
+        if (!event.key.repeat)
+          pia1->key_down(event.key.keysym);
+        break;
+
+      case SDL_KEYUP:
+        pia1->key_up(event.key.keysym);
         break;
     }
   }
