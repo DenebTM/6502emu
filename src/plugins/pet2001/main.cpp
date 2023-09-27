@@ -37,7 +37,6 @@ extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *d
   devs->push_back({chardev, 0x8800});
   devs->push_back({chardev, 0x8c00});
 
-  pia1->start();
   devs->push_back({pia1, 0xe810});
 
   devs->push_back({via, 0xe840});

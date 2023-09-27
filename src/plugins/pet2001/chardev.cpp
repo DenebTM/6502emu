@@ -5,6 +5,7 @@
 #include "chardev.hpp"
 #include "pia1.hpp"
 #include "plugin-callback.hpp"
+#include "via.hpp"
 
 #define COL_WIDTH 8
 #define ROW_HEIGHT 8
@@ -18,6 +19,7 @@ constexpr int RENDER_HEIGHT = ROW_HEIGHT * ROWS * RENDER_SCALE;
 extern plugin_callback_t plugin_callback;
 
 extern Pia1 *pia1;
+extern Via *via;
 
 Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
   screen_mem = new Byte[1024];
@@ -111,6 +113,7 @@ void Chardev::render() {
     }
   }
 
+  via->flag_interrupt(0x10);
   SDL_RenderPresent(renderer);
 }
 

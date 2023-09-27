@@ -18,7 +18,7 @@ Byte AddressSpace::read(DWord addr) {
   if (info.dev.has_value()) {
     auto [dev, dev_idx] = info.dev.value();
     dev->pre_read(dev_idx);
-    return dev->mapped_regs[dev_idx];
+    return dev->read(dev_idx);
   }
 
   return memory[addr];
@@ -39,7 +39,7 @@ void AddressSpace::write(DWord addr, Byte val) {
   if (info.dev.has_value()) {
     auto [dev, dev_idx] = info.dev.value();
     if (!info.read_only)
-      dev->mapped_regs[dev_idx] = val;
+      dev->write(dev_idx, val);
     dev->post_write(dev_idx);
   }
 

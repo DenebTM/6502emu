@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -O3 -std=c++17 -shared -fPIC
+CXXFLAGS = -g -std=c++17 -shared -fPIC
 LDFLAGS =
 
 INCLUDE = ../../include

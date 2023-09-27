@@ -13,14 +13,21 @@ Via::Via() : MemoryMappedDevice(false, 16) {
   *ier = 0x80;
 }
 
-int Via::pre_read(Word offset) { return 0; }
-
-int Via::post_write(Word offset) {
+Byte Via::write(Word offset, Byte val) {
   if (mapped_regs + offset == ifr) {
-    *ifr = 0;
+    val = *ifr & ~(val & ~0x80);
   }
 
-  return 0;
+  else if (mapped_regs + offset == ier) {
+    bool enable_irqs = val >> 7;
+    if (enable_irqs) {
+      val = *ier | (val & ~0x80);
+    } else {
+      val = *ier & ~(val & ~0x80);
+    }
+  }
+
+  return mapped_regs[offset] = val;
 }
 
 void Via::flag_interrupt(Byte irq) {

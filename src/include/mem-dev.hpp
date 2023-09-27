@@ -14,6 +14,9 @@ struct MemoryMappedDevice {
   const Word mapped_regs_count;
   Byte *mapped_regs;
 
+  // FIXME: consolidate these
   virtual int pre_read(Word offset) = 0;
   virtual int post_write(Word offset) = 0;
+  virtual Byte read(Word offset) { return mapped_regs[offset]; }
+  virtual Byte write(Word offset, Byte val) { return mapped_regs[offset] = val; }
 };

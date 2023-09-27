@@ -7,8 +7,10 @@ class Via : public MemoryMappedDevice {
 public:
   Via();
 
-  int pre_read(Word offset);
-  int post_write(Word offset);
+  int pre_read(Word offset) { return 0; }
+  int post_write(Word offset) { return 0; }
+
+  Byte write(Word offset, Byte val) override;
 
   void flag_interrupt(Byte irq);
 
