@@ -41,7 +41,7 @@ EmuConfig *config;
 typedef int (*plugin_load_t)(void);
 typedef int (*plugin_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> *, plugin_callback_t);
 typedef int (*plugin_destroy_t)(void);
-typedef int (*plugin_update_t)(void);
+typedef int (*plugin_update_t)(int cycles_passed);
 
 std::vector<plugin_init_t> plugin_init_funcs;
 std::vector<plugin_destroy_t> plugin_destroy_funcs;
@@ -85,15 +85,23 @@ int main(int argc, char **argv) {
   }
 
   while (is_running.load()) {
+    static QWord cycle_prev = cycle;
+
     cpu.do_instruction();
+
+    int cycles_taken = cycle - cycle_prev;
+    cycle_prev = cycle;
+    if (cycles_taken < 0) {
+      cycles_taken = cycle;
+    }
+
+    for (auto plugin_update_func : plugin_update_funcs) {
+      plugin_update_func(cycles_taken);
+    }
 
     if (cycle > CYCLES_UNTIL_PAUSE) {
       cycle = 0;
       sleep_for(sleep_time);
-
-      for (auto plugin_update_func : plugin_update_funcs) {
-        plugin_update_func();
-      }
     }
   }
 

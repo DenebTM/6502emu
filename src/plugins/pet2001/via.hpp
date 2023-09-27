@@ -14,7 +14,11 @@ public:
 
   void flag_interrupt(Byte irq);
 
+  void update(int cycles_taken);
+
 private:
   Byte *ifr = mapped_regs + 0xd;
   Byte *ier = mapped_regs + 0xe;
+
+  ushort *timer1_period = (ushort *)(mapped_regs + 0x4);
 };

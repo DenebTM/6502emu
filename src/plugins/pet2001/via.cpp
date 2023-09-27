@@ -37,3 +37,7 @@ void Via::flag_interrupt(Byte irq) {
     plugin_callback(CPU_INTERRUPT, (void *)false);
   }
 }
+
+void Via::update(int cycles_taken) {
+  // TODO: implement timers
+}
