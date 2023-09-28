@@ -9,6 +9,7 @@ using namespace std::chrono_literals;
 extern plugin_callback_t plugin_callback;
 
 Pia1::Pia1() : MemoryMappedDevice(false, 4) {
+  *port_a = 0xff;
   *port_b = 0xff;
 
   *ctrl_a = 0x80;
@@ -39,7 +40,11 @@ Byte Pia1::read(Word offset) {
 }
 
 Byte Pia1::write(Word offset, Byte val) {
-  if (mapped_regs + offset == ctrl_a || mapped_regs + offset == ctrl_b) {
+  if (mapped_regs + offset == port_a) {
+    val = (mapped_regs[offset] & 0xf0) | (val & ~0xf0);
+  } else if (mapped_regs + offset == port_b) {
+    val = mapped_regs[offset];
+  } else if (mapped_regs + offset == ctrl_a || mapped_regs + offset == ctrl_b) {
     val = (mapped_regs[offset] & 0x80) | (val & ~0xc0);
   }
 
