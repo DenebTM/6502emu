@@ -32,6 +32,7 @@ std::atomic_bool is_running = true;
 
 #define CYCLES_UNTIL_PAUSE 100
 QWord cyclesToRun = -1, cycle = 0;
+QWord cycle_real = 0;
 
 AddressSpace add_spc;
 Emu6502 cpu;
@@ -100,6 +101,7 @@ int main(int argc, char **argv) {
     }
 
     if (cycle > CYCLES_UNTIL_PAUSE) {
+      cycle_real += cycle;
       cycle = 0;
       sleep_for(sleep_time);
     }

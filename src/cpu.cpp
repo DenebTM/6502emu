@@ -3,6 +3,7 @@
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
 extern QWord cycle;
+extern QWord cycle_real;
 
 Emu6502::Emu6502() {}
 
@@ -160,7 +161,7 @@ void Emu6502::do_instruction() {
       break;
     // PHP
     case 0x08:
-      push(get_sr());
+      push(get_sr() | FLAG_B);
       break;
     // PLA
     case 0x68:
@@ -501,7 +502,7 @@ void Emu6502::set_flags(Byte val, Byte flags) {
   reg_sr |= (flags & FLAG_N) & val;
 }
 
-Byte Emu6502::get_sr() { return reg_sr | FLAG_B | 0x20; }
+Byte Emu6502::get_sr() { return reg_sr | 0x20; }
 
 void Emu6502::set_reg(Byte *reg, Byte val) { set_reg(reg, val, 0); }
 void Emu6502::set_reg(Byte *reg, Byte val, Byte flags) {
