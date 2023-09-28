@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 
 #include "emu-common.hpp"
@@ -69,7 +70,7 @@ private:
   void alu_add(Byte op1, Byte op2, Byte *target, Byte flags, Byte carry_in);
   void alu_bcd(Byte operand, Byte flags, bool sub);
 
-  void handle_interrupt();
+  void handle_interrupt(bool brk);
   bool got_irq;
   bool got_nmi;
 };

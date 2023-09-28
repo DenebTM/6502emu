@@ -50,7 +50,7 @@ Word Emu6502::get_target(AddressingMode mode) {
 void Emu6502::do_instruction() {
   if (got_irq || got_nmi) {
     got_irq = got_nmi = false;
-    handle_interrupt();
+    handle_interrupt(false);
   }
 
   current_opcode = read(reg_pc++);
@@ -491,7 +491,7 @@ void Emu6502::do_instruction() {
     case 0x00:
     default:
       reg_pc++;
-      handle_interrupt();
+      handle_interrupt(true);
       break;
   }
 }
@@ -594,9 +594,9 @@ void Emu6502::assert_interrupt(bool nmi) {
     got_irq = true;
 }
 
-void Emu6502::handle_interrupt() {
+void Emu6502::handle_interrupt(bool brk) {
   push_word(reg_pc);
-  push(get_sr());
+  push(get_sr() | (brk * FLAG_B));
   reg_sr |= FLAG_I;
   reg_pc = read_word(got_nmi ? VEC_NMI : VEC_IRQ);
 
