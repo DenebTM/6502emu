@@ -52,32 +52,30 @@ Byte Pia1::write(Word offset, Byte val) {
 }
 
 void Pia1::key_down(SDL_Keysym key) {
-  if (key.mod & KMOD_CTRL) {
-    switch (key.sym) {
-      case SDLK_c:
-        keyboard_rows[9] &= ~0x10;
-        break;
-    }
-  }
+  auto maybe_modkey = modkey_map(key);
 
-  else {
+  if (maybe_modkey.has_value()) {
+    auto [row, bit] = maybe_modkey.value();
+    keyboard_rows[row] &= ~bit;
+  } else {
     auto [row, bit] = keysym_map(key.sym);
     keyboard_rows[row] &= ~bit;
   }
 }
 
 void Pia1::key_up(SDL_Keysym key) {
-  if (key.mod & KMOD_CTRL) {
-    switch (key.scancode) {
-      case SDLK_c:
-        keyboard_rows[9] |= 0x10;
-        break;
-    }
-  }
+  auto maybe_modkey = modkey_map(key);
 
-  else {
+  if (maybe_modkey.has_value()) {
+    auto [row, bit] = maybe_modkey.value();
+    if (bit) {
+      keyboard_rows[row] |= bit;
+    }
+  } else {
     auto [row, bit] = keysym_map(key.sym);
-    keyboard_rows[row] |= bit;
+    if (bit) {
+      keyboard_rows[row] |= bit;
+    }
   }
 }
 

@@ -2,7 +2,7 @@
 
 ## Build dependencies
 
-- GCC supporting C++17 or higher
+- GCC supporting C++20 or higher
 - GNU Make
 - readline
 - yaml-cpp
@@ -13,11 +13,11 @@ Run `make all` to build the `6502` executable and all included plugins.
 
 Run `make rebuild` to perform a clean rebuild.
 
-## I/O (`emu-stdio.so`)
+## I/O plugin (`emu-stdio.so`)
 
 ### Build dependencies
 
-- GCC supporting C++17 or higher
+- GCC supporting C++20 or higher
 - GNU Make
 - ncurses
 
@@ -26,16 +26,18 @@ Intended for use with Jeff Tranter's [Enhanced 6502 BASIC](https://github.com/je
 - To write a character to `stdout`, store it at address `0xF001`.
 - To read a character from `stdin`, read from address `0xF004` (non-blocking, returns `0` if there is none).
 
-## Character display (`chardev.so`)
+## PET 2001 emulation (`pet2001.so`)
 
 ### Build dependencies
 
-- GCC supporting C++17 or higher
+- GCC supporting C++20 or higher
 - GNU Make
 - SDL2
 
-Provides a 40x25 character display, mapped to `0x8000-0x8FFF` (mirrored four times).
-Requires a 2k PETSCII character ROM to be present at `roms/char_rom.bin`.
+Incomplete implementation of the Commodore PET 2001 hardware, sufficient to boot into BASIC.
+
+Use with [pet2001.yaml](configs/pet2001.yaml) - ROMs not included.
+Additionally requires a 2k PETSCII character ROM to be present at `roms/char_rom.bin`
 
 ## TODO
 

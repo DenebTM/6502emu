@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -std=c++17 -shared -fPIC
+CXXFLAGS = -g -std=c++20 -shared -fPIC
 LDFLAGS = -lncurses
 
 INCLUDE = ../../include
