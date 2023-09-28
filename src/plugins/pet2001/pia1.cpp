@@ -8,12 +8,11 @@ using namespace std::chrono_literals;
 
 extern plugin_callback_t plugin_callback;
 
-Pia1::Pia1() : MemoryMappedDevice(true, 16) {
-  mapped_regs[2] = 0xff;
-  mapped_regs[3] = 0x80;
+Pia1::Pia1() : MemoryMappedDevice(false, 4) {
+  *port_b = 0xff;
 
-  port_a = mapped_regs + 0;
-  port_b = mapped_regs + 2;
+  *ctrl_a = 0x80;
+  *ctrl_b = 0x80;
 
   std::fill_n(keyboard_rows, 10, 0xff);
 }
@@ -26,7 +25,26 @@ int Pia1::pre_read(Word offset) {
   return 0;
 }
 
-int Pia1::post_write(Word offset) { return 0; }
+Byte Pia1::read(Word offset) {
+  Byte val = mapped_regs[offset];
+
+  if (*ctrl_a & 0x01) {
+    *ctrl_a &= ~0x80;
+  }
+  if (*ctrl_b & 0x01) {
+    *ctrl_b &= ~0x80;
+  }
+
+  return val;
+}
+
+Byte Pia1::write(Word offset, Byte val) {
+  if (mapped_regs + offset == ctrl_a || mapped_regs + offset == ctrl_b) {
+    val = (mapped_regs[offset] & 0x80) | (val & ~0xc0);
+  }
+
+  return mapped_regs[offset] = val;
+}
 
 void Pia1::key_down(SDL_Keysym key) {
   if (key.mod & KMOD_CTRL) {
@@ -55,6 +73,13 @@ void Pia1::key_up(SDL_Keysym key) {
   else {
     auto [row, bit] = keysym_map(key.sym);
     keyboard_rows[row] |= bit;
+  }
+}
+
+void Pia1::flag_interrupt() {
+  if (*ctrl_b & 0x01) {
+    *ctrl_b |= 0x80;
+    plugin_callback(CPU_INTERRUPT, (void *)false);
   }
 }
 

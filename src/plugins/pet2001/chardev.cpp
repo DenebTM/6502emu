@@ -113,7 +113,7 @@ void Chardev::render() {
     }
   }
 
-  via->flag_interrupt(0x10);
+  pia1->flag_interrupt();
   SDL_RenderPresent(renderer);
 }
 
