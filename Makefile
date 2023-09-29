@@ -20,5 +20,5 @@ clean-plugins:
 	$(MAKE) -C src clean-plugins
 
 rebuild: rebuild-6502 rebuild-plugins
-rebuild-6502: clean-6502 rebuild-6502
+rebuild-6502: clean-6502 6502
 rebuild-plugins: clean-plugins plugins
