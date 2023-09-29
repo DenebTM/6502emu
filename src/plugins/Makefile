@@ -1,12 +1,14 @@
 PLUGINS = $(shell find * -maxdepth 0 -type d)
+BUILD_TARGETS = $(PLUGINS:%=%.so)
+CLEAN_TARGETS = $(PLUGINS:%=%-clean)
 
-.PHONY: all clean $(PLUGINS) $(PLUGINS:%=%-clean)
+.PHONY: all clean $(BUILD_TARGETS) $(CLEAN_TARGETS)
 
-all: $(PLUGINS)
+all: $(BUILD_TARGETS)
 
-$(PLUGINS):
-	$(MAKE) -C $@ ../$@.so
+$(BUILD_TARGETS):
+	$(MAKE) -C $(@:.so=)
 
-clean: $(PLUGINS:%=%-clean)
-$(PLUGINS:%=%-clean):
+clean: $(CLEAN_TARGETS)
+$(CLEAN_TARGETS):
 	$(MAKE) -C $(@:-clean=) clean
