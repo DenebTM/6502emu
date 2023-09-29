@@ -28,21 +28,21 @@ extern "C" int plugin_load() {
   return 0;
 }
 
-extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *devs, plugin_callback_t callback) {
+extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> &devs, plugin_callback_t callback) {
   plugin_callback = callback;
 
   chardev->init_sdl();
-  devs->push_back({chardev, 0x8000});
-  devs->push_back({chardev, 0x8400});
-  devs->push_back({chardev, 0x8800});
-  devs->push_back({chardev, 0x8c00});
+  devs.push_back({chardev, 0x8000});
+  devs.push_back({chardev, 0x8400});
+  devs.push_back({chardev, 0x8800});
+  devs.push_back({chardev, 0x8c00});
 
-  devs->push_back({pia1, 0xe810});
-  devs->push_back({pia1, 0xe814});
-  devs->push_back({pia1, 0xe818});
-  devs->push_back({pia1, 0xe81c});
+  devs.push_back({pia1, 0xe810});
+  devs.push_back({pia1, 0xe814});
+  devs.push_back({pia1, 0xe818});
+  devs.push_back({pia1, 0xe81c});
 
-  devs->push_back({via, 0xe840});
+  devs.push_back({via, 0xe840});
 
   return 0;
 }

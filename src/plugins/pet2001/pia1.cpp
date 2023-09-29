@@ -51,7 +51,7 @@ Byte Pia1::write(Word offset, Byte val) {
   return mapped_regs[offset] = val;
 }
 
-void Pia1::key_down(SDL_Keysym key) {
+void Pia1::key_down(SDL_Keysym &key) {
   if (key.mod & KMOD_SHIFT && shiftmap.count(key.sym)) {
     auto &[row, bit] = shiftmap.at(key.sym);
 
@@ -73,7 +73,7 @@ void Pia1::key_down(SDL_Keysym key) {
   }
 }
 
-void Pia1::key_up(SDL_Keysym key) {
+void Pia1::key_up(SDL_Keysym &key) {
   if (key.sym == SDLK_LSHIFT || key.sym == SDLK_RSHIFT) {
     for (auto &[key, value] : shiftmap) {
       auto &[row, bit] = value;

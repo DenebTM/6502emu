@@ -40,7 +40,7 @@ Emu6502 cpu;
 EmuConfig *config;
 
 typedef int (*plugin_load_t)(void);
-typedef int (*plugin_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> *, plugin_callback_t);
+typedef int (*plugin_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> &, plugin_callback_t);
 typedef int (*plugin_destroy_t)(void);
 typedef int (*plugin_update_t)(int cycles_passed);
 
@@ -174,7 +174,7 @@ void load_plugins() {
 void init_plugins() {
   std::vector<std::pair<MemoryMappedDevice *, Word>> plugin_devs;
   for (auto plugin_init_func : plugin_init_funcs)
-    plugin_init_func(&plugin_devs, &plugin_callback_handler);
+    plugin_init_func(plugin_devs, &plugin_callback_handler);
   for (auto [dev, addr] : plugin_devs) {
     add_spc.map_mem(dev, addr);
   }

@@ -16,8 +16,8 @@ public:
   Byte read(Word offset) override;
   Byte write(Word offset, Byte val) override;
 
-  void key_down(SDL_Keysym key);
-  void key_up(SDL_Keysym key);
+  void key_down(SDL_Keysym &key);
+  void key_up(SDL_Keysym &key);
 
   void flag_interrupt();
 

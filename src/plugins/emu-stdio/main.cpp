@@ -11,14 +11,14 @@ InChar *emu_in;
 
 plugin_callback_t plugin_callback;
 
-extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> *devs, plugin_callback_t callback) {
+extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> &devs, plugin_callback_t callback) {
   plugin_callback = callback;
 
   emu_out = new OutChar();
   emu_in = new InChar();
 
-  devs->push_back({emu_out, 0xF001});
-  devs->push_back({emu_in, 0xF004});
+  devs.push_back({emu_out, 0xF001});
+  devs.push_back({emu_in, 0xF004});
 
   return 0;
 }

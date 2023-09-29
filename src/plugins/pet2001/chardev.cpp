@@ -56,8 +56,7 @@ int Chardev::init_sdl() {
     return -1;
   }
 
-  window =
-      SDL_CreateWindow("Chardev", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, RENDER_WIDTH, RENDER_HEIGHT, 0);
+  window = SDL_CreateWindow("Chardev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RENDER_WIDTH, RENDER_HEIGHT, 0);
   if (!window) {
     std::cerr << "Failed to create SDL2 window" << std::endl;
     return -2;
