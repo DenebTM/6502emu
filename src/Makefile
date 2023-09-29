@@ -6,7 +6,7 @@ INCLUDE = include
 OBJS = main.o mem.o cpu.o plugin-callback.o emu-config.o
 OUTFILE = 6502
 
-.PHONY: plugins clean clean-all rebuild rebuild-plugins rebuild-all
+.PHONY: all plugins clean clean-all rebuild rebuild-plugins rebuild-all
 
 all: 6502 plugins
 

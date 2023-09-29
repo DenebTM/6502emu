@@ -6,6 +6,8 @@ INCLUDE = ../../include
 $(OUTFILE): $(OBJS)
 	$(CXX) -shared -o $@ $^ $(LDLIBS)
 
+-include $(OBJS:%.o=%.d)
+
 %.o: %.cpp
 	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -c $<
 
