@@ -23,9 +23,9 @@
 #define SR_Z (Byte)(reg_sr & FLAG_Z)
 #define SR_C (Byte)(reg_sr & FLAG_C)
 
-#define VEC_NMI 0xFFFA
-#define VEC_RST 0xFFFC
-#define VEC_IRQ 0xFFFE
+#define VEC_NMI 0xfffa
+#define VEC_RST 0xfffc
+#define VEC_IRQ 0xfffe
 
 class Emu6502 {
 public:

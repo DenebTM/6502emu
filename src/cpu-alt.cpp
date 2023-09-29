@@ -1,8 +1,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include "sysclock.hpp"
 #include "cpu.hpp"
+#include "sysclock.hpp"
 
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
@@ -297,7 +297,7 @@ Emu6502::Emu6502() {
     if (flag) {
       auto new_pc = reg_pc + *(SByte *)&offset;
       step_cycle();
-      if (reg_pc & 0xff00 != new_pc & 0xff00)
+      if ((reg_pc & 0xff00) != (new_pc & 0xff00))
         step_cycle();
       reg_pc = new_pc;
     }
@@ -367,6 +367,10 @@ Word Emu6502::get_target(AddressingMode mode) {
       auto addr_zpg = read(reg_pc++);
       return read_word(addr_zpg, true) + reg_y;
     }
+
+    case ACC:
+    case NONE:
+      return 0;
   }
   return 0;
 }
@@ -381,9 +385,9 @@ void Emu6502::do_instruction() {
   current_opcode = read(reg_pc++);
 
   // determine addressing mode for instruction
-  char opc_a = (current_opcode & 0xe0) >> 5;
-  char opc_b = (current_opcode & 0x1c) >> 2;
-  char opc_c = (current_opcode & 0x03) >> 0;
+  int opc_a = (current_opcode & 0xe0) >> 5;
+  int opc_b = (current_opcode & 0x1c) >> 2;
+  int opc_c = (current_opcode & 0x03) >> 0;
 
   AddressingMode mode = NONE;
   if (current_opcode == 0x6c) {
@@ -446,7 +450,7 @@ inline Word Emu6502::read_word(Word addr_lo, bool wrap_page) {
   if (wrap_page) {
     addr_hi &= 0x00ff;
     addr_hi |= addr_lo & 0xff00;
-  } else if (addr_lo & 0xFF00 != addr_hi & 0xFF00) {
+  } else if ((addr_lo & 0xff00) != (addr_hi & 0xff00)) {
     step_cycle();
   }
 
@@ -463,7 +467,7 @@ inline void Emu6502::move(Byte val, Byte *target) { *target = val; }
 void Emu6502::push(Byte val) { write(0x100 + (reg_sp--), val); }
 void Emu6502::push_word(Word data) {
   push((Byte)(data >> 8));
-  push((Byte)(data & 0xFF));
+  push((Byte)(data & 0xff));
 }
 
 Byte Emu6502::pop() { return read(0x100 + (++reg_sp)); }
@@ -487,7 +491,7 @@ void Emu6502::alu_bcd(Byte operand, Byte flags, bool sub) {
   Byte op1_bcd = (reg_a & 0x0f) + 10 * (reg_a >> 4);
   signed char op2_bcd = (operand & 0x0f) + 10 * (operand >> 4);
   short res_bcd = (short)op1_bcd + op2_bcd + SR_C;
-  bool carry_out = res_bcd > 99 | res_bcd < 0;
+  bool carry_out = (res_bcd > 99) | (res_bcd < 0);
   res_bcd %= 100;
   Byte res = (res_bcd % 10) | ((res_bcd / 10) << 4);
 
@@ -506,7 +510,7 @@ void Emu6502::reset() {
   reg_sp = 0xff;
   reg_pc = read_word(VEC_RST);
   for (int i = 0; i < 4; i++)
-  step_cycle();
+    step_cycle();
 }
 
 void Emu6502::assert_interrupt(bool nmi) {
@@ -523,4 +527,7 @@ void Emu6502::handle_interrupt(bool brk) {
   reg_pc = read_word(got_nmi ? VEC_NMI : VEC_IRQ);
 
   (got_nmi ? got_nmi : got_irq) = false;
+
+  for (int i = 0; i < 2; i++)
+    step_cycle();
 }
