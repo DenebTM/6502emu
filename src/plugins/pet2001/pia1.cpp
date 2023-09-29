@@ -52,28 +52,42 @@ Byte Pia1::write(Word offset, Byte val) {
 }
 
 void Pia1::key_down(SDL_Keysym key) {
-  auto maybe_modkey = modkey_map(key);
+  if (key.mod & KMOD_SHIFT && shiftmap.count(key.sym)) {
+    auto &[row, bit] = shiftmap.at(key.sym);
 
-  if (maybe_modkey.has_value()) {
-    auto [row, bit] = maybe_modkey.value();
+    if (key.mod & KMOD_LSHIFT) {
+      keyboard_rows[8] |= 0x01;
+    }
+    if (key.mod & KMOD_RSHIFT) {
+      keyboard_rows[8] |= 0x20;
+    }
+
     keyboard_rows[row] &= ~bit;
-  } else {
-    auto [row, bit] = keysym_map(key.sym);
+  } else if (key.mod & KMOD_CTRL && ctrlmap.count(key.sym)) {
+    auto &[row, bit] = ctrlmap.at(key.sym);
     keyboard_rows[row] &= ~bit;
+  } else if (keymap.count(key.sym)) {
+    for (auto &[row, bit] : keymap.at(key.sym)) {
+      keyboard_rows[row] &= ~bit;
+    }
   }
 }
 
 void Pia1::key_up(SDL_Keysym key) {
-  auto maybe_modkey = modkey_map(key);
-
-  if (maybe_modkey.has_value()) {
-    auto [row, bit] = maybe_modkey.value();
-    if (bit) {
+  if (key.sym == SDLK_LSHIFT || key.sym == SDLK_RSHIFT) {
+    for (auto &[key, value] : shiftmap) {
+      auto &[row, bit] = value;
       keyboard_rows[row] |= bit;
     }
-  } else {
-    auto [row, bit] = keysym_map(key.sym);
-    if (bit) {
+  } else if (key.sym == SDLK_LCTRL || key.sym == SDLK_RCTRL) {
+    for (auto &[key, value] : ctrlmap) {
+      auto &[row, bit] = value;
+      keyboard_rows[row] |= bit;
+    }
+  }
+
+  if (keymap.count(key.sym)) {
+    for (auto &[row, bit] : keymap.at(key.sym)) {
       keyboard_rows[row] |= bit;
     }
   }
