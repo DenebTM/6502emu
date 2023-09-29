@@ -57,10 +57,12 @@ extern "C" int plugin_destroy() {
   return 0;
 }
 
-// extern "C" int plugin_update(int cycles_passed) {
-//   if (via)
-//     via->update(cycles_passed);
-// }
+extern "C" int plugin_update(int cycles_passed) {
+  if (via)
+    via->update(cycles_passed);
+
+  return 0;
+}
 
 // extern "C" int plugin_update() {
 //   static auto min_render_interval = 8.333ms;

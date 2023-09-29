@@ -14,7 +14,11 @@ public:
 
   void flag_interrupt(Byte irq);
 
-  void update(int cycles_taken);
+  inline void update(int cycles_taken) {
+    *timer1_period -= cycles_taken;
+
+    // TODO: fully implement timers
+  }
 
 private:
   Byte *ifr = mapped_regs + 0xd;
