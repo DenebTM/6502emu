@@ -1,9 +1,8 @@
 #include "cpu.hpp"
+#include "sysclock.hpp"
 
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
-extern QWord cycle;
-extern QWord cycle_real;
 
 Emu6502::Emu6502() {}
 
@@ -465,9 +464,9 @@ void Emu6502::do_instruction() {
 
       if (flags[opc_a]) {
         auto new_pc = reg_pc + *(SByte *)&offset;
-        cycle++;
+        step_cycle();
         if (reg_pc & 0xff00 != new_pc & 0xff00)
-          cycle++;
+          step_cycle();
         reg_pc = new_pc;
       }
       break;
@@ -525,7 +524,7 @@ void Emu6502::set_reg(Byte *reg, Byte val, Byte flags) {
 }
 
 inline Byte Emu6502::read(Word addr) {
-  cycle++;
+  step_cycle();
   return add_spc.read(addr);
 }
 inline Word Emu6502::read_word(Word addr_lo) { return read_word(addr_lo, false); }
@@ -535,14 +534,14 @@ inline Word Emu6502::read_word(Word addr_lo, bool wrap_page) {
     addr_hi &= 0x00ff;
     addr_hi |= addr_lo & 0xff00;
   } else if (addr_lo & 0xFF00 != addr_hi & 0xFF00) {
-    cycle++;
+    step_cycle();
   }
 
   return (Word)read(addr_lo) + ((Word)read(addr_hi) << 8);
 }
 
 inline void Emu6502::write(Word addr, Byte val) {
-  cycle++;
+  step_cycle();
   add_spc.write(addr, val);
 }
 
@@ -593,7 +592,9 @@ void Emu6502::reset() {
   reg_sr = 0x20;
   reg_sp = 0xff;
   reg_pc = read_word(VEC_RST);
-  cycle += 4;
+
+  for (int i = 0; i < 4; i++)
+    step_cycle();
 }
 
 void Emu6502::assert_interrupt(bool nmi) {
@@ -610,4 +611,7 @@ void Emu6502::handle_interrupt(bool brk) {
   reg_pc = read_word(got_nmi ? VEC_NMI : VEC_IRQ);
 
   (got_nmi ? got_nmi : got_irq) = false;
+
+  for (int i = 0; i < 2; i++)
+    step_cycle();
 }

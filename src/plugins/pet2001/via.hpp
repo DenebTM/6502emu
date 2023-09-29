@@ -14,8 +14,8 @@ public:
 
   void flag_interrupt(Byte irq);
 
-  inline void update(int cycles_taken) {
-    *timer1_period -= cycles_taken;
+  inline void update(int cycles_elapsed) {
+    *timer1_period -= cycles_elapsed;
 
     // TODO: fully implement timers
   }

@@ -3,7 +3,14 @@
 
 #include "emu-config.hpp"
 
+EmuConfig *config;
+
 EmuConfig::EmuConfig(FilePath file_name) {
+  // singleton pattern 🤓
+  if (config) {
+    delete config;
+  }
+
   this->config_file_name = file_name;
   YAML::Node config_root = YAML::LoadFile(file_name);
 

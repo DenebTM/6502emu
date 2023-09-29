@@ -30,42 +30,35 @@ extern void plugin_callback_handler(PluginCallbackType, void *);
 int exit_code = 0;
 std::atomic_bool is_running = true;
 
-#define CYCLES_UNTIL_PAUSE 100
-QWord cyclesToRun = -1, cycle = 0;
-QWord cycle_real = 0;
-
 AddressSpace add_spc;
 Emu6502 cpu;
 
-EmuConfig *config;
-
+// FIXME: pull these out into their own translation unit (see also sysclock.cpp)
 typedef int (*plugin_load_t)(void);
 typedef int (*plugin_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> &, plugin_callback_t);
 typedef int (*plugin_destroy_t)(void);
-typedef int (*plugin_update_t)(int cycles_passed);
+typedef int (*plugin_update_t)(int cycles_elapsed);
 
 std::vector<plugin_init_t> plugin_init_funcs;
 std::vector<plugin_destroy_t> plugin_destroy_funcs;
 std::vector<plugin_update_t> plugin_update_funcs;
 
 int main(int argc, char **argv) {
-  using namespace std::this_thread;
-  using namespace std::chrono;
-
   char *config_file_name;
   if (argc >= 2) {
     config_file_name = argv[1];
   } else {
     config_file_name = readline("Enter config filename: ");
   }
-  if (!config_file_name || strlen(config_file_name) == 0) {
-    return 0;
-  }
 
+  // got EOF or empty string
+  // TODO: handle empty string case separately
+  if (!config_file_name || strlen(config_file_name) == 0)
+    return 0;
+
+  // trim trailing spaces that may be added by `readline`
   config_file_name = strtok(config_file_name, " ");
   config = new EmuConfig(config_file_name);
-
-  const auto sleep_time = 1000000000ns / (config->clock_speed / CYCLES_UNTIL_PAUSE);
 
   signal(SIGINT, signal_callback_handler);
 
@@ -78,33 +71,16 @@ int main(int argc, char **argv) {
 
   init_plugins();
 
-  // Start execution loop
+  // config may either use the reset vector (default) or set the pc to a defined value
   if (config->init_reset) {
     cpu.reset();
   } else {
     cpu.reg_pc = config->init_pc;
   }
 
+  // execution loop runs until is_running is cleared by either the signal handler or plugin callback
   while (is_running.load()) {
-    static QWord cycle_prev = cycle;
-
     cpu.do_instruction();
-
-    int cycles_taken = cycle - cycle_prev;
-    cycle_prev = cycle;
-    if (cycles_taken < 0) {
-      cycles_taken = cycle;
-    }
-
-    for (auto plugin_update_func : plugin_update_funcs) {
-      plugin_update_func(cycles_taken);
-    }
-
-    if (cycle > CYCLES_UNTIL_PAUSE) {
-      cycle_real += cycle;
-      cycle = 0;
-      sleep_for(sleep_time);
-    }
   }
 
   emu_exit(exit_code);

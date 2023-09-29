@@ -57,26 +57,9 @@ extern "C" int plugin_destroy() {
   return 0;
 }
 
-extern "C" int plugin_update(int cycles_passed) {
+extern "C" int plugin_update(int cycles_elapsed) {
   if (via)
-    via->update(cycles_passed);
+    via->update(cycles_elapsed);
 
   return 0;
 }
-
-// extern "C" int plugin_update() {
-//   static auto min_render_interval = 8.333ms;
-//   static auto last_render = std::chrono::system_clock::now();
-
-//   if (chardev) {
-//     chardev->handle_events();
-
-//     auto now = std::chrono::system_clock::now();
-//     if ((now - last_render) >= min_render_interval) {
-//       chardev->render();
-//       last_render = now;
-//     }
-//   }
-
-//   return 0;
-// }

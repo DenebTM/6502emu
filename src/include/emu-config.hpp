@@ -28,3 +28,5 @@ struct EmuConfig {
   bool enumerate_plugins = true;
   std::vector<FileName> disabled_plugins;
 };
+
+extern EmuConfig *config;
