@@ -11,7 +11,7 @@ void plugin_callback_handler(PluginCallbackType type, void *arg) {
   switch (type) {
     case EMU_EXIT:
       exit_code = (int)arg;
-      is_running.store(false);
+      is_running = false;
       break;
 
     case CPU_INTERRUPT: {

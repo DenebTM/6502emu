@@ -5,13 +5,10 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <limits>
 #include <readline/readline.h>
 #include <signal.h>
-#include <thread>
 #include <tuple>
 #include <vector>
-using namespace std::chrono_literals;
 
 #include "cpu.hpp"
 #include "emu-common.hpp"
@@ -79,7 +76,7 @@ int main(int argc, char **argv) {
   }
 
   // execution loop runs until is_running is cleared by either the signal handler or plugin callback
-  while (is_running.load()) {
+  while (is_running) {
     cpu.do_instruction();
   }
 

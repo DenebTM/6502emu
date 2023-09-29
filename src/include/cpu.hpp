@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <functional>
 #include <string>
 #include <tuple>
@@ -74,8 +75,8 @@ private:
   void alu_bcd(Byte operand, Byte flags, bool sub);
 
   void handle_interrupt(bool brk);
-  bool got_irq;
-  bool got_nmi;
+  std::atomic_bool got_irq;
+  std::atomic_bool got_nmi;
 
   std::tuple<std::string, std::function<void(Emu6502::AddressingMode)>> *opcode_map;
 };
