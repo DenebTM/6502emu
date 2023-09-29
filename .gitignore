@@ -3,6 +3,5 @@
 !**/.gitignore
 **/6502
 **/*.so
-**/cpu-old.*
 roms/**/*.bin
 roms/**/*.lst

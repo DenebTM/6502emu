@@ -7,6 +7,12 @@ extern QWord cycle_real;
 
 Emu6502::Emu6502() {}
 
+Emu6502::~Emu6502() {}
+
+/**
+ * get memory address of instruction operand based on addressing mode
+ * also advances the program counter to point at the following instruction
+ */
 Word Emu6502::get_target(AddressingMode mode) {
   switch (mode) {
     case IMM:
@@ -53,8 +59,10 @@ void Emu6502::do_instruction() {
     handle_interrupt(false);
   }
 
+  // fetch the next instruction from memory
   current_opcode = read(reg_pc++);
 
+  // determine addressing mode for instruction
   char opc_a = (current_opcode & 0xe0) >> 5;
   char opc_b = (current_opcode & 0x1c) >> 2;
   char opc_c = (current_opcode & 0x03) >> 0;
@@ -86,6 +94,7 @@ void Emu6502::do_instruction() {
     mode = IND_Y;
   }
 
+  // execute the instruction
   switch (current_opcode) {
     // LDA/LDX/LDY
     case 0xa9:

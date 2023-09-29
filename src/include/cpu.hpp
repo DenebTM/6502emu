@@ -1,5 +1,7 @@
 #pragma once
+#include <functional>
 #include <string>
+#include <tuple>
 
 #include "emu-common.hpp"
 #include "mem.hpp"
@@ -30,6 +32,7 @@ public:
   enum CpuRegister { REG_A, REG_X, REG_Y, REG_SP, REG_SR };
 
   Emu6502();
+  ~Emu6502();
 
   Word reg_pc = 0;
   Byte reg_sp = 0x00;
@@ -73,4 +76,6 @@ private:
   void handle_interrupt(bool brk);
   bool got_irq;
   bool got_nmi;
+
+  std::tuple<std::string, std::function<void(Emu6502::AddressingMode)>> *opcode_map;
 };
