@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -O3 -funsigned-char -fpermissive -std=c++20
+CXXFLAGS = -O3 -funsigned-char -fpermissive -std=c++20 -MMD
 LDLIBS = -lm -ldl -lreadline -lyaml-cpp
 
 INCLUDE = include
@@ -11,7 +11,9 @@ OUTFILE = 6502
 all: 6502 plugins
 
 $(OUTFILE): $(OBJS)
-	$(CXX) -o $@ $(LDLIBS) $^ 
+	$(CXX) -o $@ $^ $(LDLIBS)
+
+-include $(OBJS:%.o=%.d)
 
 %.o: %.cpp
 	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -c $<
@@ -20,7 +22,7 @@ plugins:
 	$(MAKE) -C plugins all
 
 clean:
-	$(RM) $(OUTFILE) $(OBJS)
+	$(RM) $(OUTFILE) $(OBJS) $(OBJS:.o=.d)
 clean-plugins:
 	$(MAKE) -C plugins clean
 clean-all: clean clean-plugins

@@ -3,6 +3,7 @@
 !**/.gitignore
 **/6502
 **/*.o
+**/*.d
 **/*.so
 roms/**/*.bin
 roms/**/*.lst

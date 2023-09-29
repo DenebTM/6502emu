@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -std=c++20 -fPIC
+CXXFLAGS = -g -std=c++20 -fPIC -MMD
 
 INCLUDE = ../../include
 
@@ -10,4 +10,4 @@ $(OUTFILE): $(OBJS)
 	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -c $<
 
 clean:
-	$(RM) $(OUTFILE) $(OBJS)
+	$(RM) $(OUTFILE) $(OBJS) $(OBJS:.o=.d)
