@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <iostream>
 
 #include "cpu.hpp"
@@ -15,7 +16,8 @@ Emu6502::Emu6502() {
   opcode_map = new std::tuple<std::string, std::function<void(Emu6502::AddressingMode)>>[256];
 
   static std::function<void(AddressingMode)> illegal_opcode_handler = [&](AddressingMode) {
-    std::cerr << std::hex << "Encountered illegal opcode " << current_opcode << " at pc=" << reg_pc << std::endl;
+    std::cerr << std::hex << std::setw(2) << std::setfill('0') << "Encountered illegal opcode " << (int)current_opcode
+              << " at pc=" << std::setw(4) << (int)reg_pc << std::endl;
   };
   for (int i = 0; i < 256; i++) {
     opcode_map[i] = {"???", illegal_opcode_handler};
@@ -324,9 +326,7 @@ Emu6502::Emu6502() {
   opcode_map[0xea] = {"NOP", [&](AddressingMode mode) {}};
 }
 
-Emu6502::~Emu6502() {
-  delete[] opcode_map;
-}
+Emu6502::~Emu6502() { delete[] opcode_map; }
 
 /**
  * get memory address of instruction operand based on addressing mode
