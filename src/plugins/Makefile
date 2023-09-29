@@ -1,10 +1,12 @@
-all: emu-stdio.so pet2001.so
+PLUGINS = $(patsubst %,%.so,$(shell find * -maxdepth 0 -type d))
 
-emu-stdio.so: $(wildcard emu-stdio/*.cpp)
-	$(MAKE) -C emu-stdio $@
+.PHONY: all clean
 
-pet2001.so: $(wildcard pet2001/*.cpp)
-	$(MAKE) -C pet2001 $@
+all: $(PLUGINS)
 
-clean:
-	$(RM) -f *.so
+%.so: %
+	$(MAKE) -C $< ../$@
+
+clean: $(patsubst %.so,%-clean,$(PLUGINS))
+%-clean: %
+	$(MAKE) -C $< clean

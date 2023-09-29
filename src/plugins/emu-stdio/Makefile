@@ -1,9 +1,5 @@
-CXX = g++
-CXXFLAGS = -g -std=c++20 -shared -fPIC
-LDFLAGS = -lncurses
+LDLIBS = -lncurses
+OBJS = main.o emu-stdin.o emu-stdout.o
+OUTFILE = ../emu-stdio.so
 
-INCLUDE = ../../include
-SOURCES = main.cpp emu-stdin.cpp emu-stdout.cpp
-
-emu-stdio.so: $(SOURCES)
-	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -o ../$@ $^ $(LDFLAGS)
+include ../plugin-makefile-base

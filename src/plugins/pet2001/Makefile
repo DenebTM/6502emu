@@ -1,9 +1,5 @@
-CXX = g++
-CXXFLAGS = -g -std=c++20 -shared -fPIC
-LDFLAGS =
+LDLIBS = `sdl2-config --cflags --libs`
+OBJS = main.o chardev.o pia1.o via.o
+OUTFILE = ../pet2001.so
 
-INCLUDE = ../../include
-SOURCES = main.cpp chardev.cpp pia1.cpp via.cpp
-
-pet2001.so: $(SOURCES)
-	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -o ../$@ $^ $(LDFLAGS) `sdl2-config --cflags --libs`
+include ../plugin-makefile-base

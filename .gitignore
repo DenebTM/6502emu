@@ -2,6 +2,7 @@
 !**/.clang-format
 !**/.gitignore
 **/6502
+**/*.o
 **/*.so
 roms/**/*.bin
 roms/**/*.lst

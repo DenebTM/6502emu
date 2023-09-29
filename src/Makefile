@@ -1,24 +1,30 @@
 CXX = g++
-CXXFLAGS = -g -funsigned-char -fpermissive -std=c++20
-LDFLAGS = -lm -ldl -lreadline -lyaml-cpp
+CXXFLAGS = -O3 -funsigned-char -fpermissive -std=c++20
+LDLIBS = -lm -ldl -lreadline -lyaml-cpp
 
 INCLUDE = include
-SOURCES = main.cpp mem.cpp cpu.cpp plugin-callback.cpp emu-config.cpp
+OBJS = main.o mem.o cpu.o plugin-callback.o emu-config.o
+OUTFILE = 6502
 
-.PHONY: clean rebuild plugins
+.PHONY: plugins clean clean-all rebuild rebuild-plugins rebuild-all
 
 all: 6502 plugins
 
-6502: $(SOURCES)
-	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+$(OUTFILE): $(OBJS)
+	$(CXX) -o $@ $(LDLIBS) $^ 
+
+%.o: %.cpp
+	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -c $<
 
 plugins:
 	$(MAKE) -C plugins all
 
-run: 6502
-	./6502
-
-rebuild: clean all
-
 clean:
-	$(RM) -f 6502 plugins/*.so
+	$(RM) $(OUTFILE) $(OBJS)
+clean-plugins:
+	$(MAKE) -C plugins clean
+clean-all: clean clean-plugins
+
+rebuild: clean $(OUTFILE)
+rebuild-plugins: clean-plugins plugins
+rebuild-all: rebuild rebuild-plugins
