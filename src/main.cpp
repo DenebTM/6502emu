@@ -104,7 +104,7 @@ void load_plugins() {
     return;
 
   for (auto &entry : std::filesystem::directory_iterator(plugin_path, {})) {
-    if ((entry.is_regular_file() || entry.is_symlink()) && entry.path().extension().string() == "so") {
+    if ((entry.is_regular_file() || entry.is_symlink()) && entry.path().extension().string() == ".so") {
 
       std::string filename = entry.path().filename().string();
       if (std::find(config->disabled_plugins.begin(), config->disabled_plugins.end(), filename) !=
