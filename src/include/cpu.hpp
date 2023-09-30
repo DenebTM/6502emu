@@ -50,6 +50,7 @@ public:
   void assert_interrupt(bool nmi);
 
 private:
+  AddressingMode get_addr_mode(int opc_a, int opc_b, int opc_c);
   Word get_target(AddressingMode mode);
 
   Byte read(Word addr);
