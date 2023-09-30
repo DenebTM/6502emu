@@ -8,7 +8,7 @@ extern AddressSpace add_spc;
 extern Emu6502 cpu;
 
 // hacky but reduces code duplication
-#include "common.cpp"
+#include "cpu-common.cpp"
 
 /**
  * set up functions to handle instructions

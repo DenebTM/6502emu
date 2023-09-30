@@ -5,7 +5,7 @@ extern AddressSpace add_spc;
 extern Emu6502 cpu;
 
 // hacky but reduces code duplication
-#include "common.cpp"
+#include "cpu-common.cpp"
 
 Emu6502::Emu6502() {}
 
