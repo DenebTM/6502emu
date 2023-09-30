@@ -58,8 +58,10 @@ extern "C" int plugin_destroy() {
 }
 
 extern "C" int plugin_update(int cycles_elapsed) {
-  if (via)
-    via->update(cycles_elapsed);
+  if (via) {
+    for (int i = 0; i < cycles_elapsed; i++)
+      via->update();
+  }
 
   return 0;
 }
