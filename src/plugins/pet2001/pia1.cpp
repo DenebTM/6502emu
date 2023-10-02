@@ -3,6 +3,7 @@
 #include <fstream>
 using namespace std::chrono_literals;
 
+#include "keymap-normal.hpp"
 #include "pia1.hpp"
 #include "plugin-callback.hpp"
 
