@@ -21,14 +21,15 @@ extern "C" int plugin_load() {
   return 0;
 }
 
-extern "C" int plugin_init(AddressSpace &add_spc, plugin_callback_t callback) {
+extern "C" int plugin_init(AddressSpace &add_spc, Word addr, plugin_callback_t callback) {
+  addr = addr ? addr : 0x8000;
   plugin_callback = callback;
 
   chardev->sdl_init();
-  add_spc.map_mem(chardev, 0x8000);
-  add_spc.map_mem(chardev, 0x8400);
-  add_spc.map_mem(chardev, 0x8800);
-  add_spc.map_mem(chardev, 0x8c00);
+  add_spc.map_mem(chardev, addr + 0x000);
+  add_spc.map_mem(chardev, addr + 0x400);
+  add_spc.map_mem(chardev, addr + 0x800);
+  add_spc.map_mem(chardev, addr + 0xc00);
 
   add_spc.map_mem(pia1, 0xe810);
   add_spc.map_mem(pia1, 0xe814);

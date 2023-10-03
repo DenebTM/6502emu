@@ -9,14 +9,15 @@ InChar *emu_in;
 
 plugin_callback_t plugin_callback;
 
-extern "C" int plugin_init(AddressSpace &add_spc, plugin_callback_t callback) {
+extern "C" int plugin_init(AddressSpace &add_spc, Word addr, plugin_callback_t callback) {
+  addr = addr ? addr : 0xf001;
   plugin_callback = callback;
 
   emu_out = new OutChar();
   emu_in = new InChar();
 
-  add_spc.map_mem(emu_out, 0xf001);
-  add_spc.map_mem(emu_in, 0xf004);
+  add_spc.map_mem(emu_out, addr);
+  add_spc.map_mem(emu_in, addr + 3);
 
   return 0;
 }

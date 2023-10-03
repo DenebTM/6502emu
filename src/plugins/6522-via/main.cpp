@@ -13,10 +13,11 @@ extern "C" int plugin_load() {
   return 0;
 }
 
-extern "C" int plugin_init(AddressSpace &add_spc, plugin_callback_t callback) {
+extern "C" int plugin_init(AddressSpace &add_spc, Word addr, plugin_callback_t callback) {
+  addr = addr ? addr : 0xe840;
   plugin_callback = callback;
 
-  add_spc.map_mem(via, 0xe840);
+  add_spc.map_mem(via, addr);
 
   return 0;
 }

@@ -30,11 +30,11 @@ Emu6502 cpu;
 
 // FIXME: pull these out into their own translation unit (see also sysclock.cpp)
 typedef int (*plugin_load_t)(void);
-typedef int (*plugin_init_t)(AddressSpace &, plugin_callback_t);
+typedef int (*plugin_init_t)(AddressSpace &, Word, plugin_callback_t);
 typedef int (*plugin_destroy_t)(void);
 typedef int (*plugin_update_t)(int cycles_elapsed);
 
-std::vector<plugin_init_t> plugin_init_funcs;
+std::vector<std::tuple<plugin_init_t, Word>> plugin_init_funcs;
 std::vector<plugin_destroy_t> plugin_destroy_funcs;
 std::vector<plugin_update_t> plugin_update_funcs;
 
@@ -58,9 +58,7 @@ int main(int argc, char **argv) {
   signal(SIGINT, signal_callback_handler);
 
   load_roms();
-  if (config->enumerate_plugins) {
-    load_plugins();
-  }
+  load_plugins();
 
   std::cout << "Press Ctrl+C to quit." << std::endl;
 
@@ -103,10 +101,21 @@ void load_plugins() {
 
   for (auto &entry : std::filesystem::directory_iterator(plugin_path, {})) {
     if ((entry.is_regular_file() || entry.is_symlink()) && entry.path().extension().string() == ".so") {
+      std::string loaded_filename = entry.path().filename().string();
 
-      std::string filename = entry.path().filename().string();
-      if (std::find(config->disabled_plugins.begin(), config->disabled_plugins.end(), filename) !=
-          config->disabled_plugins.end())
+      bool has_config = false;
+      Word plugin_addr = 0;
+      bool plugin_disable = false;
+      for (auto [filename, start_addr, disable] : config->plugin_configs) {
+        if (loaded_filename == filename) {
+          has_config = true;
+          plugin_addr = start_addr;
+          plugin_disable = disable;
+          break;
+        }
+      }
+
+      if ((!config->enumerate_plugins && !has_config) || plugin_disable)
         continue;
 
       void *plugin = dlopen(entry.path().c_str(), RTLD_NOW | RTLD_GLOBAL);
@@ -117,7 +126,7 @@ void load_plugins() {
 
       auto plugin_load_func = (plugin_load_t)dlsym(plugin, "plugin_load");
       if (plugin_load_func && plugin_load_func() == -1) {
-        std::cerr << "Plugin " << filename << " failed to load." << std::endl;
+        std::cerr << "Plugin " << loaded_filename << " failed to load." << std::endl;
         continue;
       }
 
@@ -126,7 +135,7 @@ void load_plugins() {
         std::cerr << dlerror() << std::endl;
         continue;
       }
-      plugin_init_funcs.push_back(plugin_init_func);
+      plugin_init_funcs.push_back({plugin_init_func, plugin_addr});
 
       auto plugin_destroy_func = (plugin_destroy_t)dlsym(plugin, "plugin_destroy");
       if (!plugin_destroy_func) {
@@ -143,8 +152,8 @@ void load_plugins() {
 }
 
 void init_plugins() {
-  for (auto plugin_init_func : plugin_init_funcs)
-    plugin_init_func(add_spc, &plugin_callback_handler);
+  for (auto [plugin_init_func, plugin_addr] : plugin_init_funcs)
+    plugin_init_func(add_spc, plugin_addr, &plugin_callback_handler);
 }
 
 void signal_callback_handler(int signum) {

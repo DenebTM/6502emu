@@ -51,14 +51,19 @@ EmuConfig::EmuConfig(FilePath file_name) {
   auto plugin_opts = config_root["plugins"];
   if (plugin_opts.IsDefined()) {
     if (plugin_opts["enumerate"].IsDefined()) {
-      this->enumerate_plugins = config_root["plugins"]["enumerate"].as<bool>();
+      this->enumerate_plugins = plugin_opts["enumerate"].as<bool>();
     }
 
-    if (plugin_opts["override"].IsDefined()) {
-      for (auto [plugin_filename, plugin_override] : plugin_opts["override"].as<std::map<std::string, YAML::Node>>()) {
-        if (!plugin_override["load"].as<bool>()) {
-          this->disabled_plugins.push_back(plugin_filename);
-        }
+    if (plugin_opts["config"].IsDefined()) {
+      for (YAML::Node plugin_node : plugin_opts["config"]) {
+        std::string file_name = plugin_node["file"].as<FileName>();
+        Word start_address = plugin_node["address"].as<Word>();
+
+        bool plugin_disable = false;
+        if (plugin_node["disable"].IsDefined())
+          plugin_disable = plugin_node["disable"].as<bool>();
+
+        this->plugin_configs.push_back({file_name, start_address, plugin_disable});
       }
     }
   }

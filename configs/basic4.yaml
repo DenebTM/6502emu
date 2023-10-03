@@ -26,8 +26,11 @@ roms:
     start: 0xf000
 
 plugins:
-  enumerate: true
+  enumerate: false
+  config:
+    - file: pet2001.so
+      # disable: false
+      address: 0x8000
 
-  override:
-    emu-stdio.so:
-      load: false
+    - file: 6522-via.so
+      address: 0xe840

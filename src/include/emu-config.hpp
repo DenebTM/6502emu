@@ -13,6 +13,7 @@ struct EmuConfig {
   using StartAddress = Word;
   using Size = DWord;
   using ReadOnly = bool;
+  using PluginDisable = bool;
 
   EmuConfig(FilePath file_name);
 
@@ -26,7 +27,7 @@ struct EmuConfig {
   std::vector<std::tuple<FilePath, StartAddress, ReadOnly>> roms;
 
   bool enumerate_plugins = true;
-  std::vector<FileName> disabled_plugins;
+  std::vector<std::tuple<FileName, StartAddress, PluginDisable>> plugin_configs;
 };
 
 extern EmuConfig *config;

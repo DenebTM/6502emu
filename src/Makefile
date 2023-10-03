@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -O3 -Wall -Wpedantic -funsigned-char -fpermissive -std=c++20 -MMD
+CXXFLAGS = -g -Wall -Wpedantic -funsigned-char -fpermissive -std=c++20 -MMD
 LDLIBS = -lm -ldl -lreadline -lyaml-cpp
 
 INCLUDE = include
