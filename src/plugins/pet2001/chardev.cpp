@@ -31,9 +31,9 @@ Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
 
 Chardev::~Chardev() {
   if (sdl_initialized) {
-    render_thread_exit = true;
-    if (render_thread.joinable())
-      render_thread.join();
+    sdl_thread_exit = true;
+    if (sdl_thread.joinable())
+      sdl_thread.join();
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -50,35 +50,20 @@ int Chardev::pre_read(Word offset) { return 0; }
 
 int Chardev::post_write(Word offset) { return 0; }
 
-int Chardev::init_sdl() {
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    std::cerr << "Failed to initialize SDL2" << std::endl;
-    return -1;
-  }
+int Chardev::sdl_init() {
+  std::promise<int> sdl_init_promise;
+  auto sdl_init_future = sdl_init_promise.get_future();
 
-  window = SDL_CreateWindow("Chardev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RENDER_WIDTH, RENDER_HEIGHT, 0);
-  if (!window) {
-    std::cerr << "Failed to create SDL2 window" << std::endl;
-    return -2;
-  }
+  sdl_thread = std::thread(&Chardev::sdl_thread_fn, this, std::move(sdl_init_promise));
 
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-  if (!renderer) {
-    std::cerr << "Failed to create SDL2 renderer" << std::endl;
-    return -3;
-  }
+  sdl_init_future.wait();
+  auto sdl_init_return = sdl_init_future.get();
 
-  create_char_textures();
-
-  SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
-  SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
-  render_thread = std::thread(&Chardev::render_thread_func, this);
-
-  sdl_initialized = true;
-  return 0;
+  sdl_initialized = (sdl_init_return == 0);
+  return sdl_init_return;
 }
 
-void Chardev::handle_events() {
+void Chardev::sdl_handle_events() {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
@@ -98,7 +83,7 @@ void Chardev::handle_events() {
   }
 }
 
-void Chardev::render() {
+void Chardev::sdl_render() {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
 
@@ -116,10 +101,37 @@ void Chardev::render() {
   SDL_RenderPresent(renderer);
 }
 
-void Chardev::render_thread_func() {
-  while (!render_thread_exit) {
-    handle_events();
-    render();
+void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    std::cerr << "Failed to initialize SDL2" << std::endl;
+    ret.set_value(-1);
+    return;
+  }
+
+  window = SDL_CreateWindow("Chardev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RENDER_WIDTH, RENDER_HEIGHT, 0);
+  if (!window) {
+    std::cerr << "Failed to create SDL2 window" << std::endl;
+    ret.set_value(-2);
+    return;
+  }
+
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  if (!renderer) {
+    std::cerr << "Failed to create SDL2 renderer" << std::endl;
+    ret.set_value(-3);
+    return;
+  }
+
+  ret.set_value(0);
+
+  create_char_textures();
+
+  SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
+  SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
+
+  while (!sdl_thread_exit) {
+    sdl_handle_events();
+    sdl_render();
   }
 }
 

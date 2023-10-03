@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include <future>
 #include <thread>
 
 #include "mem-dev.hpp"
@@ -12,10 +13,10 @@ public:
   int pre_read(Word offset);
   int post_write(Word offset);
 
-  int init_sdl();
+  int sdl_init();
 
-  void render();
-  void handle_events();
+  void sdl_render();
+  void sdl_handle_events();
 
   bool load_success = false;
 
@@ -29,10 +30,10 @@ private:
   SDL_Texture **characters;
 
   bool sdl_initialized = false;
+  bool sdl_thread_exit = false;
 
-  bool render_thread_exit = false;
-  std::thread render_thread;
-  void render_thread_func();
+  std::thread sdl_thread;
+  void sdl_thread_fn(std::promise<int> &&ret);
 
   int load_char_rom();
   void create_char_textures();
