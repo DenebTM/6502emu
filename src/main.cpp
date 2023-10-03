@@ -7,8 +7,6 @@
 #include <iostream>
 #include <readline/readline.h>
 #include <signal.h>
-#include <tuple>
-#include <vector>
 
 #include "cpu.hpp"
 #include "emu-common.hpp"
@@ -32,7 +30,7 @@ Emu6502 cpu;
 
 // FIXME: pull these out into their own translation unit (see also sysclock.cpp)
 typedef int (*plugin_load_t)(void);
-typedef int (*plugin_init_t)(std::vector<std::pair<MemoryMappedDevice *, Word>> &, plugin_callback_t);
+typedef int (*plugin_init_t)(AddressSpace &, plugin_callback_t);
 typedef int (*plugin_destroy_t)(void);
 typedef int (*plugin_update_t)(int cycles_elapsed);
 
@@ -145,12 +143,8 @@ void load_plugins() {
 }
 
 void init_plugins() {
-  std::vector<std::pair<MemoryMappedDevice *, Word>> plugin_devs;
   for (auto plugin_init_func : plugin_init_funcs)
-    plugin_init_func(plugin_devs, &plugin_callback_handler);
-  for (auto [dev, addr] : plugin_devs) {
-    add_spc.map_mem(dev, addr);
-  }
+    plugin_init_func(add_spc, &plugin_callback_handler);
 }
 
 void signal_callback_handler(int signum) {

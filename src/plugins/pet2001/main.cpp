@@ -1,18 +1,13 @@
-// #include <chrono>
-#include <tuple>
-#include <vector>
-
 #include "chardev.hpp"
 #include "mem-dev.hpp"
+#include "mem.hpp"
 #include "pia1.hpp"
 #include "plugin-callback.hpp"
-#include "via.hpp"
 
 plugin_callback_t plugin_callback;
 
 Chardev *chardev;
 Pia1 *pia1;
-Via *via;
 
 extern "C" int plugin_load() {
   chardev = new Chardev();
@@ -23,26 +18,22 @@ extern "C" int plugin_load() {
 
   pia1 = new Pia1();
 
-  via = new Via();
-
   return 0;
 }
 
-extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> &devs, plugin_callback_t callback) {
+extern "C" int plugin_init(AddressSpace &add_spc, plugin_callback_t callback) {
   plugin_callback = callback;
 
   chardev->sdl_init();
-  devs.push_back({chardev, 0x8000});
-  devs.push_back({chardev, 0x8400});
-  devs.push_back({chardev, 0x8800});
-  devs.push_back({chardev, 0x8c00});
+  add_spc.map_mem(chardev, 0x8000);
+  add_spc.map_mem(chardev, 0x8400);
+  add_spc.map_mem(chardev, 0x8800);
+  add_spc.map_mem(chardev, 0x8c00);
 
-  devs.push_back({pia1, 0xe810});
-  devs.push_back({pia1, 0xe814});
-  devs.push_back({pia1, 0xe818});
-  devs.push_back({pia1, 0xe81c});
-
-  devs.push_back({via, 0xe840});
+  add_spc.map_mem(pia1, 0xe810);
+  add_spc.map_mem(pia1, 0xe814);
+  add_spc.map_mem(pia1, 0xe818);
+  add_spc.map_mem(pia1, 0xe81c);
 
   return 0;
 }
@@ -53,15 +44,6 @@ extern "C" int plugin_destroy() {
 
   if (pia1)
     delete pia1;
-
-  return 0;
-}
-
-extern "C" int plugin_update(int cycles_elapsed) {
-  if (via) {
-    for (int i = 0; i < cycles_elapsed; i++)
-      via->update();
-  }
 
   return 0;
 }

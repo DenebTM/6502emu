@@ -1,9 +1,7 @@
-#include <tuple>
-#include <vector>
-
 #include "emu-stdin.hpp"
 #include "emu-stdio-common.hpp"
 #include "emu-stdout.hpp"
+#include "mem.hpp"
 #include "plugin-callback.hpp"
 
 OutChar *emu_out;
@@ -11,14 +9,14 @@ InChar *emu_in;
 
 plugin_callback_t plugin_callback;
 
-extern "C" int plugin_init(std::vector<std::pair<MemoryMappedDevice *, Word>> &devs, plugin_callback_t callback) {
+extern "C" int plugin_init(AddressSpace &add_spc, plugin_callback_t callback) {
   plugin_callback = callback;
 
   emu_out = new OutChar();
   emu_in = new InChar();
 
-  devs.push_back({emu_out, 0xF001});
-  devs.push_back({emu_in, 0xF004});
+  add_spc.map_mem(emu_out, 0xf001);
+  add_spc.map_mem(emu_in, 0xf004);
 
   return 0;
 }

@@ -4,7 +4,7 @@
 using namespace std::chrono_literals;
 
 #include "plugin-callback.hpp"
-#include "via.hpp"
+#include "plugins/6522-via.hpp"
 
 extern plugin_callback_t plugin_callback;
 
@@ -14,7 +14,15 @@ Via::Via() : MemoryMappedDevice(false, 16) {
 }
 
 Byte Via::read(Word offset) {
-  if (mapped_regs + offset == t1c_lo || mapped_regs + offset == t1l_lo) {
+  Byte *reg = mapped_regs + offset;
+
+  if (reg == port_a_ca2) {
+    reg = port_a;
+
+    // TODO: perform CA2 handshake
+  }
+
+  else if (reg == t1c_lo || reg == t1l_lo) {
     clear_interrupt(IRQ::TIMER1_ZERO);
   }
 
@@ -22,11 +30,24 @@ Byte Via::read(Word offset) {
 }
 
 Byte Via::write(Word offset, Byte val) {
-  if (mapped_regs + offset == ifr) {
+  Byte *reg = mapped_regs + offset;
+
+  if (reg == port_a_ca2) {
+    reg = port_a;
+
+    // TODO: perform CA2 handshake
+  }
+  if (reg == port_a) {
+    val = (*port_a & *ddra) | (val & ~(*ddra));
+  } else if (reg == port_b) {
+    val = (*port_b & *ddrb) | (val & ~(*ddrb));
+  }
+
+  else if (reg == ifr) {
     val = *ifr & ~(val & ~0x80);
   }
 
-  else if (mapped_regs + offset == ier) {
+  else if (reg == ier) {
     bool enable_irqs = val >> 7;
     if (enable_irqs) {
       val = *ier | (val & ~0x80);
@@ -35,11 +56,11 @@ Byte Via::write(Word offset, Byte val) {
     }
   }
 
-  else if (mapped_regs + offset == t1c_hi || mapped_regs + offset == t1l_hi) {
+  else if (reg == t1c_hi || reg == t1l_hi) {
     clear_interrupt(IRQ::TIMER1_ZERO);
   }
 
-  return mapped_regs[offset] = val;
+  return *reg = val;
 }
 
 void Via::flag_interrupt(IRQ irq) {

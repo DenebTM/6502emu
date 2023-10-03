@@ -1,5 +1,4 @@
 #pragma once
-#include <thread>
 
 #include "mem-dev.hpp"
 
@@ -58,8 +57,8 @@ public:
     }
   }
 
-  Byte *orb = mapped_regs + 0;
-  Byte *ora = mapped_regs + 1;
+  Byte *port_b = mapped_regs + 0;
+  Byte *port_a_ca2 = mapped_regs + 1;
   Byte *ddrb = mapped_regs + 2;
   Byte *ddra = mapped_regs + 3;
 
@@ -80,7 +79,7 @@ public:
   Byte *pcr = mapped_regs + 12;
   Byte *ifr = mapped_regs + 13;
   Byte *ier = mapped_regs + 14;
-  Byte *ora_nohandshake = mapped_regs + 15;
+  Byte *port_a = mapped_regs + 15;
 
 private:
   void flag_interrupt(IRQ irq);
