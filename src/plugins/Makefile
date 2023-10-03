@@ -1,4 +1,4 @@
-PLUGINS = $(shell find * -maxdepth 0 -type d)
+PLUGINS = $(shell find * -mindepth 1 -maxdepth 1 -type f -iname Makefile -printf '%h\n')
 BUILD_TARGETS = $(PLUGINS:%=%.so)
 CLEAN_TARGETS = $(PLUGINS:%=%-clean)
 

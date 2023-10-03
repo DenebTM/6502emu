@@ -28,6 +28,6 @@ clean-plugins:
 	$(MAKE) -C plugins clean
 clean-all: clean clean-plugins
 
-rebuild: clean $(OUTFILE)
-rebuild-plugins: clean-plugins plugins
+rebuild: clean .WAIT $(OUTFILE)
+rebuild-plugins: clean-plugins .WAIT plugins
 rebuild-all: rebuild rebuild-plugins
