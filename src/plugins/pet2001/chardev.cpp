@@ -3,8 +3,9 @@
 #include <fstream>
 
 #include "chardev.hpp"
-#include "pia1.hpp"
+#include "keyboard.hpp"
 #include "plugin-callback.hpp"
+#include "plugins/6520-pia.hpp"
 
 #define COL_WIDTH 8
 #define ROW_HEIGHT 8
@@ -17,7 +18,7 @@ constexpr int RENDER_HEIGHT = ROW_HEIGHT * ROWS * RENDER_SCALE;
 
 extern plugin_callback_t plugin_callback;
 
-extern Pia1 *pia1;
+extern Pia *pia1;
 
 Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
   screen_mem = new Byte[1024];
@@ -71,11 +72,11 @@ void Chardev::sdl_handle_events() {
 
       case SDL_KEYDOWN:
         if (!event.key.repeat)
-          pia1->key_down(event.key.keysym);
+          handle_key_down(event.key.keysym);
         break;
 
       case SDL_KEYUP:
-        pia1->key_up(event.key.keysym);
+        handle_key_up(event.key.keysym);
         break;
     }
   }
@@ -95,8 +96,9 @@ void Chardev::sdl_render() {
     }
   }
 
-  pia1->flag_interrupt();
   SDL_RenderPresent(renderer);
+  if (pia1)
+    pia1->flag_interrupt();
 }
 
 void Chardev::sdl_thread_fn(std::promise<int> &&ret) {

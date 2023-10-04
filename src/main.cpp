@@ -29,8 +29,8 @@ AddressSpace add_spc;
 Emu6502 cpu;
 
 // FIXME: pull these out into their own translation unit (see also sysclock.cpp)
-typedef int (*plugin_load_t)(void);
-typedef int (*plugin_init_t)(AddressSpace &, Word, plugin_callback_t);
+typedef int (*plugin_load_t)(plugin_callback_t);
+typedef int (*plugin_init_t)(AddressSpace &, Word);
 typedef int (*plugin_destroy_t)(void);
 typedef int (*plugin_update_t)(int cycles_elapsed);
 
@@ -125,7 +125,7 @@ void load_plugins() {
       }
 
       auto plugin_load_func = (plugin_load_t)dlsym(plugin, "plugin_load");
-      if (plugin_load_func && plugin_load_func() == -1) {
+      if (plugin_load_func && plugin_load_func(&plugin_callback_handler) == -1) {
         std::cerr << "Plugin " << loaded_filename << " failed to load." << std::endl;
         continue;
       }
@@ -153,7 +153,7 @@ void load_plugins() {
 
 void init_plugins() {
   for (auto [plugin_init_func, plugin_addr] : plugin_init_funcs)
-    plugin_init_func(add_spc, plugin_addr, &plugin_callback_handler);
+    plugin_init_func(add_spc, plugin_addr);
 }
 
 void signal_callback_handler(int signum) {

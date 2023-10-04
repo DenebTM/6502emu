@@ -1,5 +1,5 @@
 LDLIBS = `sdl2-config --cflags --libs`
-OBJS = main.o chardev.o keyboard.o
-OUTFILE = ../pet2001.so
+OBJS = main.o 6520-pia.o
+OUTFILE = ../6520-pia.so
 
 include ../plugin-makefile-base

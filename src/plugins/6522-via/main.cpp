@@ -7,15 +7,16 @@ plugin_callback_t plugin_callback;
 
 Via *via;
 
-extern "C" int plugin_load() {
+extern "C" int plugin_load(plugin_callback_t callback) {
+  plugin_callback = callback;
+
   via = new Via();
 
   return 0;
 }
 
-extern "C" int plugin_init(AddressSpace &add_spc, Word addr, plugin_callback_t callback) {
+extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
   addr = addr ? addr : 0xe840;
-  plugin_callback = callback;
 
   add_spc.map_mem(via, addr);
 

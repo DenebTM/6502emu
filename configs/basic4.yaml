@@ -28,9 +28,15 @@ roms:
 plugins:
   enumerate: false
   config:
-    - file: pet2001.so
-      # disable: false
-      address: 0x8000
+    - file: 6520-pia.so
+      address: 0xe810
+
+    - file: 6520-pia.so
+      address: 0xe820
 
     - file: 6522-via.so
       address: 0xe840
+
+    - file: pet2001.so
+      # disable: false
+      address: 0x8000

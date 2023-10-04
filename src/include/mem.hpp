@@ -107,6 +107,15 @@ public:
       mem_info[i].dev.reset();
   }
 
+  std::optional<MemoryMappedDevice *> get_dev(DWord addr) {
+    auto dev = mem_info[addr].dev;
+    if (dev.has_value()) {
+      return std::get<MemoryMappedDevice *>(dev.value());
+    }
+
+    return std::nullopt;
+  }
+
 private:
   DWord mem_size;
 

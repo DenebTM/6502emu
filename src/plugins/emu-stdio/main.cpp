@@ -9,9 +9,13 @@ InChar *emu_in;
 
 plugin_callback_t plugin_callback;
 
-extern "C" int plugin_init(AddressSpace &add_spc, Word addr, plugin_callback_t callback) {
-  addr = addr ? addr : 0xf001;
+extern "C" int plugin_load(plugin_callback_t callback) {
   plugin_callback = callback;
+  return 0;
+}
+
+extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
+  addr = addr ? addr : 0xf001;
 
   emu_out = new OutChar();
   emu_in = new InChar();
