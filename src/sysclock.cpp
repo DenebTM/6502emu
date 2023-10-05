@@ -28,6 +28,6 @@ void step_cycle() {
     std::this_thread::sleep_until(next_wake);
 
     cycle_current_period = 0;
-    next_wake = std::chrono::system_clock::now() + scanline_time;
+    next_wake += scanline_time;
   }
 }
