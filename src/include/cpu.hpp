@@ -7,30 +7,28 @@
 #include "emu-common.hpp"
 #include "mem.hpp"
 
-#define FLAG_N 0x80
-#define FLAG_V 0x40
-#define FLAG_B 0x10
-#define FLAG_D 0x08
-#define FLAG_I 0x04
-#define FLAG_Z 0x02
-#define FLAG_C 0x01
+#define FLAG_N 0x80 // status register bit 7 - negative
+#define FLAG_V 0x40 // status register bit 6 - signed operation overflow
+#define FLAG_B 0x10 // status register bit 4 - break (set on stack when pushed by BRK)
+#define FLAG_D 0x08 // status register bit 3 - BCD arithmetic
+#define FLAG_I 0x04 // status register bit 2 - interrupt disable
+#define FLAG_Z 0x02 // status register bit 1 - zero
+#define FLAG_C 0x01 // status register bit 0 - carry
 
-#define SR_N (Byte)(reg_sr & FLAG_N)
-#define SR_V (Byte)(reg_sr & FLAG_V)
-#define SR_B (Byte)(reg_sr & FLAG_B)
-#define SR_D (Byte)(reg_sr & FLAG_D)
-#define SR_I (Byte)(reg_sr & FLAG_I)
-#define SR_Z (Byte)(reg_sr & FLAG_Z)
-#define SR_C (Byte)(reg_sr & FLAG_C)
+#define SR_N (Byte)(reg_sr & FLAG_N) // current bit 7 of status register
+#define SR_V (Byte)(reg_sr & FLAG_V) // current bit 6 of status register
+#define SR_D (Byte)(reg_sr & FLAG_D) // current bit 3 of status register
+#define SR_I (Byte)(reg_sr & FLAG_I) // current bit 2 of status register
+#define SR_Z (Byte)(reg_sr & FLAG_Z) // current bit 1 of status register
+#define SR_C (Byte)(reg_sr & FLAG_C) // current bit 0 of status register
 
-#define VEC_NMI 0xfffa
-#define VEC_RST 0xfffc
-#define VEC_IRQ 0xfffe
+#define VEC_NMI 0xfffa // word at this address is loaded into program counter on NMI
+#define VEC_RST 0xfffc // word at this address is loaded into program counter on RESET
+#define VEC_IRQ 0xfffe // word at this address is loaded into program counter on IRQ/BRK
 
 class Emu6502 {
 public:
   enum AddressingMode { NONE, ACC, IMM, ZPG, ZPG_X, ZPG_Y, ABS, ABS_X, ABS_Y, IND, X_IND, IND_Y };
-  enum CpuRegister { REG_A, REG_X, REG_Y, REG_SP, REG_SR };
 
   Emu6502();
   ~Emu6502();

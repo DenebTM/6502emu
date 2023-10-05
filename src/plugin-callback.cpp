@@ -7,6 +7,10 @@ extern std::atomic_bool is_running;
 extern int exit_code;
 extern Emu6502 cpu;
 
+/**
+ * a pointer to this function should be passed to every plugin that
+ * needs to be able to interrupt the CPU or cleanly shut down the emulator
+ */
 void plugin_callback_handler(PluginCallbackType type, void *arg) {
   switch (type) {
     case EMU_EXIT:

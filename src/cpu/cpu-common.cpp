@@ -4,6 +4,9 @@
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
 
+/**
+ * determine addressing mode based on this table: https://www.masswerk.at/6502/6502_instruction_set.html#layout
+ */
 Emu6502::AddressingMode Emu6502::get_addr_mode(int opc_a, int opc_b, int opc_c) {
   if (current_opcode == 0x6c) {
     return IND;
@@ -39,6 +42,14 @@ Emu6502::AddressingMode Emu6502::get_addr_mode(int opc_a, int opc_b, int opc_c) 
  * also advances the program counter to point at the following instruction
  */
 Word Emu6502::get_target(AddressingMode mode) { return get_target(mode, false); }
+
+/**
+ * get memory address of instruction operand based on addressing mode
+ * also advances the program counter to point at the following instruction
+ *
+ * @param index_always_adds_cycle when `false`, indexed addressing modes only add an extra cycle
+ * when a page boundary is crossed
+ */
 Word Emu6502::get_target(AddressingMode mode, bool index_always_adds_cycle) {
   switch (mode) {
     case IMM:
@@ -119,13 +130,8 @@ inline Byte Emu6502::read(Word addr) {
 }
 inline Word Emu6502::read_word(Word addr_lo) { return read_word(addr_lo, false); }
 inline Word Emu6502::read_word(Word addr_lo, bool wrap_page) {
-  auto addr_hi = addr_lo + 1;
-  if (wrap_page) {
-    addr_hi &= 0x00ff;
-    addr_hi |= addr_lo & 0xff00;
-  }
-
-  return (Word)read(addr_lo) + ((Word)read(addr_hi) << 8);
+  step_cycle(2);
+  return add_spc.read_word(addr_lo, wrap_page);
 }
 
 inline void Emu6502::write(Word addr, Byte val) {

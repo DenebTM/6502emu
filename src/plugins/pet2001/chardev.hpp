@@ -10,8 +10,8 @@ public:
   Chardev();
   ~Chardev();
 
-  int pre_read(Word offset);
-  int post_write(Word offset);
+  int pre_read(Word offset) { return 0; }
+  int post_write(Word offset) { return 0; }
 
   int sdl_init();
 

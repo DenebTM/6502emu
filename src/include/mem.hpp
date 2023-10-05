@@ -111,21 +111,21 @@ public:
    *
    * @param bytes ROM data or NULL
    */
-  void map_mem(const Byte *bytes, Word size, Word start_addr) { map_mem((Byte *)bytes, size, start_addr, true); }
+  void map_mem(const Byte *bytes, DWord size, Word start_addr) { map_mem((Byte *)bytes, size, start_addr, true); }
 
   /**
    * mark a region in the address space as mapped and read-write, optionally copy a byte array into it
    *
    * @param bytes RAM data or NULL
    */
-  void map_mem(Byte *bytes, Word size, Word start_addr) { map_mem(bytes, size, start_addr, false); }
+  void map_mem(Byte *bytes, DWord size, Word start_addr) { map_mem(bytes, size, start_addr, false); }
 
   /**
    * mark a region in the address space as mapped, optionally copy a byte array into it
    *
    * @param bytes binary data or NULL
    */
-  void map_mem(Byte *bytes, Word size, Word start_addr, bool read_only) {
+  void map_mem(Byte *bytes, DWord size, Word start_addr, bool read_only) {
     for (size_t i = 0; i < size && (start_addr + i) < SIZE; i++) {
       mem_info[start_addr + i].mapped = true;
       mem_info[start_addr + i].read_only = read_only;

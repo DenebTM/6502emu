@@ -44,10 +44,6 @@ Chardev::~Chardev() {
   }
 }
 
-int Chardev::pre_read(Word offset) { return 0; }
-
-int Chardev::post_write(Word offset) { return 0; }
-
 int Chardev::sdl_init() {
   std::promise<int> sdl_init_promise;
   auto sdl_init_future = sdl_init_promise.get_future();
