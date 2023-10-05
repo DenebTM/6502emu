@@ -54,7 +54,12 @@ public:
    * @param wrap_page when `true`, `addr_hi`'s high byte will not be incremented for the second read
    */
   Word read_word(Word addr_lo, bool wrap_page) {
-    auto addr_hi = wrap_page ? (addr_lo & 0xff00) : (addr_lo + 1);
+    auto addr_hi = addr_lo + 1;
+    if (wrap_page) {
+      addr_hi &= 0x00ff;
+      addr_hi |= addr_lo & 0xff00;
+    }
+
     return (Word)read(addr_lo) + ((Word)read(addr_hi) << 8);
   }
 
@@ -95,7 +100,12 @@ public:
    * @param wrap_page when `true`, `addr_hi`'s high byte will not be incremented for the second write
    */
   void write_word(Word addr_lo, Word val, bool wrap_page) {
-    auto addr_hi = wrap_page ? (addr_lo & 0xff00) : (addr_lo + 1);
+    auto addr_hi = addr_lo + 1;
+    if (wrap_page) {
+      addr_hi &= 0x00ff;
+      addr_hi |= addr_lo & 0xff00;
+    }
+
     write(addr_lo, val), write(addr_hi, val >> 8);
   }
 
