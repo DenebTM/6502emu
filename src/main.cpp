@@ -81,15 +81,17 @@ int main(int argc, char **argv) {
 
 void load_roms() {
   for (auto [file_name, start_addr, read_only] : config->roms) {
+    // load ROM and determine size in bytes
     std::ifstream file(file_name, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
+
+    // get ROM contents
     char *bytes = new char[size];
     file.read(bytes, size);
 
-    ROM rom = ROM((const Byte *)bytes, size, start_addr, read_only);
-    add_spc.map_mem(rom);
-
+    // copy ROM into address space
+    add_spc.map_mem((Byte *)bytes, size, start_addr, read_only);
     delete[] bytes;
   }
 }

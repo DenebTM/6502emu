@@ -5,7 +5,6 @@
 
 #include "emu-common.hpp"
 #include "mem-dev.hpp"
-#include "rom.hpp"
 
 struct EmuConfig {
   using FilePath = std::string;
