@@ -15,7 +15,8 @@ QWord cycle_full = 0;
 // TODO maybe: add a version of this for non-CPU devices and/or non-main threads
 void step_cycle() {
   const static auto cycles_per_scanline = config->clock_speed / 200 / 60;
-  const static auto sleep_time = 1000000000ns / (config->clock_speed / cycles_per_scanline);
+  const static auto scanline_time = 1000000000ns / (config->clock_speed / cycles_per_scanline);
+  static auto next_wake = std::chrono::system_clock::now() + scanline_time;
 
   cycle_current_period++;
   cycle_full++;
@@ -24,7 +25,9 @@ void step_cycle() {
     plugin_update_func(1);
 
   if (cycle_current_period >= cycles_per_scanline) {
+    std::this_thread::sleep_until(next_wake);
+
     cycle_current_period = 0;
-    std::this_thread::sleep_for(sleep_time);
+    next_wake = std::chrono::system_clock::now() + scanline_time;
   }
 }
