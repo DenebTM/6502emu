@@ -1,0 +1,15 @@
+cpu:
+  init_pc: reset
+  clock_speed: 100000000
+
+ram:
+  - start: 0x0000
+    size: 65536
+
+roms:
+  - file: roms/cycletest-nobranch.bin
+    start: 0xf000
+    ro: true
+
+plugins:
+  enumerate: false

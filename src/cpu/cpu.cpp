@@ -67,50 +67,60 @@ void Emu6502::do_instruction() {
     case 0x94:
     case 0x8c: {
       Byte *reg = opc_c == 0 ? &reg_y : opc_c == 1 ? &reg_a : &reg_x;
-      write(get_target(mode), *reg);
+      write(get_target(mode, true), *reg);
       break;
     }
 
     // TAX
     case 0xaa:
       set_reg(&reg_x, reg_a, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
     // TAY
     case 0xa8:
       set_reg(&reg_y, reg_a, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
     // TSX
     case 0xba:
       set_reg(&reg_x, reg_sp, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
     // TXA
     case 0x8a:
       set_reg(&reg_a, reg_x, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
     // TXS
     case 0x9a:
       set_reg(&reg_sp, reg_x);
+      step_cycle();
       break;
     // TYA
     case 0x98:
       set_reg(&reg_a, reg_y, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
 
     // PHA
     case 0x48:
       push(reg_a);
+      step_cycle();
       break;
     // PHP
     case 0x08:
       push(get_sr() | FLAG_B);
+      step_cycle();
       break;
     // PLA
     case 0x68:
       set_reg(&reg_a, pop(), FLAG_N | FLAG_Z);
+      step_cycle(2);
       break;
     // PLP
     case 0x28:
       set_reg(&reg_sr, pop());
+      step_cycle(2);
       break;
 
     // DEC
@@ -118,21 +128,24 @@ void Emu6502::do_instruction() {
     case 0xd6:
     case 0xce:
     case 0xde: {
-      auto addr = get_target(mode);
+      auto addr = get_target(mode, true);
       auto val = read(addr) - 1;
       write(addr, val);
       set_flags(val, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
     }
     // DEX
     case 0xca:
       reg_x--;
       set_flags(reg_x, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
     // DEY
     case 0x88:
       reg_y--;
       set_flags(reg_y, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
 
     // INC
@@ -140,21 +153,24 @@ void Emu6502::do_instruction() {
     case 0xf6:
     case 0xee:
     case 0xfe: {
-      auto addr = get_target(mode);
+      auto addr = get_target(mode, true);
       auto val = read(addr) + 1;
       write(addr, val);
       set_flags(val, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
     }
     // INX
     case 0xe8:
       reg_x++;
       set_flags(reg_x, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
     // INY
     case 0xc8:
       reg_y++;
       set_flags(reg_y, FLAG_N | FLAG_Z);
+      step_cycle();
       break;
 
     // ADC
@@ -239,13 +255,14 @@ void Emu6502::do_instruction() {
     case 0x16:
     case 0x0e:
     case 0x1e: {
-      Word addr = (mode != ACC) ? get_target(mode) : 0;
+      Word addr = (mode != ACC) ? get_target(mode, true) : 0;
       Byte val = addr ? read(addr) : reg_a;
       Word res = (Word)val << 1;
 
       reg_sr &= ~FLAG_C;
       reg_sr |= (res & 0x100) >> 8;
       set_flags((Byte)res, FLAG_N | FLAG_Z);
+      step_cycle();
 
       if (mode == ACC) {
         reg_a = (Byte)res;
@@ -261,13 +278,14 @@ void Emu6502::do_instruction() {
     case 0x56:
     case 0x4e:
     case 0x5e: {
-      Word addr = (mode != ACC) ? get_target(mode) : 0;
+      Word addr = (mode != ACC) ? get_target(mode, true) : 0;
       Byte val = addr ? read(addr) : reg_a;
       Word res = (Word)val >> 1;
 
       reg_sr &= ~FLAG_C;
       reg_sr |= FLAG_C & val;
       set_flags((Byte)res, FLAG_N | FLAG_Z);
+      step_cycle();
 
       if (mode == ACC) {
         reg_a = (Byte)res;
@@ -283,13 +301,14 @@ void Emu6502::do_instruction() {
     case 0x36:
     case 0x2e:
     case 0x3e: {
-      Word addr = (mode != ACC) ? get_target(mode) : 0;
+      Word addr = (mode != ACC) ? get_target(mode, true) : 0;
       Byte val = addr ? read(addr) : reg_a;
       Word res = ((Word)val << 1) | SR_C;
 
       reg_sr &= ~FLAG_C;
       reg_sr |= (res & 0x100) >> 8;
       set_flags((Byte)res, FLAG_N | FLAG_Z);
+      step_cycle();
 
       if (mode == ACC) {
         reg_a = (Byte)res;
@@ -305,13 +324,14 @@ void Emu6502::do_instruction() {
     case 0x76:
     case 0x6e:
     case 0x7e: {
-      Word addr = (mode != ACC) ? get_target(mode) : 0;
+      Word addr = (mode != ACC) ? get_target(mode, true) : 0;
       Byte val = addr ? read(addr) : reg_a;
       Word res = ((Word)val >> 1) | (SR_C << 7);
 
       reg_sr &= ~FLAG_C;
       reg_sr |= FLAG_C & val;
       set_flags((Byte)res, FLAG_N | FLAG_Z);
+      step_cycle();
 
       if (mode == ACC) {
         reg_a = (Byte)res;
@@ -321,34 +341,28 @@ void Emu6502::do_instruction() {
       break;
     }
 
-    // CLC
+    // CLC/CLD/CLI/CLV / SEC/SED/SEI
     case 0x18:
-      reg_sr &= ~FLAG_C;
-      break;
-    // CLD
     case 0xd8:
-      reg_sr &= ~FLAG_D;
-      break;
-    // CLI
     case 0x58:
-      reg_sr &= ~FLAG_I;
-      break;
-    // CLV
     case 0xb8:
-      reg_sr &= ~FLAG_V;
-      break;
-    // SEC
     case 0x38:
-      reg_sr |= FLAG_C;
-      break;
-    // SED
     case 0xf8:
-      reg_sr |= FLAG_D;
+    case 0x78: {
+      Byte flag_affected[4] = {FLAG_C, FLAG_I, FLAG_V, FLAG_D};
+
+      // clear the flag
+      if (opc_a % 2 == 0 || opc_a == 5) {
+        reg_sr &= ~flag_affected[opc_a / 2];
+      }
+      // set the flag
+      else {
+        reg_sr |= flag_affected[opc_a / 2];
+      }
+
+      step_cycle();
       break;
-    // SEI
-    case 0x78:
-      reg_sr |= FLAG_I;
-      break;
+    }
 
     // CMP/CPX/CPY
     case 0xc9:
@@ -392,10 +406,10 @@ void Emu6502::do_instruction() {
     case 0xb0:
     case 0xd0:
     case 0xf0: {
-      Byte flags[8] = {!SR_N, SR_N, !SR_V, SR_V, !SR_C, SR_C, !SR_Z, SR_Z};
+      Byte conditions[8] = {!SR_N, SR_N, !SR_V, SR_V, !SR_C, SR_C, !SR_Z, SR_Z};
       auto offset = read(reg_pc++);
 
-      if (flags[opc_a]) {
+      if (conditions[opc_a]) {
         auto new_pc = reg_pc + *(SByte *)&offset;
         step_cycle();
         if ((reg_pc & 0xff00) != (new_pc & 0xff00))
@@ -408,6 +422,7 @@ void Emu6502::do_instruction() {
     // JSR
     case 0x20:
       push_word(reg_pc + 1);
+      step_cycle();
     // JMP
     case 0x4c:
     case 0x6c:
@@ -417,15 +432,18 @@ void Emu6502::do_instruction() {
     // RTS
     case 0x60:
       reg_pc = pop_word() + 1;
+      step_cycle(3);
       break;
 
     // RTI
     case 0x40:
       set_reg(&reg_sr, pop());
       reg_pc = pop_word();
+      step_cycle(2);
       break;
 
     case 0xea:
+      step_cycle();
       break;
 
     // BRK

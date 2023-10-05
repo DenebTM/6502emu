@@ -32,7 +32,7 @@ Emu6502 cpu;
 typedef int (*plugin_load_t)(plugin_callback_t);
 typedef int (*plugin_init_t)(AddressSpace &, Word);
 typedef int (*plugin_destroy_t)(void);
-typedef int (*plugin_update_t)(int cycles_elapsed);
+typedef int (*plugin_update_t)(unsigned int cycles_elapsed);
 
 std::vector<std::tuple<plugin_init_t, Word>> plugin_init_funcs;
 std::vector<plugin_destroy_t> plugin_destroy_funcs;

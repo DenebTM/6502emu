@@ -41,8 +41,7 @@ Additionally requires a 2k PETSCII character ROM to be present at `roms/char_rom
 
 ## TODO
 
-- fix cycle counting
-- improve memory-mapping process
-- more plugins - CBM PET or VIC-20 emulation as potential goal
+- actually honour RAM config
+- more plugins - full CBM PET or VIC-20 emulation as potential goal
 - UI for debugging
 - documentation

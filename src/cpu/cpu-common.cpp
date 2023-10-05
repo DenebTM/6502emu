@@ -38,28 +38,35 @@ Emu6502::AddressingMode Emu6502::get_addr_mode(int opc_a, int opc_b, int opc_c) 
  * get memory address of instruction operand based on addressing mode
  * also advances the program counter to point at the following instruction
  */
-Word Emu6502::get_target(AddressingMode mode) {
+Word Emu6502::get_target(AddressingMode mode) { return get_target(mode, false); }
+Word Emu6502::get_target(AddressingMode mode, bool index_always_adds_cycle) {
   switch (mode) {
     case IMM:
       return reg_pc++;
     case ZPG:
       return read(reg_pc++);
     case ZPG_X:
-      return (Byte)(read(reg_pc++) + reg_x);
+      return (Byte)(read(reg_pc++) + (step_cycle(), reg_x));
     case ZPG_Y:
-      return (Byte)(read(reg_pc++) + reg_y);
+      return (Byte)(read(reg_pc++) + (step_cycle(), reg_y));
     case ABS: {
       auto addr = read_word(reg_pc);
       reg_pc += 2;
       return addr;
     }
     case ABS_X: {
-      auto addr = read_word(reg_pc) + reg_x;
+      auto addr_preindex = read_word(reg_pc);
+      auto addr = addr_preindex + reg_x;
+      if (index_always_adds_cycle || (addr & 0xff00) != (addr_preindex & 0xff00))
+        step_cycle();
       reg_pc += 2;
       return addr;
     }
     case ABS_Y: {
-      auto addr = read_word(reg_pc) + reg_y;
+      auto addr_preindex = read_word(reg_pc);
+      auto addr = addr_preindex + reg_y;
+      if (index_always_adds_cycle || (addr & 0xff00) != (addr_preindex & 0xff00))
+        step_cycle();
       reg_pc += 2;
       return addr;
     }
@@ -67,15 +74,20 @@ Word Emu6502::get_target(AddressingMode mode) {
       return read_word(read_word(reg_pc));
     }
     case X_IND: {
-      auto addr_zpg = (Byte)(read(reg_pc++) + reg_x);
+      auto addr_zpg = (Byte)(read(reg_pc++) + (step_cycle(), reg_x));
       return read_word(addr_zpg, true);
     }
     case IND_Y: {
       auto addr_zpg = read(reg_pc++);
-      return read_word(addr_zpg, true) + reg_y;
+      auto addr_preindex = read_word(addr_zpg, true);
+      auto addr = addr_preindex + reg_y;
+      if (index_always_adds_cycle || (addr & 0xff00) != (addr_preindex & 0xff00))
+        step_cycle();
+      return addr;
     }
 
     case ACC:
+      step_cycle();
     case NONE:
       return 0;
   }
@@ -111,8 +123,6 @@ inline Word Emu6502::read_word(Word addr_lo, bool wrap_page) {
   if (wrap_page) {
     addr_hi &= 0x00ff;
     addr_hi |= addr_lo & 0xff00;
-  } else if ((addr_lo & 0xff00) != (addr_hi & 0xff00)) {
-    step_cycle();
   }
 
   return (Word)read(addr_lo) + ((Word)read(addr_hi) << 8);
@@ -171,8 +181,7 @@ void Emu6502::reset() {
   reg_sp = 0xff;
   reg_pc = read_word(VEC_RST);
 
-  for (int i = 0; i < 4; i++)
-    step_cycle();
+  step_cycle(4);
 }
 
 void Emu6502::assert_interrupt(bool nmi) {
@@ -189,7 +198,5 @@ void Emu6502::handle_interrupt(bool brk) {
   reg_pc = read_word(got_nmi ? VEC_NMI : VEC_IRQ);
 
   (got_nmi ? got_nmi : got_irq) = false;
-
-  for (int i = 0; i < 2; i++)
-    step_cycle();
+  step_cycle();
 }

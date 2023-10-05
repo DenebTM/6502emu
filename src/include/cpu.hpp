@@ -52,6 +52,7 @@ public:
 private:
   AddressingMode get_addr_mode(int opc_a, int opc_b, int opc_c);
   Word get_target(AddressingMode mode);
+  Word get_target(AddressingMode mode, bool index_always_adds_cycle);
 
   Byte read(Word addr);
   Word read_word(Word addr_lo);

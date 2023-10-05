@@ -30,9 +30,9 @@ extern "C" int plugin_destroy() {
   return 0;
 }
 
-extern "C" int plugin_update(int cycles_elapsed) {
+extern "C" int plugin_update(unsigned int cycles_elapsed) {
   if (via) {
-    for (int i = 0; i < cycles_elapsed; i++)
+    for (unsigned int i = 0; i < cycles_elapsed; i++)
       via->update();
   }
 

@@ -48,7 +48,7 @@ Emu6502::Emu6502() {
   opcode_map[0xbc] = {"LDY abs,x", [&](AddressingMode mode) { load_reg_fn(&reg_y, mode); }};
 
   static std::function<void(Byte *, AddressingMode)> store_reg_fn = [&](Byte *reg, AddressingMode mode) {
-    write(get_target(mode), *reg);
+    write(get_target(mode, true), *reg);
   };
   opcode_map[0x85] = {"STA zpg", [&](AddressingMode mode) { store_reg_fn(&reg_a, mode); }};
   opcode_map[0x95] = {"STA zpg,x", [&](AddressingMode mode) { store_reg_fn(&reg_a, mode); }};
@@ -64,43 +64,45 @@ Emu6502::Emu6502() {
   opcode_map[0x94] = {"STY zpg,x", [&](AddressingMode mode) { store_reg_fn(&reg_y, mode); }};
   opcode_map[0x8c] = {"STY abs", [&](AddressingMode mode) { store_reg_fn(&reg_y, mode); }};
 
-  opcode_map[0xaa] = {"TAX", [&](AddressingMode) { set_reg(&reg_x, reg_a, FLAG_N | FLAG_Z); }};
-  opcode_map[0xa8] = {"TAY", [&](AddressingMode) { set_reg(&reg_y, reg_a, FLAG_N | FLAG_Z); }};
-  opcode_map[0xba] = {"TSX", [&](AddressingMode) { set_reg(&reg_x, reg_sp, FLAG_N | FLAG_Z); }};
-  opcode_map[0x8a] = {"TXA", [&](AddressingMode) { set_reg(&reg_a, reg_x, FLAG_N | FLAG_Z); }};
-  opcode_map[0x9a] = {"TXS", [&](AddressingMode) { set_reg(&reg_sp, reg_x); }};
-  opcode_map[0x98] = {"TYA", [&](AddressingMode) { set_reg(&reg_a, reg_y, FLAG_N | FLAG_Z); }};
+  opcode_map[0xaa] = {"TAX", [&](AddressingMode) { step_cycle(), set_reg(&reg_x, reg_a, FLAG_N | FLAG_Z); }};
+  opcode_map[0xa8] = {"TAY", [&](AddressingMode) { step_cycle(), set_reg(&reg_y, reg_a, FLAG_N | FLAG_Z); }};
+  opcode_map[0xba] = {"TSX", [&](AddressingMode) { step_cycle(), set_reg(&reg_x, reg_sp, FLAG_N | FLAG_Z); }};
+  opcode_map[0x8a] = {"TXA", [&](AddressingMode) { step_cycle(), set_reg(&reg_a, reg_x, FLAG_N | FLAG_Z); }};
+  opcode_map[0x9a] = {"TXS", [&](AddressingMode) { step_cycle(), set_reg(&reg_sp, reg_x); }};
+  opcode_map[0x98] = {"TYA", [&](AddressingMode) { step_cycle(), set_reg(&reg_a, reg_y, FLAG_N | FLAG_Z); }};
 
-  opcode_map[0x48] = {"PHA", [&](AddressingMode) { push(reg_a); }};
-  opcode_map[0x08] = {"PHP", [&](AddressingMode) { push(get_sr() | FLAG_B); }};
-  opcode_map[0x68] = {"PLA", [&](AddressingMode) { set_reg(&reg_a, pop(), FLAG_N | FLAG_Z); }};
-  opcode_map[0x28] = {"PLP", [&](AddressingMode) { set_reg(&reg_sr, pop()); }};
+  opcode_map[0x48] = {"PHA", [&](AddressingMode) { step_cycle(), push(reg_a); }};
+  opcode_map[0x08] = {"PHP", [&](AddressingMode) { step_cycle(), push(get_sr() | FLAG_B); }};
+  opcode_map[0x68] = {"PLA", [&](AddressingMode) { step_cycle(2), set_reg(&reg_a, pop(), FLAG_N | FLAG_Z); }};
+  opcode_map[0x28] = {"PLP", [&](AddressingMode) { step_cycle(2), set_reg(&reg_sr, pop()); }};
 
   static std::function<void(AddressingMode)> dec_fn = [&](AddressingMode mode) {
-    auto addr = get_target(mode);
+    auto addr = get_target(mode, true);
     auto val = read(addr) - 1;
     write(addr, val);
     set_flags(val, FLAG_N | FLAG_Z);
+    step_cycle();
   };
   opcode_map[0xc6] = {"DEC zpg", dec_fn};
   opcode_map[0xd6] = {"DEC zpg,x", dec_fn};
   opcode_map[0xce] = {"DEC abs", dec_fn};
   opcode_map[0xde] = {"DEC abs,x", dec_fn};
-  opcode_map[0xca] = {"DEX", [&](AddressingMode) { reg_x--, set_flags(reg_x, FLAG_N | FLAG_Z); }};
-  opcode_map[0x88] = {"DEY", [&](AddressingMode) { reg_y--, set_flags(reg_y, FLAG_N | FLAG_Z); }};
+  opcode_map[0xca] = {"DEX", [&](AddressingMode) { step_cycle(), reg_x--, set_flags(reg_x, FLAG_N | FLAG_Z); }};
+  opcode_map[0x88] = {"DEY", [&](AddressingMode) { step_cycle(), reg_y--, set_flags(reg_y, FLAG_N | FLAG_Z); }};
 
   static std::function<void(AddressingMode)> inc_fn = [&](AddressingMode mode) {
-    auto addr = get_target(mode);
+    auto addr = get_target(mode, true);
     auto val = read(addr) + 1;
     write(addr, val);
     set_flags(val, FLAG_N | FLAG_Z);
+    step_cycle();
   };
   opcode_map[0xe6] = {"INC zpg", inc_fn};
   opcode_map[0xf6] = {"INC zpg,x", inc_fn};
   opcode_map[0xee] = {"INC abs", inc_fn};
   opcode_map[0xfe] = {"INC abs,x", inc_fn};
-  opcode_map[0xe8] = {"INX", [&](AddressingMode) { reg_x++, set_flags(reg_x, FLAG_N | FLAG_Z); }};
-  opcode_map[0xc8] = {"INY", [&](AddressingMode) { reg_y++, set_flags(reg_y, FLAG_N | FLAG_Z); }};
+  opcode_map[0xe8] = {"INX", [&](AddressingMode) { step_cycle(), reg_x++, set_flags(reg_x, FLAG_N | FLAG_Z); }};
+  opcode_map[0xc8] = {"INY", [&](AddressingMode) { step_cycle(), reg_y++, set_flags(reg_y, FLAG_N | FLAG_Z); }};
 
   static std::function<void(AddressingMode)> adc_fn = [&](AddressingMode mode) {
     auto operand = read(get_target(mode));
@@ -174,13 +176,14 @@ Emu6502::Emu6502() {
   opcode_map[0x11] = {"ORA (ind),y", ora_fn};
 
   static std::function<void(AddressingMode)> asl_fn = [&](AddressingMode mode) {
-    Word addr = (mode != ACC) ? get_target(mode) : 0;
+    Word addr = (mode != ACC) ? get_target(mode, true) : 0;
     Byte val = addr ? read(addr) : reg_a;
     Word res = (Word)val << 1;
 
     reg_sr &= ~FLAG_C;
     reg_sr |= (res & 0x100) >> 8;
     set_flags((Byte)res, FLAG_N | FLAG_Z);
+    step_cycle();
 
     if (mode == ACC) {
       reg_a = (Byte)res;
@@ -195,13 +198,14 @@ Emu6502::Emu6502() {
   opcode_map[0x1e] = {"ASL abs,x", asl_fn};
 
   static std::function<void(AddressingMode)> lsr_fn = [&](AddressingMode mode) {
-    Word addr = (mode != ACC) ? get_target(mode) : 0;
+    Word addr = (mode != ACC) ? get_target(mode, true) : 0;
     Byte val = addr ? read(addr) : reg_a;
     Word res = (Word)val >> 1;
 
     reg_sr &= ~FLAG_C;
     reg_sr |= FLAG_C & val;
     set_flags((Byte)res, FLAG_N | FLAG_Z);
+    step_cycle();
 
     if (mode == ACC) {
       reg_a = (Byte)res;
@@ -216,13 +220,14 @@ Emu6502::Emu6502() {
   opcode_map[0x5e] = {"LSR abs,x", lsr_fn};
 
   static std::function<void(AddressingMode)> rol_fn = [&](AddressingMode mode) {
-    Word addr = (mode != ACC) ? get_target(mode) : 0;
+    Word addr = (mode != ACC) ? get_target(mode, true) : 0;
     Byte val = addr ? read(addr) : reg_a;
     Word res = ((Word)val << 1) | SR_C;
 
     reg_sr &= ~FLAG_C;
     reg_sr |= (res & 0x100) >> 8;
     set_flags((Byte)res, FLAG_N | FLAG_Z);
+    step_cycle();
 
     if (mode == ACC) {
       reg_a = (Byte)res;
@@ -237,13 +242,14 @@ Emu6502::Emu6502() {
   opcode_map[0x3e] = {"ROL abs,x", rol_fn};
 
   static std::function<void(AddressingMode)> ror_fn = [&](AddressingMode mode) {
-    Word addr = (mode != ACC) ? get_target(mode) : 0;
+    Word addr = (mode != ACC) ? get_target(mode, true) : 0;
     Byte val = addr ? read(addr) : reg_a;
     Word res = ((Word)val >> 1) | (SR_C << 7);
 
     reg_sr &= ~FLAG_C;
     reg_sr |= FLAG_C & val;
     set_flags((Byte)res, FLAG_N | FLAG_Z);
+    step_cycle();
 
     if (mode == ACC) {
       reg_a = (Byte)res;
@@ -257,13 +263,13 @@ Emu6502::Emu6502() {
   opcode_map[0x6e] = {"ROR abs", ror_fn};
   opcode_map[0x7e] = {"ROR abs,x", ror_fn};
 
-  opcode_map[0x18] = {"CLC", [&](AddressingMode) { reg_sr &= ~FLAG_C; }};
-  opcode_map[0xd8] = {"CLD", [&](AddressingMode) { reg_sr &= ~FLAG_D; }};
-  opcode_map[0x58] = {"CLI", [&](AddressingMode) { reg_sr &= ~FLAG_I; }};
-  opcode_map[0xb8] = {"CLV", [&](AddressingMode) { reg_sr &= ~FLAG_V; }};
-  opcode_map[0x38] = {"SEC", [&](AddressingMode) { reg_sr |= FLAG_C; }};
-  opcode_map[0xf8] = {"SED", [&](AddressingMode) { reg_sr |= FLAG_D; }};
-  opcode_map[0x78] = {"SEI", [&](AddressingMode) { reg_sr |= FLAG_I; }};
+  opcode_map[0x18] = {"CLC", [&](AddressingMode) { step_cycle(), reg_sr &= ~FLAG_C; }};
+  opcode_map[0xd8] = {"CLD", [&](AddressingMode) { step_cycle(), reg_sr &= ~FLAG_D; }};
+  opcode_map[0x58] = {"CLI", [&](AddressingMode) { step_cycle(), reg_sr &= ~FLAG_I; }};
+  opcode_map[0xb8] = {"CLV", [&](AddressingMode) { step_cycle(), reg_sr &= ~FLAG_V; }};
+  opcode_map[0x38] = {"SEC", [&](AddressingMode) { step_cycle(), reg_sr |= FLAG_C; }};
+  opcode_map[0xf8] = {"SED", [&](AddressingMode) { step_cycle(), reg_sr |= FLAG_D; }};
+  opcode_map[0x78] = {"SEI", [&](AddressingMode) { step_cycle(), reg_sr |= FLAG_I; }};
 
   static std::function<void(Byte *, AddressingMode)> cmp_fn = [&](Byte *reg, AddressingMode mode) {
     auto operand = read(get_target(mode));
@@ -319,13 +325,13 @@ Emu6502::Emu6502() {
   opcode_map[0x4c] = {"JMP abs", jmp_fn};
   opcode_map[0x6c] = {"JMP (ind)", jmp_fn};
 
-  opcode_map[0x20] = {"JSR abs", [&](AddressingMode mode) { push_word(reg_pc + 1), jmp_fn(mode); }};
-  opcode_map[0x60] = {"RTS", [&](AddressingMode mode) { reg_pc = pop_word() + 1; }};
+  opcode_map[0x20] = {"JSR abs", [&](AddressingMode mode) { step_cycle(), push_word(reg_pc + 1), jmp_fn(mode); }};
+  opcode_map[0x60] = {"RTS", [&](AddressingMode mode) { step_cycle(3), reg_pc = pop_word() + 1; }};
 
   opcode_map[0x00] = {"BRK", [&](AddressingMode mode) { reg_pc++, handle_interrupt(true); }};
-  opcode_map[0x40] = {"RTI", [&](AddressingMode mode) { set_reg(&reg_sr, pop()), reg_pc = pop_word(); }};
+  opcode_map[0x40] = {"RTI", [&](AddressingMode mode) { step_cycle(2), set_reg(&reg_sr, pop()), reg_pc = pop_word(); }};
 
-  opcode_map[0xea] = {"NOP", [&](AddressingMode mode) {}};
+  opcode_map[0xea] = {"NOP", [&](AddressingMode mode) { step_cycle(); }};
 }
 
 Emu6502::~Emu6502() { delete[] opcode_map; }
