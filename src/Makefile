@@ -3,8 +3,8 @@ CXXFLAGS = -g -Wall -Wpedantic -funsigned-char -fpermissive -std=c++20 -MMD
 LDLIBS = -lm -ldl -lreadline -lyaml-cpp
 
 INCLUDE = include
-OBJS = main.o cpu/cpu.o plugin-callback.o emu-config.o sysclock.o
-# OBJS = main.o cpu/cpu-alt.o plugin-callback.o emu-config.o sysclock.o
+OBJS = main.o sysclock.o emu-config.o cpu/cpu.o plugin-callback.o plugin-loader.o
+# OBJS = main.o sysclock.o emu-config.o cpu/cpu-alt.o plugin-callback.o plugin-loader.o
 OUTFILE = 6502
 
 .PHONY: all plugins clean clean-all rebuild rebuild-plugins rebuild-all

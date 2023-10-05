@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <dlfcn.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -13,11 +12,10 @@
 #include "emu-config.hpp"
 #include "mem.hpp"
 #include "plugin-callback.hpp"
+#include "plugin-loader.hpp"
 
 void load_roms();
 void setup_ram();
-void load_plugins();
-void init_plugins();
 void signal_callback_handler(int signum);
 void emu_exit(int code);
 
@@ -28,16 +26,6 @@ std::atomic_bool is_running = true;
 
 AddressSpace add_spc;
 Emu6502 cpu;
-
-// FIXME: pull these out into their own translation unit (see also sysclock.cpp)
-typedef int (*plugin_load_t)(plugin_callback_t);
-typedef int (*plugin_init_t)(AddressSpace &, Word);
-typedef int (*plugin_destroy_t)(void);
-typedef int (*plugin_update_t)(unsigned int cycles_elapsed);
-
-std::vector<std::tuple<plugin_init_t, Word>> plugin_init_funcs;
-std::vector<plugin_destroy_t> plugin_destroy_funcs;
-std::vector<plugin_update_t> plugin_update_funcs;
 
 int main(int argc, char **argv) {
   char *config_file_name;
@@ -103,68 +91,6 @@ void setup_ram() {
     add_spc.map_mem(NULL, size, start_addr, false);
 }
 
-void load_plugins() {
-  std::string plugin_path = "./plugins";
-  if (!std::filesystem::exists(plugin_path))
-    return;
-
-  for (auto &entry : std::filesystem::directory_iterator(plugin_path, {})) {
-    if ((entry.is_regular_file() || entry.is_symlink()) && entry.path().extension().string() == ".so") {
-      std::string loaded_filename = entry.path().filename().string();
-
-      bool has_config = false;
-      Word plugin_addr = 0;
-      bool plugin_disable = false;
-      for (auto [filename, start_addr, disable] : config->plugin_configs) {
-        if (loaded_filename == filename) {
-          has_config = true;
-          plugin_addr = start_addr;
-          plugin_disable = disable;
-          break;
-        }
-      }
-
-      if ((!config->enumerate_plugins && !has_config) || plugin_disable)
-        continue;
-
-      void *plugin = dlopen(entry.path().c_str(), RTLD_NOW | RTLD_GLOBAL);
-      if (!plugin) {
-        std::cerr << dlerror() << std::endl;
-        break;
-      }
-
-      auto plugin_load_func = (plugin_load_t)dlsym(plugin, "plugin_load");
-      if (plugin_load_func && plugin_load_func(&plugin_callback_handler) == -1) {
-        std::cerr << "Plugin " << loaded_filename << " failed to load." << std::endl;
-        continue;
-      }
-
-      auto plugin_init_func = (plugin_init_t)dlsym(plugin, "plugin_init");
-      if (!plugin_init_func) {
-        std::cerr << dlerror() << std::endl;
-        continue;
-      }
-      plugin_init_funcs.push_back({plugin_init_func, plugin_addr});
-
-      auto plugin_destroy_func = (plugin_destroy_t)dlsym(plugin, "plugin_destroy");
-      if (!plugin_destroy_func) {
-        std::cerr << dlerror() << std::endl;
-        continue;
-      }
-      plugin_destroy_funcs.push_back(plugin_destroy_func);
-
-      auto plugin_update_func = (plugin_update_t)dlsym(plugin, "plugin_update");
-      if (plugin_update_func)
-        plugin_update_funcs.push_back(plugin_update_func);
-    }
-  }
-}
-
-void init_plugins() {
-  for (auto [plugin_init_func, plugin_addr] : plugin_init_funcs)
-    plugin_init_func(add_spc, plugin_addr);
-}
-
 void signal_callback_handler(int signum) {
   if (signum == SIGINT || signum == SIGTERM)
     emu_exit(0);
@@ -173,9 +99,7 @@ void signal_callback_handler(int signum) {
 void emu_exit(int code) {
   std::cout << std::endl << "Exiting." << std::endl;
 
-  for (auto plugin_destroy_func : plugin_destroy_funcs)
-    plugin_destroy_func();
-
+  destroy_plugins();
   delete config;
 
   exit(code);

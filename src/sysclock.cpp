@@ -3,11 +3,8 @@
 using namespace std::chrono_literals;
 
 #include "emu-config.hpp"
+#include "plugin-loader.hpp"
 #include "sysclock.hpp"
-
-// FIXME: pull these out into their own translation unit (see also main.cpp)
-typedef int (*plugin_update_t)(unsigned int cycles_elapsed);
-extern std::vector<plugin_update_t> plugin_update_funcs;
 
 QWord cycle_current_period = 0;
 QWord cycle_full = 0;
