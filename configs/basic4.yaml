@@ -3,10 +3,14 @@ cpu:
   clock_speed: 1000000
 
 ram:
-  - start: 0x0000
-    size: 16384
-
-  - start: 0x4000
+  # 8K
+  - start: 0
+    size: 8192
+  # 16K
+  - start: 8192
+    size: 8192
+  # 32K
+  - start: 16384
     size: 16384
 
 roms:

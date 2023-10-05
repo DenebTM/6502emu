@@ -41,7 +41,6 @@ Additionally requires a 2k PETSCII character ROM to be present at `roms/char_rom
 
 ## TODO
 
-- actually honour RAM config
 - more plugins - full CBM PET or VIC-20 emulation as potential goal
 - UI for debugging
 - documentation

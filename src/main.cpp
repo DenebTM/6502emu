@@ -15,6 +15,7 @@
 #include "plugin-callback.hpp"
 
 void load_roms();
+void setup_ram();
 void load_plugins();
 void init_plugins();
 void signal_callback_handler(int signum);
@@ -58,6 +59,7 @@ int main(int argc, char **argv) {
   signal(SIGINT, signal_callback_handler);
 
   load_roms();
+  setup_ram();
   load_plugins();
 
   std::cout << "Press Ctrl+C to quit." << std::endl;
@@ -94,6 +96,11 @@ void load_roms() {
     add_spc.map_mem((Byte *)bytes, size, start_addr, read_only);
     delete[] bytes;
   }
+}
+
+void setup_ram() {
+  for (auto [start_addr, size] : config->ram)
+    add_spc.map_mem(NULL, size, start_addr, false);
 }
 
 void load_plugins() {

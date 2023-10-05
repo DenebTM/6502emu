@@ -27,10 +27,7 @@ public:
   }
 
   /**
-   * read a byte from mapped RAM, ROM or devices
-   *
-   * @param addr
-   * @return Byte
+   * read a byte from mapped RAM, ROM or device
    */
   Byte read(Word addr) {
     AddressInfo info = mem_info[addr];
@@ -60,8 +57,17 @@ public:
     auto addr_hi = wrap_page ? (addr_lo & 0xff00) : (addr_lo + 1);
     return (Word)read(addr_lo) + ((Word)read(addr_hi) << 8);
   }
+
+  /**
+   * read a word from memory (little-endian byte order)
+   *
+   * @param addr_lo location from which to read low byte
+   */
   Word read_word(Word addr_lo) { return read_word(addr_lo, false); }
 
+  /**
+   * write a byte to mapped RAM, ROM or device
+   */
   void write(Word addr, Byte val) {
     AddressInfo info = mem_info[addr];
 
@@ -85,38 +91,52 @@ public:
   /**
    * write a word to memory (little-endian byte order)
    *
-   * @param addr_lo location at which store low byte of `val`
-   * @param val
+   * @param addr_lo location at which to store low byte of `val`
    * @param wrap_page when `true`, `addr_hi`'s high byte will not be incremented for the second write
    */
   void write_word(Word addr_lo, Word val, bool wrap_page) {
     auto addr_hi = wrap_page ? (addr_lo & 0xff00) : (addr_lo + 1);
     write(addr_lo, val), write(addr_hi, val >> 8);
   }
+
+  /**
+   * write a word to memory (little-endian byte order)
+   *
+   * @param addr_lo location at which to store low byte of `val`
+   */
   void write_word(Word addr_lo, Word val) { write_word(addr_lo, val, false); }
 
   /**
-   * copy a byte array into the address space
+   * mark a region in the address space as mapped and read-only, optionally copy a byte array into it
    *
-   * @param bytes
-   * @param size
-   * @param start_addr
+   * @param bytes ROM data or NULL
    */
   void map_mem(const Byte *bytes, Word size, Word start_addr) { map_mem((Byte *)bytes, size, start_addr, true); }
+
+  /**
+   * mark a region in the address space as mapped and read-write, optionally copy a byte array into it
+   *
+   * @param bytes RAM data or NULL
+   */
   void map_mem(Byte *bytes, Word size, Word start_addr) { map_mem(bytes, size, start_addr, false); }
+
+  /**
+   * mark a region in the address space as mapped, optionally copy a byte array into it
+   *
+   * @param bytes binary data or NULL
+   */
   void map_mem(Byte *bytes, Word size, Word start_addr, bool read_only) {
     for (size_t i = 0; i < size && (start_addr + i) < SIZE; i++) {
-      memory[start_addr + i] = bytes[i];
       mem_info[start_addr + i].mapped = true;
       mem_info[start_addr + i].read_only = read_only;
+
+      if (bytes)
+        memory[start_addr + i] = bytes[i];
     }
   }
 
   /**
-   * make a `MemoryMappedDevice` available in the address space
-   *
-   * @param dev
-   * @param start_addr
+   * map a peripheral device into the address space
    */
   void map_mem(MemoryMappedDevice *dev, Word start_addr) {
     for (size_t i = 0; i < dev->mapped_regs_count && (start_addr + i) < SIZE; i++) {
