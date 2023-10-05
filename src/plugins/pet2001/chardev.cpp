@@ -33,16 +33,15 @@ Chardev::~Chardev() {
     sdl_thread_exit = true;
     if (sdl_thread.joinable())
       sdl_thread.join();
-
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
   }
 
   if (characters) {
     delete[] characters;
   }
-  if (char_rom)
+
+  if (char_rom) {
     delete[] char_rom;
+  }
 }
 
 int Chardev::pre_read(Word offset) { return 0; }
@@ -133,6 +132,9 @@ void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
     sdl_handle_events();
     sdl_render();
   }
+
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(window);
 }
 
 int Chardev::load_char_rom() {
