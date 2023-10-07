@@ -46,12 +46,12 @@ int main(int argc, char **argv) {
   config = new EmuConfig(config_file_name);
 
   signal(SIGINT, signal_callback_handler);
+  signal(SIGTERM, signal_callback_handler);
+  std::cout << "Press Ctrl+C to quit." << std::endl;
 
   load_configured_roms();
   setup_configured_ram();
   load_configured_plugins();
-
-  std::cout << "Press Ctrl+C to quit." << std::endl;
 
   init_plugins();
 
