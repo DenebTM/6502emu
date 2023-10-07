@@ -14,12 +14,46 @@ std::vector<std::tuple<plugin_init_t, Word>> plugin_init_funcs;
 std::vector<plugin_destroy_t> plugin_destroy_funcs;
 std::vector<plugin_update_t> plugin_update_funcs;
 
-void load_plugins() {
-  std::string plugin_path = "./plugins";
-  if (!std::filesystem::exists(plugin_path))
-    return;
+std::optional<std::tuple<plugin_init_t, plugin_destroy_t, plugin_update_t>> load_plugin(std::filesystem::path path) {
+  std::string loaded_filename = path.filename().string();
 
-  for (auto &entry : std::filesystem::directory_iterator(plugin_path, {})) {
+  void *plugin = dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL);
+  if (!plugin) {
+    std::cerr << dlerror() << std::endl;
+    return std::nullopt;
+  }
+
+  auto plugin_load_func = (plugin_load_t)dlsym(plugin, "plugin_load");
+  if (plugin_load_func && plugin_load_func(&plugin_callback_handler) == -1) {
+    std::cerr << "Plugin " << loaded_filename << " failed to load." << std::endl;
+    return std::nullopt;
+  }
+
+  auto plugin_init_func = (plugin_init_t)dlsym(plugin, "plugin_init");
+  if (!plugin_init_func) {
+    std::cerr << dlerror() << std::endl;
+    return std::nullopt;
+  }
+
+  auto plugin_destroy_func = (plugin_destroy_t)dlsym(plugin, "plugin_destroy");
+  if (!plugin_destroy_func) {
+    std::cerr << dlerror() << std::endl;
+    return std::nullopt;
+  }
+
+  auto plugin_update_func = (plugin_update_t)dlsym(plugin, "plugin_update");
+
+  return std::make_optional<std::tuple<plugin_init_t, plugin_destroy_t, plugin_update_t>>(
+      {plugin_init_func, plugin_destroy_func, plugin_update_func});
+}
+
+void load_configured_plugins() {
+  if (!std::filesystem::exists(PLUGIN_PATH)) {
+    std::cerr << "Could not find plugin directory (" << PLUGIN_PATH << ")" << std::endl;
+    return;
+  }
+
+  for (auto &entry : std::filesystem::directory_iterator(PLUGIN_PATH, {})) {
     if ((entry.is_regular_file() || entry.is_symlink()) && entry.path().extension().string() == ".so") {
       std::string loaded_filename = entry.path().filename().string();
 
@@ -38,45 +72,25 @@ void load_plugins() {
       if ((!config->enumerate_plugins && !has_config) || plugin_disable)
         continue;
 
-      void *plugin = dlopen(entry.path().c_str(), RTLD_NOW | RTLD_GLOBAL);
-      if (!plugin) {
-        std::cerr << dlerror() << std::endl;
-        break;
+      auto loaded_plugin = load_plugin(entry.path());
+      if (loaded_plugin.has_value()) {
+        auto [init, destroy, update] = loaded_plugin.value();
+        plugin_init_funcs.push_back({init, plugin_addr});
+        plugin_destroy_funcs.push_back(destroy);
+        if (update) {
+          plugin_update_funcs.push_back(update);
+        }
       }
-
-      auto plugin_load_func = (plugin_load_t)dlsym(plugin, "plugin_load");
-      if (plugin_load_func && plugin_load_func(&plugin_callback_handler) == -1) {
-        std::cerr << "Plugin " << loaded_filename << " failed to load." << std::endl;
-        continue;
-      }
-
-      auto plugin_init_func = (plugin_init_t)dlsym(plugin, "plugin_init");
-      if (!plugin_init_func) {
-        std::cerr << dlerror() << std::endl;
-        continue;
-      }
-      plugin_init_funcs.push_back({plugin_init_func, plugin_addr});
-
-      auto plugin_destroy_func = (plugin_destroy_t)dlsym(plugin, "plugin_destroy");
-      if (!plugin_destroy_func) {
-        std::cerr << dlerror() << std::endl;
-        continue;
-      }
-      plugin_destroy_funcs.push_back(plugin_destroy_func);
-
-      auto plugin_update_func = (plugin_update_t)dlsym(plugin, "plugin_update");
-      if (plugin_update_func)
-        plugin_update_funcs.push_back(plugin_update_func);
     }
   }
 }
 
 void init_plugins() {
-  for (auto [plugin_init_func, plugin_addr] : plugin_init_funcs)
-    plugin_init_func(add_spc, plugin_addr);
+  for (auto [plugin_init, addr] : plugin_init_funcs)
+    plugin_init(add_spc, addr);
 }
 
 void destroy_plugins() {
-  for (auto plugin_destroy_func : plugin_destroy_funcs)
-    plugin_destroy_func();
+  for (auto plugin_destroy : plugin_destroy_funcs)
+    plugin_destroy();
 }

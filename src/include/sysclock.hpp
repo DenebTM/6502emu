@@ -3,7 +3,7 @@
 #include "emu-common.hpp"
 
 extern QWord cycle_current_period;
-extern QWord cycle_full;
+extern QWord cycle;
 
 void step_cycle();
 inline void step_cycle(unsigned int count) {

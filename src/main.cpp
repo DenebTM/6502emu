@@ -14,8 +14,8 @@
 #include "plugin-callback.hpp"
 #include "plugin-loader.hpp"
 
-void load_roms();
-void setup_ram();
+void load_configured_roms();
+void setup_configured_ram();
 void signal_callback_handler(int signum);
 void emu_exit(int code);
 
@@ -28,6 +28,7 @@ AddressSpace add_spc;
 Emu6502 cpu;
 
 int main(int argc, char **argv) {
+  // load configuration
   char *config_file_name;
   if (argc >= 2) {
     config_file_name = argv[1];
@@ -46,9 +47,9 @@ int main(int argc, char **argv) {
 
   signal(SIGINT, signal_callback_handler);
 
-  load_roms();
-  setup_ram();
-  load_plugins();
+  load_configured_roms();
+  setup_configured_ram();
+  load_configured_plugins();
 
   std::cout << "Press Ctrl+C to quit." << std::endl;
 
@@ -69,7 +70,7 @@ int main(int argc, char **argv) {
   emu_exit(exit_code);
 }
 
-void load_roms() {
+void load_configured_roms() {
   for (auto [file_name, start_addr, read_only] : config->roms) {
     // load ROM and determine size in bytes
     std::ifstream file(file_name, std::ios::binary | std::ios::ate);
@@ -86,7 +87,7 @@ void load_roms() {
   }
 }
 
-void setup_ram() {
+void setup_configured_ram() {
   for (auto [start_addr, size] : config->ram)
     add_spc.map_mem(NULL, size, start_addr, false);
 }
