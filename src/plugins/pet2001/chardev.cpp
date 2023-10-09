@@ -103,6 +103,8 @@ void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
     return;
   }
 
+  SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+
   window = SDL_CreateWindow("Chardev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RENDER_WIDTH, RENDER_HEIGHT, 0);
   if (!window) {
     std::cerr << "Failed to create SDL2 window" << std::endl;
