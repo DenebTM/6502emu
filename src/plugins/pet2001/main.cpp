@@ -52,15 +52,12 @@ extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
     } while (!dev.has_value());
 
     pia1 = dynamic_cast<Pia *>(dev.value());
-
-    pia1->read_port_a = []() { return *pia1->port_a; };
     pia1->write_port_a = [](Byte val) {
       set_kb_row(val & 0x0f);
-      return *pia1->port_a = (*pia1->port_a & 0xf0) | (val & ~0xf0);
+      pia1->mapped_regs[Pia::PortA] &= ~0x0f;
+      return pia1->mapped_regs[Pia::PortA] |= (val & 0x0f);
     };
-
     pia1->read_port_b = get_kb_row_contents;
-    pia1->write_port_b = [](Byte) { return 0; };
   });
 
   return 0;

@@ -4,6 +4,25 @@
 
 class Via : public MemoryMappedDevice {
 public:
+  enum ViaRegister {
+    PortB,
+    PortACA2,
+    DDRB,
+    DDRA,
+    Timer1PeriodLow,
+    Timer1PeriodHigh,
+    Timer1LatchLow,
+    Timer1LatchHigh,
+    Timer2PeriodLow,
+    Timer2PeriodHigh,
+    ShiftReg,
+    AuxControlReg,
+    PeripheralControlReg,
+    InterruptFlagReg,
+    InterruptEnableReg,
+    PortA,
+  };
+
   enum IRQ {
     CA2_ACTEDGE = 0x01,
     CA1_ACTEDGE = 0x02,
@@ -57,34 +76,36 @@ public:
     }
   }
 
-  Byte *port_b = mapped_regs + 0;
-  Byte *port_a_ca2 = mapped_regs + 1;
-  Byte *ddrb = mapped_regs + 2;
-  Byte *ddra = mapped_regs + 3;
-
-  Byte *t1c_lo = mapped_regs + 4;
-  Byte *t1c_hi = mapped_regs + 5;
-  Word *timer1_period = (Word *)t1c_lo;
-
-  Byte *t1l_lo = mapped_regs + 6;
-  Byte *t1l_hi = mapped_regs + 7;
-  Word *timer1_latch = (Word *)t1l_lo;
-
-  Byte *t2c_lo = mapped_regs + 4;
-  Byte *t2c_hi = mapped_regs + 5;
-  Word *timer2_period = (Word *)t2c_lo;
-
-  Byte *shift_register = mapped_regs + 10;
-  Byte *acr = mapped_regs + 11;
-  Byte *pcr = mapped_regs + 12;
-  Byte *ifr = mapped_regs + 13;
-  Byte *ier = mapped_regs + 14;
-  Byte *port_a = mapped_regs + 15;
-
 private:
   void flag_interrupt(IRQ irq);
   void clear_interrupt(IRQ irq);
 
   bool timer1_running = true;
   bool timer2_running = true;
+
+  Byte *port_b = mapped_regs + PortB;
+  Byte *port_a_ca2 = mapped_regs + PortACA2;
+  Byte *ddrb = mapped_regs + DDRB;
+  Byte *ddra = mapped_regs + DDRA;
+
+  Byte *t1c_lo = mapped_regs + Timer1PeriodLow;
+  Byte *t1c_hi = mapped_regs + Timer1PeriodHigh;
+  Word *timer1_period = (Word *)t1c_lo;
+
+  Byte *t1l_lo = mapped_regs + Timer1LatchLow;
+  Byte *t1l_hi = mapped_regs + Timer1LatchHigh;
+  Word *timer1_latch = (Word *)t1l_lo;
+
+  Byte *t2c_lo = mapped_regs + Timer2PeriodLow;
+  Byte *t2c_hi = mapped_regs + Timer2PeriodHigh;
+  Word *timer2_period = (Word *)t2c_lo;
+
+  Byte *shift_register = mapped_regs + ShiftReg;
+
+  Byte *acr = mapped_regs + AuxControlReg;
+  Byte *pcr = mapped_regs + PeripheralControlReg;
+  Byte *ifr = mapped_regs + InterruptFlagReg;
+  Byte *ier = mapped_regs + InterruptEnableReg;
+
+  Byte *port_a = mapped_regs + PortA;
 };

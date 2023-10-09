@@ -14,15 +14,13 @@ Via::Via() : MemoryMappedDevice(false, 16) {
 }
 
 Byte Via::read(Word offset) {
-  Byte *reg = mapped_regs + offset;
-
-  if (reg == port_a_ca2) {
-    reg = port_a;
+  if (offset == PortACA2) {
+    offset = PortA;
 
     // TODO: perform CA2 handshake
   }
 
-  else if (reg == t1c_lo || reg == t1l_lo) {
+  else if (offset == Timer1PeriodLow || offset == Timer1LatchLow) {
     clear_interrupt(IRQ::TIMER1_ZERO);
   }
 
@@ -30,24 +28,22 @@ Byte Via::read(Word offset) {
 }
 
 Byte Via::write(Word offset, Byte val) {
-  Byte *reg = mapped_regs + offset;
-
-  if (reg == port_a_ca2) {
-    reg = port_a;
+  if (offset == PortACA2) {
+    offset = PortA;
 
     // TODO: perform CA2 handshake
   }
-  if (reg == port_a) {
+  if (offset == PortA) {
     val = (*port_a & *ddra) | (val & ~(*ddra));
-  } else if (reg == port_b) {
+  } else if (offset == PortB) {
     val = (*port_b & *ddrb) | (val & ~(*ddrb));
   }
 
-  else if (reg == ifr) {
+  else if (offset == InterruptFlagReg) {
     val = *ifr & ~(val & ~0x80);
   }
 
-  else if (reg == ier) {
+  else if (offset == InterruptEnableReg) {
     bool enable_irqs = val >> 7;
     if (enable_irqs) {
       val = *ier | (val & ~0x80);
@@ -56,11 +52,11 @@ Byte Via::write(Word offset, Byte val) {
     }
   }
 
-  else if (reg == t1c_hi || reg == t1l_hi) {
+  else if (offset == Timer1PeriodHigh || offset == Timer1LatchHigh) {
     clear_interrupt(IRQ::TIMER1_ZERO);
   }
 
-  return *reg = val;
+  return mapped_regs[offset] = val;
 }
 
 void Via::flag_interrupt(IRQ irq) {
