@@ -46,8 +46,7 @@ extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
    * this plugin may be initialized before PIA1, therefore wait for it asynchronously and return early
    * so as not to block _its_ initialization
    */
-  std::future<void> wait_for_peripherals = std::async(std::launch::async, [&] {
-    // wait for PIA 1
+  std::future<void> wait_for_pia1 = std::async(std::launch::async, [&] {
     std::optional<MemoryMappedDevice *> dev_pia1 = std::nullopt;
     do {
       dev_pia1 = add_spc.get_dev(0xe810);
@@ -57,12 +56,13 @@ extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
     pia1 = dynamic_cast<Pia *>(dev_pia1.value());
     pia1->write_port_a = [](Byte val) {
       set_kb_row(val & 0x0f);
-      pia1->mapped_regs[Pia::PortA] &= ~0x0f;
-      return pia1->mapped_regs[Pia::PortA] |= (val & 0x0f);
+      return pia1->mapped_regs[Pia::ORA] = val;
     };
     pia1->read_port_b = get_kb_row_contents;
+  });
 
-    // wait for VIA
+  // same for VIA
+  std::future<void> wait_for_via = std::async(std::launch::async, [&] {
     std::optional<MemoryMappedDevice *> dev_via = std::nullopt;
     do {
       dev_via = add_spc.get_dev(0xe840);

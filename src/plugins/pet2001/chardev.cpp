@@ -92,6 +92,9 @@ void Chardev::sdl_render() {
 
   // vblank over, visible portion begins
   auto frame_start = std::chrono::system_clock::now();
+  if (pia1) {
+    pia1->set_cb1(true);
+  }
   if (via) {
     via->mapped_regs[Via::PortB] |= 0b00100000;
   }
@@ -113,13 +116,11 @@ void Chardev::sdl_render() {
   std::this_thread::sleep_until(frame_start + visible_time);
 
   // visible portion over, vblank begins
+  if (pia1) {
+    pia1->set_cb1(false);
+  }
   if (via) {
     via->mapped_regs[Via::PortB] &= ~0b00100000;
-  }
-
-  // TODO: handle this properly
-  if (pia1) {
-    pia1->flag_interrupt();
   }
 
   std::this_thread::sleep_until(frame_start + frame_time);
