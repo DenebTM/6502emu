@@ -8,9 +8,8 @@ using namespace std::chrono_literals;
 
 QWord cycle = 0;
 
-// TODO maybe: add a version of this for non-CPU devices and/or non-main threads
 void step_cycle() {
-  const static auto cycles_per_scanline = config->clock_speed / 200 / 60;
+  const static auto cycles_per_scanline = config->clock_speed / 220 / 60;
   const static auto scanline_time = 1000000000ns / (config->clock_speed / cycles_per_scanline);
   static auto next_wake = std::chrono::system_clock::now() + scanline_time;
 

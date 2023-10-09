@@ -1,11 +1,14 @@
 #include <SDL2/SDL.h>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
+using namespace std::chrono_literals;
 
 #include "chardev.hpp"
 #include "keyboard.hpp"
 #include "plugin-callback.hpp"
 #include "plugins/6520-pia.hpp"
+#include "plugins/6522-via.hpp"
 
 #define COL_WIDTH 8
 #define ROW_HEIGHT 8
@@ -19,6 +22,7 @@ constexpr int RENDER_HEIGHT = ROW_HEIGHT * ROWS * RENDER_SCALE;
 extern plugin_callback_t plugin_callback;
 
 extern Pia *pia1;
+extern Via *via;
 
 Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
   screen_mem = new Byte[1024];
@@ -78,11 +82,24 @@ void Chardev::sdl_handle_events() {
 }
 
 void Chardev::sdl_render() {
+  // assume 60Hz refresh rate for simplicity
+  static constexpr auto frame_time = 1s / 60.0;
+
+  // from http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/pet/2001/video-1.gif (graphic 2) and
+  // http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/pet/2001/notes-2.gif
+  static constexpr auto vblank_time = 1.5ms;
+  static constexpr auto visible_time = frame_time - vblank_time;
+
+  // vblank over, visible portion begins
+  auto frame_start = std::chrono::system_clock::now();
+  if (via) {
+    via->mapped_regs[Via::PortB] |= 0b00100000;
+  }
+
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
 
   SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
   for (int row = 0; row < 25; row++) {
     for (int col = 0; col < 40; col++) {
       auto screen_addr = row * 40 + col;
@@ -91,9 +108,21 @@ void Chardev::sdl_render() {
     }
   }
 
+  // draw screen, simulate that this takes until vblank begins
   SDL_RenderPresent(renderer);
-  if (pia1)
+  std::this_thread::sleep_until(frame_start + visible_time);
+
+  // visible portion over, vblank begins
+  if (via) {
+    via->mapped_regs[Via::PortB] &= ~0b00100000;
+  }
+
+  // TODO: handle this properly
+  if (pia1) {
     pia1->flag_interrupt();
+  }
+
+  std::this_thread::sleep_until(frame_start + frame_time);
 }
 
 void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
@@ -112,7 +141,7 @@ void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
     return;
   }
 
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
   if (!renderer) {
     std::cerr << "Failed to create SDL2 renderer" << std::endl;
     ret.set_value(-3);
