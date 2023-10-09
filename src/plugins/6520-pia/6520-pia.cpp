@@ -87,7 +87,7 @@ Byte Pia::write_orx(bool orb, Byte val) {
   }
 
   // CRx bit 2 == 1 -> PORTx selected
-  if (*ctrl & BIT2) {
+  if (*ctrl & ORx_SEL_PORT) {
     auto val_keep = val & ~*ddr;
     auto val_out = val & *ddr;
 
@@ -108,10 +108,10 @@ void Pia::set_cx1(bool cb, bool val) {
   if ((((*ctrl & Cx1_POS_EDGE) && (!*cx1 && val)) || // positive transition enabled
        (!(*ctrl & Cx1_POS_EDGE) && (*cx1 && !val))   // negative transition enabled
        )) {
-    *ctrl |= BIT7;
+    *ctrl |= Cx1_IRQ_FLAG;
 
     // IRQ enabled
-    if (*ctrl & BIT1) {
+    if (*ctrl & Cx1_IRQ_EN) {
       flag_interrupt();
     }
 
