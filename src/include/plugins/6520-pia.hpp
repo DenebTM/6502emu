@@ -34,10 +34,17 @@ struct Pia : public MemoryMappedDevice {
   std::function<Byte(void)> read_port_b = [&]() { return *port_b; };
   std::function<Byte(Byte)> write_port_b = [&](Byte val) { return *port_b = val; };
 
-  inline void set_ca1(bool val) { set_cx1(false, val); }
-  inline void set_cb1(bool val) { set_cx1(true, val); }
+  bool ca1 = 1;
+  bool ca2 = 1;
+  bool cb1 = 1;
+  bool cb2 = 1;
 
-  // TODO: ca2, cb2
+  inline void set_ca1(bool val) { set_cx1(false, val); }
+  inline void set_ca2(bool val) { set_cx2(false, val); }
+  inline void set_cb1(bool val) { set_cx1(true, val); }
+  inline void set_cb2(bool val) { set_cx2(true, val); }
+
+  void update();
 
 private:
   Byte *port_a = mapped_regs + ORA;
@@ -48,12 +55,9 @@ private:
   Byte ddr_a;
   Byte ddr_b;
 
-  bool ca1 = false;
-  bool ca2 = false;
-  bool cb1 = false;
-  bool cb2 = false;
-
   Byte read_orx(bool orb);
   Byte write_orx(bool orb, Byte val);
+
   void set_cx1(bool cb, bool val);
+  void set_cx2(bool cb, bool val);
 };
