@@ -1,6 +1,6 @@
 #pragma once
 
-#include "emu-common.hpp"
+#include "emu-types.hpp"
 
 extern QWord cycle_current_period;
 extern QWord cycle;

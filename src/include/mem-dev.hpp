@@ -1,7 +1,7 @@
 #pragma once
 #include <algorithm>
 
-#include "emu-common.hpp"
+#include "emu-types.hpp"
 
 struct MemoryMappedDevice {
   MemoryMappedDevice(bool ro, Word mapped_regs_count)

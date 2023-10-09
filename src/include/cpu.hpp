@@ -4,7 +4,7 @@
 #include <string>
 #include <tuple>
 
-#include "emu-common.hpp"
+#include "emu-types.hpp"
 #include "mem.hpp"
 
 #define FLAG_N 0x80 // status register bit 7 - negative

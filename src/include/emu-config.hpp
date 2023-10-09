@@ -3,7 +3,7 @@
 #include <tuple>
 #include <vector>
 
-#include "emu-common.hpp"
+#include "emu-types.hpp"
 #include "mem-dev.hpp"
 
 struct EmuConfig {

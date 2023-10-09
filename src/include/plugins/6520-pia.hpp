@@ -7,6 +7,31 @@
 #include "mem-dev.hpp"
 #include "plugin-callback.hpp"
 
+#define Cx1_CTRL (BIT0 | BIT1)
+#define Cx1_NEG_EDGE 0
+#define Cx1_POS_EDGE BIT1
+#define Cx1_IRQ_EN BIT0
+#define Cx1_IRQ_FLAG BIT7
+
+#define Cx2_CTRL (BIT3 | BIT4 | BIT5)
+
+#define Cx2_MODE_INPUT 0
+#define Cx2_IN_IRQ_EN BIT3
+#define Cx2_IN_NEG_EDGE 0
+#define Cx2_IN_POS_EDGE BIT4
+#define Cx2_IN_IRQ_FLAG BIT6
+
+#define Cx2_MODE_OUTPUT BIT5
+// Cx2 handshake mode
+#define Cx2_OUT_PULSE BIT3
+// Cx2 manual output mode
+#define Cx2_OUT_MANUAL BIT4
+#define Cx2_OUT_LOW 0
+#define Cx2_OUT_HIGH BIT3
+
+#define ORx_SEL_DDR 0
+#define ORx_SEL_PORT BIT2
+
 struct Pia : public MemoryMappedDevice {
   enum PiaRegister {
     ORA, // Port B / DDRA

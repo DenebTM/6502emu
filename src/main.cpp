@@ -8,7 +8,7 @@
 #include <signal.h>
 
 #include "cpu.hpp"
-#include "emu-common.hpp"
+#include "emu-types.hpp"
 #include "emu-config.hpp"
 #include "mem.hpp"
 #include "plugin-callback.hpp"

@@ -3,8 +3,20 @@
 Pia::Pia(plugin_callback_t plugin_callback) : MemoryMappedDevice(false, 4) {
   this->plugin_callback = plugin_callback;
 
-  *this->ctrl_a = 0x80;
-  *this->ctrl_b = 0x80;
+  /**
+   * initial configuration:
+   * - CA1/CA2/CB1/CB2 in input mode, negative edge, IRQ disabled
+   * - all pins of Port A and B are inputs
+   * - DDRA visible on ORA, DDRB visible on ORB
+   */
+  *this->ctrl_a = 0;
+  *this->ctrl_b = 0;
+  this->ddr_a = 0;
+  this->ddr_b = 0;
+  this->ca1 = 0;
+  this->cb1 = 0;
+  this->ca2 = 0;
+  this->cb2 = 0;
 }
 
 Byte Pia::read(Word offset) {
@@ -13,11 +25,11 @@ Byte Pia::read(Word offset) {
     val = read_orx(offset == ORB);
   }
 
-  // clear bits 6 and 7 of CRA/CRB upon read
+  // clear Cx1/Cx2 IRQ flags upon read
   if (offset == ORA || offset == CRA) {
-    *ctrl_a &= ~0xc0;
+    *ctrl_a &= ~(Cx1_IRQ_FLAG | Cx2_IN_IRQ_FLAG);
   } else if (offset == ORB || offset == CRB) {
-    *ctrl_b &= ~0xc0;
+    *ctrl_b &= ~(Cx1_IRQ_FLAG | Cx2_IN_IRQ_FLAG);
   }
 
   return val;
@@ -27,11 +39,12 @@ Byte Pia::write(Word offset, Byte val) {
   if (offset == ORA || offset == ORB) {
     return write_orx(offset == ORB, val);
   } else if (offset == CRA || offset == CRB) {
-    val = (mapped_regs[offset] & 0xc0) | (val & ~0xc0);
+    // preserve Cx1/Cx2 input IRQ flags, affect only control registers
+    val = (val & (Cx1_CTRL | Cx2_CTRL | ORx_SEL_PORT)) | (mapped_regs[offset] & (Cx1_IRQ_FLAG | Cx2_IN_IRQ_FLAG));
 
-    // Cx2 in manual output mode
-    if ((val & 0b111000) == 0b110000) {
-      (offset == CRA ? ca1 : cb1) = (val & 0b1000) > 3;
+    // Cx2 in manual output mode -> value set directly by write
+    if ((val & Cx2_CTRL) == (Cx2_MODE_OUTPUT | Cx2_OUT_MANUAL)) {
+      (offset == CRA ? ca1 : cb1) = (val & Cx2_OUT_HIGH) > 0;
     }
   }
 
@@ -47,12 +60,12 @@ Byte Pia::read_orx(bool orb) {
   auto &read_port = orb ? read_port_b : read_port_a;
 
   // reading ORA and CA2 in output mode
-  if (!orb && (*ctrl & 0b100000) == 0b100000) {
+  if (!orb && (*ctrl & Cx2_MODE_OUTPUT)) {
     ca2 = 0;
   }
 
   // CRx bit 2 == 1 -> PORTx selected
-  if (*ctrl & 0b100) {
+  if (*ctrl & ORx_SEL_PORT) {
     return read_port();
   }
   // CRx bit 2 == 0 -> DDRx selected
@@ -69,12 +82,12 @@ Byte Pia::write_orx(bool orb, Byte val) {
   auto &write_port = orb ? write_port_b : write_port_a;
 
   // writing ORB and CB2 in output mode
-  if (orb && (*ctrl & 0b100000) == 0b100000) {
+  if (orb && (*ctrl & Cx2_MODE_OUTPUT)) {
     cb2 = 0;
   }
 
   // CRx bit 2 == 1 -> PORTx selected
-  if (*ctrl & 0b100) {
+  if (*ctrl & BIT2) {
     auto val_keep = val & ~*ddr;
     auto val_out = val & *ddr;
 
@@ -86,24 +99,24 @@ Byte Pia::write_orx(bool orb, Byte val) {
 }
 
 /**
- * @param cb false: set CA1; true: set CB1
+ * @param cb false -> set CA1; true -> set CB1
  */
 void Pia::set_cx1(bool cb, bool val) {
   Byte *ctrl = cb ? ctrl_b : ctrl_a;
   bool *cx1 = &(cb ? cb1 : ca1);
 
-  if ((((*ctrl & 0b10) && (!*cx1 && val)) || // positive transition enabled
-       (!(*ctrl & 0b10) && (*cx1 && !val))   // negative transition enabled
+  if ((((*ctrl & Cx1_POS_EDGE) && (!*cx1 && val)) || // positive transition enabled
+       (!(*ctrl & Cx1_POS_EDGE) && (*cx1 && !val))   // negative transition enabled
        )) {
-    *ctrl |= 0x80;
+    *ctrl |= BIT7;
 
     // IRQ enabled
-    if (*ctrl & 0b01) {
+    if (*ctrl & BIT1) {
       flag_interrupt();
     }
 
     // Cx2 is in handshake mode -> set high by Cx1 active transition
-    if ((*ctrl & 0b111000) == 0b100000) {
+    if ((*ctrl & Cx2_CTRL) == Cx2_MODE_OUTPUT) {
       bool *cx2 = &(cb ? cb2 : ca2);
       *cx2 = 1;
     }
@@ -113,23 +126,23 @@ void Pia::set_cx1(bool cb, bool val) {
 }
 
 /**
- * @param cb false: set CA2; true: set CB2
+ * @param cb false -> set CA2; true -> set CB2
  */
 void Pia::set_cx2(bool cb, bool val) {
   Byte *ctrl = cb ? ctrl_b : ctrl_a;
-  // Cx2 is in output mode
-  if (*ctrl & 0b100000)
+  // Cx2 is in output mode, ignore attempt to set it externally
+  if (*ctrl & Cx2_MODE_OUTPUT)
     return;
 
   bool *cx2 = &(cb ? cb2 : ca2);
 
-  if ((((*ctrl & 0b10000) && (!*cx2 && val)) || // positive transition enabled
-       (!(*ctrl & 0b10000) && (*cx2 && !val))   // negative transition enabled
+  if ((((*ctrl & Cx2_IN_POS_EDGE) && (!*cx2 && val)) || // positive transition enabled
+       (!(*ctrl & Cx2_IN_POS_EDGE) && (*cx2 && !val))   // negative transition enabled
        )) {
-    *ctrl |= 0x40;
+    *ctrl |= Cx2_IN_IRQ_FLAG;
 
     // IRQ enabled
-    if (*ctrl & 0b01000) {
+    if (*ctrl & Cx2_IN_IRQ_EN) {
       flag_interrupt();
     }
   }
@@ -143,20 +156,18 @@ void Pia::update() {
   static bool ca2_pulse_low = false;
   static bool cb2_pulse_low = false;
 
-  // CA2/CB2 in pulse output mode and currently low -> return to high next clock cycle
-  if (ca2 == 0 && (*ctrl_a & 0b111000) == 0b101000) {
+  // CA2 in pulse output mode and currently low -> return to high next clock cycle
+  if (ca2 == 0 && (*ctrl_a & Cx2_CTRL) == (Cx2_MODE_OUTPUT | Cx2_OUT_PULSE)) {
     ca2_pulse_low = true;
-  }
-  if (cb2 == 0 && (*ctrl_b & 0b111000) == 0b101000) {
-    cb2_pulse_low = true;
-  }
-
-  // CA2/CB2 in pulse output mode and has been low for one clock cycle -> return to high
-  if (ca2_pulse_low) {
+  } else if (ca2_pulse_low) {
     ca2_pulse_low = false;
     ca2 = 1;
   }
-  if (cb2_pulse_low) {
+
+  // CB2 in pulse output mode and currently low -> return to high next clock cycle
+  if (cb2 == 0 && (*ctrl_b & Cx2_CTRL) == (Cx2_MODE_OUTPUT | Cx2_OUT_PULSE)) {
+    cb2_pulse_low = true;
+  } else if (cb2_pulse_low) {
     cb2_pulse_low = false;
     cb2 = 1;
   }

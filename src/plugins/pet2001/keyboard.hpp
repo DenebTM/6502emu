@@ -1,7 +1,7 @@
 #pragma once
 #include <SDL2/SDL_keyboard.h>
 
-#include "emu-common.hpp"
+#include "emu-types.hpp"
 #include "plugins/6520-pia.hpp"
 
 void set_kb_row(Byte row);

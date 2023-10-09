@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <string>
 
-#include "emu-common.hpp"
+#include "emu-types.hpp"
 #include "emu-config.hpp"
 #include "mem.hpp"
 #include "plugin-loader.hpp"
