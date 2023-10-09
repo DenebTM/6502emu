@@ -53,5 +53,7 @@ private:
   bool cb1 = false;
   bool cb2 = false;
 
+  Byte read_orx(bool orb);
+  Byte write_orx(bool orb, Byte val);
   void set_cx1(bool cb, bool val);
 };

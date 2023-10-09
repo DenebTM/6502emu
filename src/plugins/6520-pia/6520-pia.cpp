@@ -9,24 +9,8 @@ Pia::Pia(plugin_callback_t plugin_callback) : MemoryMappedDevice(false, 4) {
 
 Byte Pia::read(Word offset) {
   Byte val = mapped_regs[offset];
-  if (offset == ORA) {
-    // CRA bit 2 == 1 -> PORTA selected
-    if (*ctrl_a & 0b100) {
-      val = read_port_a();
-    }
-    // CRA bit 2 == 0 -> DDRA selected
-    else {
-      val = ddr_a;
-    }
-  } else if (offset == ORB) {
-    // CRB bit 2 == 1 -> PORTB selected
-    if (*ctrl_b & 0b100) {
-      val = read_port_b();
-    }
-    // CRB bit 2 == 0 -> DDRB selected
-    else {
-      val = ddr_b;
-    }
+  if (offset == ORA || offset == ORB) {
+    val = read_orx(offset == ORB);
   }
 
   // clear bits 6 and 7 of CRA/CRB upon read
@@ -40,32 +24,8 @@ Byte Pia::read(Word offset) {
 }
 
 Byte Pia::write(Word offset, Byte val) {
-  if (offset == ORA) {
-    // CRA bit 2 == 1 -> IORA selected
-    if (*ctrl_a & 0b100) {
-      auto val_keep = val & ~ddr_a;
-      auto val_out = val & ddr_a;
-
-      write_port_a(val_out);
-      return *port_a = (*port_a & ddr_a) | val_keep;
-    }
-    // CRA bit 2 == 0 -> DDRA selected
-    else {
-      return ddr_a = val;
-    }
-  } else if (offset == ORB) {
-    // CRB bit 2 == 1 -> IORB selected
-    if (*ctrl_b & 0b100) {
-      auto val_keep = val & ~ddr_b;
-      auto val_out = val & ddr_b;
-
-      write_port_b(val_out);
-      return *port_b = (*port_b & ddr_b) | val_keep;
-    }
-    // CRB bit 2 == 0 -> DDRB selected
-    else {
-      return ddr_b = val;
-    }
+  if (offset == ORA || offset == ORB) {
+    return write_orx(offset == ORB, val);
   } else if (offset == CRA || offset == CRB) {
     val = (mapped_regs[offset] & 0xc0) | (val & ~0xc0);
   }
@@ -74,11 +34,48 @@ Byte Pia::write(Word offset, Byte val) {
 }
 
 /**
+ * @param orb false: set PORTA/DDRA; true: set PORTB/DDRB
+ */
+Byte Pia::read_orx(bool orb) {
+  Byte *ctrl = orb ? ctrl_b : ctrl_a;
+  Byte *ddr = &(orb ? ddr_b : ddr_a);
+  auto &read_port = orb ? read_port_b : read_port_a;
+
+  // CRx bit 2 == 1 -> PORTx selected
+  if (*ctrl & 0b100) {
+    return read_port();
+  }
+  // CRx bit 2 == 0 -> DDRx selected
+  return *ddr;
+}
+
+/**
+ * @param orb false: set PORTA/DDRA; true: set PORTB/DDRB
+ */
+Byte Pia::write_orx(bool orb, Byte val) {
+  Byte *ctrl = orb ? ctrl_b : ctrl_a;
+  Byte *ddr = &(orb ? ddr_b : ddr_a);
+  Byte *port = orb ? port_b : port_a;
+  auto &write_port = orb ? write_port_b : write_port_a;
+
+  // CRx bit 2 == 1 -> PORTx selected
+  if (*ctrl & 0b100) {
+    auto val_keep = val & ~*ddr;
+    auto val_out = val & *ddr;
+
+    write_port(val_out);
+    return *port = (*port & *ddr) | val_keep;
+  }
+  // CRx bit 2 == 0 -> DDRx selected
+  return *ddr = val;
+}
+
+/**
  * @param cb false: set CA1; true: set CB1
  */
 void Pia::set_cx1(bool cb, bool val) {
-  bool *cx = &(cb ? cb1 : ca1);
   Byte *ctrl = cb ? ctrl_b : ctrl_a;
+  bool *cx = &(cb ? cb1 : ca1);
 
   if ((((*ctrl & 0b10) && (!*cx && val)) || // positive transition enabled
        (!(*ctrl & 0b10) && (*cx && !val))   // negative transition enabled
