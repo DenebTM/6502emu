@@ -2,8 +2,8 @@
 #include <filesystem>
 #include <string>
 
-#include "emu-types.hpp"
 #include "emu-config.hpp"
+#include "emu-types.hpp"
 #include "mem.hpp"
 #include "plugin-loader.hpp"
 
@@ -53,26 +53,42 @@ void load_configured_plugins() {
     return;
   }
 
-  for (auto &entry : std::filesystem::directory_iterator(PLUGIN_PATH, {})) {
-    if ((entry.is_regular_file() || entry.is_symlink()) && entry.path().extension().string() == ".so") {
-      std::string loaded_filename = entry.path().filename().string();
+  // load all plugins found in ./plugins directory
+  // note: certain plugins may need to load ahead of other ones, so this can currently cause some issues
+  if (config->enumerate_plugins) {
+    for (auto &entry : std::filesystem::directory_iterator(PLUGIN_PATH, {})) {
+      if ((entry.is_regular_file() || entry.is_symlink()) && entry.path().extension().string() == ".so") {
+        std::string loaded_filename = entry.path().filename().string();
 
-      bool has_config = false;
-      Word plugin_addr = 0;
-      bool plugin_disable = false;
-      for (auto [filename, start_addr, disable] : config->plugin_configs) {
-        if (loaded_filename == filename) {
-          has_config = true;
-          plugin_addr = start_addr;
-          plugin_disable = disable;
-          break;
+        bool has_config = false;
+        Word plugin_addr = 0;
+        bool plugin_disable = false;
+        for (auto [filename, start_addr, disable] : config->plugin_configs) {
+          if (loaded_filename == filename) {
+            has_config = true;
+            plugin_addr = start_addr;
+            plugin_disable = disable;
+            break;
+          }
+        }
+
+        if ((!config->enumerate_plugins && !has_config) || plugin_disable)
+          continue;
+
+        auto loaded_plugin = load_plugin(entry.path());
+        if (loaded_plugin.has_value()) {
+          auto [init, destroy, update] = loaded_plugin.value();
+          plugin_init_funcs.push_back({init, plugin_addr});
+          plugin_destroy_funcs.push_back(destroy);
+          if (update) {
+            plugin_update_funcs.push_back(update);
+          }
         }
       }
-
-      if ((!config->enumerate_plugins && !has_config) || plugin_disable)
-        continue;
-
-      auto loaded_plugin = load_plugin(entry.path());
+    }
+  } else {
+    for (auto [filename, plugin_addr, disable] : config->plugin_configs) {
+      auto loaded_plugin = load_plugin(PLUGIN_PATH + filename);
       if (loaded_plugin.has_value()) {
         auto [init, destroy, update] = loaded_plugin.value();
         plugin_init_funcs.push_back({init, plugin_addr});

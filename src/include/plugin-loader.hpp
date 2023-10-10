@@ -6,7 +6,7 @@
 #include "mem.hpp"
 #include "plugin-callback.hpp"
 
-#define PLUGIN_PATH "./plugins"
+#define PLUGIN_PATH std::string("./plugins/")
 
 /**
  * extern "C" int plugin_load - OPTIONAL
