@@ -10,6 +10,7 @@ using namespace std::chrono_literals;
 #include "plugin-callback.hpp"
 #include "plugins/6520-pia.hpp"
 #include "plugins/6522-via.hpp"
+#include "plugins/plugin-types.hpp"
 
 plugin_callback_t plugin_callback;
 
@@ -17,7 +18,7 @@ Chardev *chardev;
 Pia *pia1;
 Via *via;
 
-extern "C" int plugin_load(plugin_callback_t callback) {
+extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   plugin_callback = callback;
 
   chardev = new Chardev();
@@ -29,7 +30,7 @@ extern "C" int plugin_load(plugin_callback_t callback) {
   return 0;
 }
 
-extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
+extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
   addr = addr ? addr : 0x8000;
 
   if (chardev->sdl_init() != 0)
@@ -75,7 +76,7 @@ extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
   return 0;
 }
 
-extern "C" int plugin_destroy() {
+extern "C" EXPORT int plugin_destroy() {
   if (chardev)
     delete chardev;
 

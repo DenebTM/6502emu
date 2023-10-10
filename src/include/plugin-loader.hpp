@@ -1,6 +1,5 @@
 #pragma once
 #include <filesystem>
-#include <optional>
 #include <tuple>
 
 #include "mem.hpp"
@@ -51,11 +50,26 @@ typedef int (*plugin_destroy_t)(void);
  */
 typedef int (*plugin_update_t)(void);
 
+extern std::vector<std::string> plugin_filenames;
 extern std::vector<std::tuple<plugin_init_t, Word>> plugin_init_funcs;
 extern std::vector<plugin_destroy_t> plugin_destroy_funcs;
 extern std::vector<plugin_update_t> plugin_update_funcs;
 
-std::optional<std::tuple<plugin_init_t, plugin_destroy_t, plugin_update_t>> load_plugin(std::filesystem::path path);
+/**
+ * load a plugin from a shared object file
+ *
+ * any given plugin may be loaded multiple times.
+ * the first plugin is loaded into the base namespace so that its exported
+ * symbols can be used by other plugins, each subsequently loaded instance is
+ * given its own namespace.
+ *
+ * note: at most 16 duplicate plugins can be loaded.
+ *
+ * @param path filesystem location of shared object to be loaded
+ * @param map_addr location in the address space to map plugin at
+ */
+void load_plugin(std::filesystem::path path, Word map_addr);
+
 void load_configured_plugins();
 void init_plugins();
 void destroy_plugins();

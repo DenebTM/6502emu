@@ -1,8 +1,9 @@
 #pragma once
 
 #include "mem-dev.hpp"
+#include "plugins/plugin-types.hpp"
 
-class Via : public MemoryMappedDevice {
+class EXPORT Via : public MemoryMappedDevice {
 public:
   enum ViaRegister {
     PortB,

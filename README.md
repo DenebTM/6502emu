@@ -45,4 +45,3 @@ Additionally requires a 2k PETSCII character ROM to be present at `roms/char_rom
 - UI for debugging
 - documentation (ongoing)
 - sort out plugin load order issues
-- prevent a plugin loaded twice from conflicting with itself

@@ -2,16 +2,17 @@
 #include "mem.hpp"
 #include "plugin-callback.hpp"
 #include "plugins/6520-pia.hpp"
+#include "plugins/plugin-types.hpp"
 
 Pia *pia;
 
-extern "C" int plugin_load(plugin_callback_t callback) {
+extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   pia = new Pia(callback);
 
   return 0;
 }
 
-extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
+extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
   addr = addr ? addr : 0xe810;
 
   add_spc.map_mem(pia, addr);
@@ -22,7 +23,7 @@ extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
   return 0;
 }
 
-extern "C" int plugin_destroy() {
+extern "C" EXPORT int plugin_destroy() {
   if (pia)
     delete pia;
 

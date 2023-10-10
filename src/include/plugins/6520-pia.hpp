@@ -6,6 +6,7 @@
 
 #include "mem-dev.hpp"
 #include "plugin-callback.hpp"
+#include "plugins/plugin-types.hpp"
 
 #define Cx1_CTRL (BIT0 | BIT1)
 #define Cx1_NEG_EDGE 0
@@ -32,7 +33,8 @@
 #define ORx_SEL_DDR 0
 #define ORx_SEL_PORT BIT2
 
-struct Pia : public MemoryMappedDevice {
+class EXPORT Pia : public MemoryMappedDevice {
+public:
   enum PiaRegister {
     ORA, // Port B / DDRA
     CRA, // Control register A

@@ -3,18 +3,19 @@
 #include "emu-stdout.hpp"
 #include "mem.hpp"
 #include "plugin-callback.hpp"
+#include "plugins/plugin-types.hpp"
 
 OutChar *emu_out;
 InChar *emu_in;
 
 plugin_callback_t plugin_callback;
 
-extern "C" int plugin_load(plugin_callback_t callback) {
+extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   plugin_callback = callback;
   return 0;
 }
 
-extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
+extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
   addr = addr ? addr : 0xf001;
 
   emu_out = new OutChar();
@@ -26,7 +27,7 @@ extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
   return 0;
 }
 
-extern "C" int plugin_destroy() {
+extern "C" EXPORT int plugin_destroy() {
   if (emu_out)
     delete emu_out;
   if (emu_in)

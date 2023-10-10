@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -Wall -Wpedantic -std=c++20 -fPIC -MMD
+CXXFLAGS = -g -Wall -Wpedantic -std=c++20 -fPIC -fvisibility=hidden -MMD
 
 INCLUDE = ../../include
 

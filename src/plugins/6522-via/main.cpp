@@ -2,12 +2,13 @@
 #include "mem.hpp"
 #include "plugin-callback.hpp"
 #include "plugins/6522-via.hpp"
+#include "plugins/plugin-types.hpp"
 
 plugin_callback_t plugin_callback;
 
 Via *via;
 
-extern "C" int plugin_load(plugin_callback_t callback) {
+extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   plugin_callback = callback;
 
   via = new Via();
@@ -15,7 +16,7 @@ extern "C" int plugin_load(plugin_callback_t callback) {
   return 0;
 }
 
-extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
+extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
   addr = addr ? addr : 0xe840;
 
   add_spc.map_mem(via, addr);
@@ -23,14 +24,14 @@ extern "C" int plugin_init(AddressSpace &add_spc, Word addr) {
   return 0;
 }
 
-extern "C" int plugin_destroy() {
+extern "C" EXPORT int plugin_destroy() {
   if (via)
     delete via;
 
   return 0;
 }
 
-extern "C" int plugin_update() {
+extern "C" EXPORT int plugin_update() {
   if (via) {
     via->update();
   }

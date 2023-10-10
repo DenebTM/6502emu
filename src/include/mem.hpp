@@ -23,7 +23,6 @@ public:
 
   ~AddressSpace() {
     delete[] this->mem_info;
-    // FIXME: why does this segfault sometimes
     delete[] this->memory;
   }
 

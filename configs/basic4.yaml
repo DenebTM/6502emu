@@ -35,9 +35,8 @@ plugins:
     - file: 6520-pia.so
       address: 0xe810
 
-    # commented out due to symbol conflict
-    # - file: 6520-pia.so
-    #   address: 0xe820
+    - file: 6520-pia.so
+      address: 0xe820
 
     - file: 6522-via.so
       address: 0xe840
