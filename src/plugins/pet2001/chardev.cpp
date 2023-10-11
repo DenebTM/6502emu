@@ -166,13 +166,13 @@ void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
 }
 
 int Chardev::load_char_rom() {
-  std::string fname = "roms/char_rom.bin";
-  if (!std::filesystem::exists(fname)) {
-    std::cerr << "Chardev: Missing character ROM (" << fname << ")" << std::endl;
+  std::string filename = "roms/char_rom.bin";
+  if (!std::filesystem::exists(filename)) {
+    std::cerr << "Chardev: Missing character ROM (" << filename << ")" << std::endl;
     return -1;
   }
 
-  std::ifstream file(fname, std::ios::binary | std::ios::ate);
+  std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
   std::streamsize size = file.tellg();
   file.seekg(0, std::ios::beg);
