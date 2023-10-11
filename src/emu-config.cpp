@@ -57,7 +57,9 @@ EmuConfig::EmuConfig(FilePath file_name) {
     if (plugin_opts["config"].IsDefined()) {
       for (YAML::Node plugin_node : plugin_opts["config"]) {
         std::string file_name = plugin_node["file"].as<FileName>();
-        Word start_address = plugin_node["address"].as<Word>();
+        Word start_address = 0;
+        if (plugin_node["disable"].IsDefined())
+          start_address = plugin_node["address"].as<Word>();
 
         bool plugin_disable = false;
         if (plugin_node["disable"].IsDefined())

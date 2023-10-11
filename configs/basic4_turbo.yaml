@@ -1,6 +1,6 @@
 cpu:
   init_pc: reset
-  clock_speed: 1000000
+  clock_speed: 30000000
 
 ram:
   # 8K
@@ -35,13 +35,14 @@ plugins:
     - file: 6520-pia.so
       address: 0xe810
 
-    - file: 6520-pia.so
-      address: 0xe820
+    # - file: 6520-pia.so
+    #   address: 0xe820
 
     - file: 6522-via.so
       address: 0xe840
 
     - file: datasette.so
+      address: 0x0000
 
     - file: pet2001.so
       # disable: false
