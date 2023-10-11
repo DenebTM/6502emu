@@ -42,47 +42,14 @@ public:
   Byte read(Word offset) override;
   Byte write(Word offset, Byte val) override;
 
-  inline void update() {
-    /**
-     * timer 1 - once zero is reached:
-     *  + 1 cycle  -> IRQ
-     *  + 2 cycles -> restart (if so configured)
-     */
-    if (timer1_running) {
-      (*timer1_period)--;
-
-      if (*timer1_period == 0) {
-        timer1_running = false;
-      }
-    } else {
-      timer1_running = true;
-      flag_interrupt(IRQ::TIMER1_ZERO);
-
-      if (*acr & 0x40) {
-        *timer1_period = *timer1_latch + 1;
-      }
-
-      // TODO: PB7 pulse
-    }
-
-    if (timer2_running) {
-      (*timer2_period)--;
-
-      if (*timer2_period == 0) {
-        timer2_running = false;
-        flag_interrupt(IRQ::TIMER2_ZERO);
-      }
-
-      // TODO: PB6 pulse counting mode
-    }
-  }
+  void update();
 
 private:
   void flag_interrupt(IRQ irq);
   void clear_interrupt(IRQ irq);
 
   bool timer1_running = true;
-  bool timer2_running = true;
+  bool timer2_active = false;
 
   Byte *port_b = mapped_regs + PortB;
   Byte *port_a_ca2 = mapped_regs + PortACA2;

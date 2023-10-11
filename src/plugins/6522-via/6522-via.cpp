@@ -22,6 +22,8 @@ Byte Via::read(Word offset) {
 
   else if (offset == Timer1PeriodLow || offset == Timer1LatchLow) {
     clear_interrupt(IRQ::TIMER1_ZERO);
+  } else if (offset == Timer2PeriodLow) {
+    clear_interrupt(IRQ::TIMER2_ZERO);
   }
 
   return mapped_regs[offset];
@@ -54,9 +56,46 @@ Byte Via::write(Word offset, Byte val) {
 
   else if (offset == Timer1PeriodHigh || offset == Timer1LatchHigh) {
     clear_interrupt(IRQ::TIMER1_ZERO);
+  } else if (offset == Timer2PeriodHigh) {
+    clear_interrupt(IRQ::TIMER2_ZERO);
+    timer2_active = true;
   }
 
   return mapped_regs[offset] = val;
+}
+
+void Via::update() {
+  /**
+   * timer 1 - once zero is reached:
+   *  + 1 cycle  -> IRQ
+   *  + 2 cycles -> restart (if so configured)
+   */
+  if (timer1_running) {
+    (*timer1_period)--;
+
+    if (*timer1_period == 0) {
+      timer1_running = false;
+    }
+  } else {
+    timer1_running = true;
+    flag_interrupt(IRQ::TIMER1_ZERO);
+
+    if (*acr & 0x40) {
+      *timer1_period = *timer1_latch + 1;
+    }
+
+    // TODO: PB7 pulse
+  }
+
+  // timer 2 - always decrements, oneshot IRQ on reaching zero
+  (*timer2_period)--;
+
+  if (*timer2_period == 0 && timer2_active) {
+    timer2_active = false;
+    flag_interrupt(IRQ::TIMER2_ZERO);
+  }
+
+  // TODO: PB6 pulse counting mode
 }
 
 void Via::flag_interrupt(IRQ irq) {
