@@ -25,13 +25,15 @@ public:
   };
 
   enum IRQ {
-    CA2_ACTEDGE = 0x01,
-    CA1_ACTEDGE = 0x02,
-    SHIFTREG_8S = 0x04,
-    CB2_ACTEDGE = 0x08,
-    CB1_ACTEDGE = 0x10,
-    TIMER2_ZERO = 0x20,
-    TIMER1_ZERO = 0x40,
+    CA2_ACTEDGE = BIT0,
+    CA1_ACTEDGE = BIT1,
+    SHIFTREG_8S = BIT2,
+    CB2_ACTEDGE = BIT3,
+    CB1_ACTEDGE = BIT4,
+    TIMER2_ZERO = BIT5,
+    TIMER1_ZERO = BIT6,
+
+    ANY = 0xff,
   };
 
   Via();
@@ -48,8 +50,8 @@ private:
   void flag_interrupt(IRQ irq);
   void clear_interrupt(IRQ irq);
 
-  bool timer1_running = true;
-  bool timer2_active = false;
+  bool timer1_irq_on_zero = false;
+  bool timer2_irq_on_zero = false;
 
   Byte *port_b = mapped_regs + PortB;
   Byte *port_a_ca2 = mapped_regs + PortACA2;
@@ -67,6 +69,7 @@ private:
   Byte *t2c_lo = mapped_regs + Timer2PeriodLow;
   Byte *t2c_hi = mapped_regs + Timer2PeriodHigh;
   Word *timer2_period = (Word *)t2c_lo;
+  Byte t2l_lo;
 
   Byte *shift_register = mapped_regs + ShiftReg;
 

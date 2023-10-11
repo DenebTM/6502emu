@@ -3,14 +3,18 @@
 #include <fstream>
 using namespace std::chrono_literals;
 
+#include "emu-types.hpp"
 #include "plugin-callback.hpp"
 #include "plugins/6522-via.hpp"
 
 extern plugin_callback_t plugin_callback;
 
 Via::Via() : MemoryMappedDevice(false, 16) {
-  *ifr = 0x00;
-  *ier = 0x80;
+  *ifr = 0;
+  *ier = BIT7;
+
+  *timer1_period = 0xffff;
+  *timer2_period = 0;
 }
 
 Byte Via::read(Word offset) {
@@ -24,6 +28,10 @@ Byte Via::read(Word offset) {
     clear_interrupt(IRQ::TIMER1_ZERO);
   } else if (offset == Timer2PeriodLow) {
     clear_interrupt(IRQ::TIMER2_ZERO);
+  }
+
+  else if (offset == InterruptFlagReg) {
+    clear_interrupt(IRQ::ANY);
   }
 
   return mapped_regs[offset];
@@ -42,23 +50,34 @@ Byte Via::write(Word offset, Byte val) {
   }
 
   else if (offset == InterruptFlagReg) {
-    val = *ifr & ~(val & ~0x80);
+    val = *ifr & ~(val & ~BIT7);
   }
 
   else if (offset == InterruptEnableReg) {
     bool enable_irqs = val >> 7;
     if (enable_irqs) {
-      val = *ier | (val & ~0x80);
+      val = *ier | (val & ~BIT7);
     } else {
-      val = *ier & ~(val & ~0x80);
+      val = *ier & ~(val & ~BIT7);
     }
   }
 
-  else if (offset == Timer1PeriodHigh || offset == Timer1LatchHigh) {
-    clear_interrupt(IRQ::TIMER1_ZERO);
+  else if (offset == Timer1PeriodLow) {
+    offset = Timer1LatchLow;
+  } else if (offset == Timer1PeriodHigh) {
+    *t1c_lo = *t1l_lo;                 // transfer latched low-order period
+    clear_interrupt(IRQ::TIMER1_ZERO); // clear IFR6
+    timer1_irq_on_zero = true;         // enable IRQ on next zero-cross (in oneshot mode)
+  } else if (offset == Timer1LatchHigh) {
+    clear_interrupt(IRQ::TIMER1_ZERO); // just clear IFR6
+  }
+
+  else if (offset == Timer2PeriodLow) {
+    return t2l_lo = val;
   } else if (offset == Timer2PeriodHigh) {
-    clear_interrupt(IRQ::TIMER2_ZERO);
-    timer2_active = true;
+    *t2c_lo = t2l_lo;                  // transfer latched low-order period
+    clear_interrupt(IRQ::TIMER2_ZERO); // clear IFR5
+    timer2_irq_on_zero = true;         // enable IRQ on next zero-cross
   }
 
   return mapped_regs[offset] = val;
@@ -67,47 +86,58 @@ Byte Via::write(Word offset, Byte val) {
 void Via::update() {
   /**
    * timer 1 - once zero is reached:
-   *  + 1 cycle  -> IRQ
-   *  + 2 cycles -> restart (if so configured)
+   *  + 0 cycles -> IRQ, disable IRQ if ACR6 == 0
+   *  + 1 cycle  -> load FFFF into timer period
+   *  + 2 cycles -> load latched value into timer period
+   *
+   * TODO: PB7 pulse
    */
-  if (timer1_running) {
+  static bool timer1_hit_zero = (timer1_period == 0);
+  static bool timer1_reload = false;
+  if (!timer1_hit_zero) {
     (*timer1_period)--;
-
     if (*timer1_period == 0) {
-      timer1_running = false;
-    }
-  } else {
-    timer1_running = true;
-    flag_interrupt(IRQ::TIMER1_ZERO);
+      timer1_hit_zero = true;
+      if (timer1_irq_on_zero) {
+        flag_interrupt(IRQ::TIMER1_ZERO);
 
-    if (*acr & 0x40) {
-      *timer1_period = *timer1_latch + 1;
+        // oneshot mode
+        if (!(*acr & BIT6)) {
+          timer1_irq_on_zero = false;
+        }
+      }
     }
-
-    // TODO: PB7 pulse
+  } else if (timer1_hit_zero) {
+    timer1_hit_zero = false;
+    timer1_reload = true;
+    *timer1_period = 0xffff;
+  } else if (timer1_reload) {
+    timer1_reload = false;
+    *timer1_period = *timer1_latch;
   }
 
-  // timer 2 - always decrements, oneshot IRQ on reaching zero
+  /**
+   * timer 2 - always decrements, oneshot IRQ on reaching zero
+   *
+   * TODO: PB6 pulse
+   */
   (*timer2_period)--;
-
-  if (*timer2_period == 0 && timer2_active) {
-    timer2_active = false;
+  if (*timer2_period == 0 && timer2_irq_on_zero) {
+    timer2_irq_on_zero = false;
     flag_interrupt(IRQ::TIMER2_ZERO);
   }
-
-  // TODO: PB6 pulse counting mode
 }
 
 void Via::flag_interrupt(IRQ irq) {
-  *ifr |= (*ier & irq) | ((irq > 0) << 7);
+  *ifr |= irq | ((irq > 0) && (*ier & ~BIT7)) << 7;
 
-  if ((*ier & 0x80) && (*ifr & ~0x80)) {
+  if (*ifr & *ier & ~BIT7) {
     plugin_callback(CPU_INTERRUPT, (void *)false);
   }
 }
 
 void Via::clear_interrupt(IRQ irq) {
   *ifr &= ~irq;
-  if (!(*ifr & ~0x80))
+  if (!(*ifr & ~BIT7))
     *ifr = 0;
 }
