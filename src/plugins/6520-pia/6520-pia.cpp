@@ -13,10 +13,10 @@ Pia::Pia(plugin_callback_t plugin_callback) : MemoryMappedDevice(false, 4) {
   *this->ctrl_b = 0;
   this->ddr_a = 0;
   this->ddr_b = 0;
-  this->ca1 = 0;
-  this->cb1 = 0;
-  this->ca2 = 0;
-  this->cb2 = 0;
+  this->ca1 = 1;
+  this->cb1 = 1;
+  this->ca2 = 1;
+  this->cb2 = 1;
 }
 
 Byte Pia::read(Word offset) {
@@ -42,9 +42,10 @@ Byte Pia::write(Word offset, Byte val) {
     // preserve Cx1/Cx2 input IRQ flags, affect only control registers
     val = (val & (Cx1_CTRL | Cx2_CTRL | ORx_SEL_PORT)) | (mapped_regs[offset] & (Cx1_IRQ_FLAG | Cx2_IN_IRQ_FLAG));
 
-    // Cx2 in manual output mode -> value set directly by write
-    if ((val & Cx2_CTRL) == (Cx2_MODE_OUTPUT | Cx2_OUT_MANUAL)) {
-      (offset == CRA ? ca1 : cb1) = (val & Cx2_OUT_HIGH) > 0;
+    // Cx2 in manual output mode -> value determined by CRx bit 3
+    if ((val & (Cx2_MODE_OUTPUT | Cx2_OUT_MANUAL)) == (Cx2_MODE_OUTPUT | Cx2_OUT_MANUAL)) {
+      bool *cx2 = &((offset == CRA) ? ca2 : cb2);
+      *cx2 = (val & Cx2_OUT_HIGH) > 0;
     }
   }
 

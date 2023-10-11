@@ -29,3 +29,11 @@ extern "C" EXPORT int plugin_destroy() {
 
   return 0;
 }
+
+extern "C" EXPORT int plugin_update() {
+  if (pia) {
+    pia->update();
+  }
+
+  return 0;
+}
