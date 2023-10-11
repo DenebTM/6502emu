@@ -39,13 +39,16 @@ void Datasette::stop() {
   pia1->mapped_regs[Pia::ORA] |= BIT4;
 }
 
-void Datasette::update() {
-  static size_t cycles_since_last_pulse = 0;
+int Datasette::update() {
+  int retval = 0;
+
+  static unsigned int cycles_since_last_pulse = 0;
+  static unsigned int autostop_cycles = 0;
 
   bool motor_en = (pia1->cb2 == 0);
 
   if (playing && motor_en && tap_index < tap_size) {
-    size_t num_cycles = tap[tap_index] * 8;
+    unsigned int num_cycles = tap[tap_index] * 8;
 
     bool nc_zero = (num_cycles == 0);
     if (nc_zero) {
@@ -56,17 +59,24 @@ void Datasette::update() {
       pia1->set_ca1(0);
       pia1->set_ca1(1);
 
-      tap_index += nc_zero ? 4 : 1;
+      int step = nc_zero ? 4 : 1;
+      tap_index += step;
       cycles_since_last_pulse = 0;
 
-      static const char *CSI = "\33[";
-      std::cout << std::endl << (tap_index - TAP_HEADER_LEN) << " / " << (tap_size - TAP_HEADER_LEN);
-      std::cout << CSI << "1F> ";
-      fflush(stdout);
+      retval = step;
     }
 
     cycles_since_last_pulse++;
+  } else if (playing) {
+    autostop_cycles++;
+
+    if (autostop_cycles >= 1000000) {
+      autostop_cycles = 0;
+      playing = false;
+    }
   }
+
+  return retval;
 }
 
 void Datasette::rewind() { tap_index = TAP_HEADER_LEN; }

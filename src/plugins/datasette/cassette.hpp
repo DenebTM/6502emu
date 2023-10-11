@@ -12,7 +12,7 @@ struct Datasette {
   void rewind();
 
   // positive non-zero return: data was read
-  void update();
+  int update();
 
   unsigned char *tap;
   size_t tap_size = 0;
