@@ -6,7 +6,7 @@ Byte keyboard_rows[10] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
 Byte active_row = 0;
 
 void set_kb_row(Byte row) { active_row = row; }
-Byte get_kb_row_contents() { return keyboard_rows[active_row]; }
+Byte get_kb_row_contents() { return (active_row < 10) ? keyboard_rows[active_row] : 0xff; }
 
 void handle_key_down(SDL_Keysym &key) {
   if (key.mod & KMOD_SHIFT && shiftmap.count(key.sym)) {
