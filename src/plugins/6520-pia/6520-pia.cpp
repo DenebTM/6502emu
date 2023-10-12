@@ -60,8 +60,8 @@ Byte Pia::read_orx(bool orb) {
   Byte *ddr = &(orb ? ddr_b : ddr_a);
   auto &read_port = orb ? read_port_b : read_port_a;
 
-  // reading ORA and CA2 in output mode
-  if (!orb && (*ctrl & Cx2_MODE_OUTPUT)) {
+  // reading ORA and CA2 in handshake output mode
+  if (!orb && (*ctrl & (Cx2_MODE_OUTPUT | Cx2_OUT_MANUAL)) == Cx2_MODE_OUTPUT) {
     ca2 = 0;
   }
 
@@ -82,8 +82,8 @@ Byte Pia::write_orx(bool orb, Byte val) {
   Byte *port = orb ? port_b : port_a;
   auto &write_port = orb ? write_port_b : write_port_a;
 
-  // writing ORB and CB2 in output mode
-  if (orb && (*ctrl & Cx2_MODE_OUTPUT)) {
+  // writing ORB and CB2 in handshake output mode
+  if (orb && (*ctrl & (Cx2_MODE_OUTPUT | Cx2_OUT_MANUAL)) == Cx2_MODE_OUTPUT) {
     cb2 = 0;
   }
 
