@@ -10,6 +10,9 @@ using namespace std::chrono_literals;
 extern plugin_callback_t plugin_callback;
 
 Via::Via() : MemoryMappedDevice(false, 16) {
+  *ddr_a = 0;
+  *ddr_b = 0;
+
   *ifr = 0;
   *ier = BIT7;
 
@@ -44,9 +47,9 @@ Byte Via::write(Word offset, Byte val) {
     // TODO: perform CA2 handshake
   }
   if (offset == PortA) {
-    val = (*port_a & *ddra) | (val & ~(*ddra));
+    val = (*port_a & ~*ddr_a) | (val & *ddr_a);
   } else if (offset == PortB) {
-    val = (*port_b & *ddrb) | (val & ~(*ddrb));
+    val = (*port_b & ~*ddr_b) | (val & *ddr_b);
   }
 
   else if (offset == InterruptFlagReg) {

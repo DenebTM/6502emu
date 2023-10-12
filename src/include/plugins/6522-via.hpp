@@ -55,8 +55,8 @@ private:
 
   Byte *port_b = mapped_regs + PortB;
   Byte *port_a_ca2 = mapped_regs + PortACA2;
-  Byte *ddrb = mapped_regs + DDRB;
-  Byte *ddra = mapped_regs + DDRA;
+  Byte *ddr_b = mapped_regs + DDRB;
+  Byte *ddr_a = mapped_regs + DDRA;
 
   Byte *t1c_lo = mapped_regs + Timer1PeriodLow;
   Byte *t1c_hi = mapped_regs + Timer1PeriodHigh;
