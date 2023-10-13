@@ -87,33 +87,31 @@ Byte Via::write(Word offset, Byte val) {
 }
 
 void Via::update() {
+  static bool timer1_hit_zero = (timer1_period == 0);
+  static bool timer1_reload = false;
+
   /**
    * timer 1 - once zero is reached:
    *  + 0 cycles -> IRQ, disable IRQ if ACR6 == 0
-   *  + 1 cycle  -> load FFFF into timer period
+   *  + 1 cycle  -> prepare to reload latched value
    *  + 2 cycles -> load latched value into timer period
    *
    * TODO: PB7 pulse
    */
-  static bool timer1_hit_zero = (timer1_period == 0);
-  static bool timer1_reload = false;
-  if (!timer1_hit_zero) {
-    (*timer1_period)--;
-    if (*timer1_period == 0) {
-      timer1_hit_zero = true;
-      if (timer1_irq_on_zero) {
-        flag_interrupt(IRQ::TIMER1_ZERO);
+  (*timer1_period)--;
+  if (*timer1_period == 0) {
+    timer1_hit_zero = true;
+    if (timer1_irq_on_zero) {
+      flag_interrupt(IRQ::TIMER1_ZERO);
 
-        // oneshot mode
-        if (!(*acr & BIT6)) {
-          timer1_irq_on_zero = false;
-        }
+      // oneshot mode
+      if (!(*acr & BIT6)) {
+        timer1_irq_on_zero = false;
       }
     }
   } else if (timer1_hit_zero) {
     timer1_hit_zero = false;
     timer1_reload = true;
-    *timer1_period = 0xffff;
   } else if (timer1_reload) {
     timer1_reload = false;
     *timer1_period = *timer1_latch;
