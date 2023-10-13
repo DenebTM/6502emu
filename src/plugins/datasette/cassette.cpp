@@ -11,8 +11,8 @@
 extern Pia *pia1;
 
 void Datasette::load_tap(std::string filename) {
-  if (!std::filesystem::exists(filename)) {
-    std::cerr << "Could not find file '" << filename << "'" << std::endl;
+  if (!std::filesystem::is_regular_file(filename)) {
+    std::cerr << "File not found or invalid: '" << filename << "'" << std::endl;
     return;
   }
 

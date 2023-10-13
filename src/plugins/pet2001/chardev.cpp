@@ -109,7 +109,7 @@ int Chardev::sdl_init(SDL_Renderer *renderer) {
                                  RENDER_WIDTH, RENDER_HEIGHT);
 
   if (!render_tex) {
-    std::cerr << "Error creating render texture: " << SDL_GetError() << std::endl;
+    std::cerr << "Chardev: Error creating render texture: " << SDL_GetError() << std::endl;
     return -1;
   }
 
@@ -198,7 +198,7 @@ int Chardev::create_char_textures() {
     // character set 1
     SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(char_rom + 8 * i, 8, 8, 1, 1, SDL_PIXELFORMAT_INDEX1MSB);
     if (!surface) {
-      std::cerr << "Error creating surface: " << SDL_GetError() << std::endl;
+      std::cerr << "Chardev: Error creating surface: " << SDL_GetError() << std::endl;
       return -1;
     }
 
@@ -212,7 +212,7 @@ int Chardev::create_char_textures() {
     // character set 2
     surface = SDL_CreateRGBSurfaceWithFormatFrom(char_rom + 8 * (i + 128), 8, 8, 1, 1, SDL_PIXELFORMAT_INDEX1MSB);
     if (!surface) {
-      std::cerr << "Error creating surface: " << SDL_GetError() << std::endl;
+      std::cerr << "Chardev: Error creating surface: " << SDL_GetError() << std::endl;
       return -1;
     }
 

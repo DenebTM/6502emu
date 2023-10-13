@@ -32,23 +32,35 @@ Emu6502 cpu;
 
 std::thread *main_window_thread;
 
-int main(int argc, char **argv) {
-  // load configuration
-  char *config_file_name;
-  if (argc >= 2) {
-    config_file_name = argv[1];
-  } else {
-    config_file_name = readline("Enter config filename: ");
-  }
+char *input_config_file() {
+  auto filename = readline("Enter config filename: ");
 
   // got EOF or empty string
   // TODO: handle empty string case separately
-  if (!config_file_name || strlen(config_file_name) == 0)
-    return 0;
+  if (!filename || strlen(filename) == 0)
+    exit(0);
 
   // trim trailing spaces that may be added by `readline`
-  config_file_name = strtok(config_file_name, " ");
-  config = new EmuConfig(config_file_name);
+  return strtok(filename, " ");
+}
+
+int main(int argc, char **argv) {
+  // load configuration
+  char *config_filename = NULL;
+  if (argc >= 2) {
+    config_filename = argv[1];
+  } else {
+    config_filename = input_config_file();
+  }
+
+  while (!(config_filename && std::filesystem::is_regular_file(config_filename))) {
+    if (!std::filesystem::is_regular_file(config_filename)) {
+      std::cerr << "File not found or invalid: '" << config_filename << "'" << std::endl;
+    }
+    config_filename = input_config_file();
+  }
+
+  config = new EmuConfig(config_filename);
 
   signal(SIGINT, signal_callback_handler);
   signal(SIGTERM, signal_callback_handler);
