@@ -4,6 +4,7 @@
 using namespace std::chrono_literals;
 
 #include "chardev.hpp"
+#include "emu-config.hpp"
 #include "keyboard.hpp"
 #include "mem-dev.hpp"
 #include "mem.hpp"
@@ -13,6 +14,7 @@ using namespace std::chrono_literals;
 #include "plugins/plugin-types.hpp"
 
 plugin_callback_t plugin_callback;
+uint64_t system_clock_speed = 1000000;
 
 Chardev *chardev;
 Pia *pia1;
@@ -30,7 +32,9 @@ extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   return 0;
 }
 
-extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
+extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *config) {
+  system_clock_speed = config->clock_speed;
+
   addr = addr ? addr : 0x8000;
 
   if (chardev->sdl_init() != 0)
@@ -80,6 +84,13 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
 extern "C" EXPORT int plugin_destroy() {
   if (chardev)
     delete chardev;
+
+  return 0;
+}
+
+extern "C" EXPORT int plugin_update() {
+  if (chardev)
+    chardev->update();
 
   return 0;
 }

@@ -15,6 +15,7 @@ public:
 
   int sdl_init();
 
+  void update();
   void sdl_render();
   void sdl_handle_events();
 

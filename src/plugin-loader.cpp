@@ -107,7 +107,7 @@ void load_configured_plugins() {
 
 void init_plugins() {
   for (auto [plugin_init, addr] : plugin_init_funcs)
-    plugin_init(add_spc, addr);
+    plugin_init(add_spc, addr, config);
 }
 
 void destroy_plugins() {

@@ -20,13 +20,16 @@ constexpr int RENDER_WIDTH = COL_WIDTH * COLS * RENDER_SCALE;
 constexpr int RENDER_HEIGHT = ROW_HEIGHT * ROWS * RENDER_SCALE;
 
 extern plugin_callback_t plugin_callback;
+extern uint64_t system_clock_speed;
 
 extern Pia *pia1;
 extern Via *via;
 
+std::condition_variable sdl_wake_cond;
+std::mutex sdl_wake_mutex;
+
 Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
-  screen_mem = new Byte[1024];
-  mapped_regs = screen_mem;
+  screen_mem = mapped_regs;
 
   if (load_char_rom() == 0)
     load_success = true;
@@ -34,6 +37,7 @@ Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
 
 Chardev::~Chardev() {
   if (sdl_initialized) {
+    sdl_wake_cond.notify_all();
     sdl_thread_exit = true;
     if (sdl_thread.joinable())
       sdl_thread.join();
@@ -81,8 +85,16 @@ void Chardev::sdl_handle_events() {
   }
 }
 
-void Chardev::sdl_render() {
-  // assume 60Hz refresh rate for simplicity
+/**
+ * this function ties the SDL thread to the system clock - every ~16.7ms
+ * a condition variable is used to signal the SDL thread to wake up
+ *
+ * additionally signals vblank to the system for 1.5ms after each frame
+ *
+ * TODO: use configured clock speed instead of 1MHz
+ */
+void Chardev::update() {
+  // 60Hz refresh rate at full clock speed
   static constexpr auto frame_time = 1s / 60.0;
 
   // from http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/pet/2001/video-1.gif (graphic 2) and
@@ -90,15 +102,42 @@ void Chardev::sdl_render() {
   static constexpr auto vblank_time = 1.5ms;
   static constexpr auto visible_time = frame_time - vblank_time;
 
-  // vblank over, visible portion begins
-  auto frame_start = std::chrono::system_clock::now();
-  if (pia1) {
-    pia1->set_cb1(1);
-  }
-  if (via) {
-    via->mapped_regs[Via::PortB] |= 0b00100000;
-  }
+  static const unsigned cycles_frame = frame_time * system_clock_speed / 1s;
+  static const unsigned cycles_visible = (visible_time / frame_time) * cycles_frame;
 
+  static QWord thisframe_cycle = 0;
+  static bool frame_vblank_done = false;
+
+  thisframe_cycle++;
+  if (thisframe_cycle > cycles_visible && !frame_vblank_done) {
+    // visible portion over, vblank begins
+    if (pia1) {
+      pia1->set_cb1(0);
+    }
+    if (via) {
+      via->mapped_regs[Via::PortB] &= ~BIT5;
+    }
+
+    frame_vblank_done = true;
+  } else if (thisframe_cycle > cycles_frame) {
+    // vblank over, visible portion begins
+    if (pia1) {
+      pia1->set_cb1(1);
+    }
+    if (via) {
+      via->mapped_regs[Via::PortB] |= BIT5;
+    }
+
+    // use a condition variable to wake the SDL thread
+    sdl_wake_cond.notify_all();
+
+    // begin next frame
+    thisframe_cycle = 0;
+    frame_vblank_done = false;
+  }
+}
+
+void Chardev::sdl_render() {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
 
@@ -111,19 +150,7 @@ void Chardev::sdl_render() {
     }
   }
 
-  // draw screen, simulate that this takes until vblank begins
   SDL_RenderPresent(renderer);
-  std::this_thread::sleep_until(frame_start + visible_time);
-
-  // visible portion over, vblank begins
-  if (pia1) {
-    pia1->set_cb1(0);
-  }
-  if (via) {
-    via->mapped_regs[Via::PortB] &= ~0b00100000;
-  }
-
-  std::this_thread::sleep_until(frame_start + frame_time);
 }
 
 void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
@@ -157,6 +184,10 @@ void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
   SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
 
   while (!sdl_thread_exit) {
+    // wait until main thread signals wake-up
+    std::unique_lock<std::mutex> sdl_wake_lock(sdl_wake_mutex);
+    sdl_wake_cond.wait(sdl_wake_lock);
+
     sdl_handle_events();
     sdl_render();
   }

@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <tuple>
 
+#include "emu-config.hpp"
 #include "mem.hpp"
 #include "plugin-callback.hpp"
 
@@ -28,7 +29,7 @@ typedef int (*plugin_load_t)(plugin_callback_t);
  *
  * @return ignored
  */
-typedef int (*plugin_init_t)(AddressSpace &, Word);
+typedef int (*plugin_init_t)(AddressSpace &, Word, EmuConfig *);
 
 /**
  * extern "C" int plugin_destroy - REQUIRED
