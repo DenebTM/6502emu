@@ -80,7 +80,7 @@ Byte Pia::write_orx(bool orb, Byte val) {
   Byte *ctrl = orb ? ctrl_b : ctrl_a;
   Byte *ddr = &(orb ? ddr_b : ddr_a);
   Byte *port = orb ? port_b : port_a;
-  auto &write_port = orb ? write_port_b : write_port_a;
+  auto &on_write_port = orb ? on_write_port_b : on_write_port_a;
 
   // writing ORB and CB2 in handshake output mode
   if (orb && (*ctrl & (Cx2_MODE_OUTPUT | Cx2_OUT_MANUAL)) == Cx2_MODE_OUTPUT) {
@@ -89,11 +89,9 @@ Byte Pia::write_orx(bool orb, Byte val) {
 
   // CRx bit 2 == 1 -> PORTx selected
   if (*ctrl & ORx_SEL_PORT) {
-    auto val_keep = val & ~*ddr;
     auto val_out = val & *ddr;
-
-    write_port(val_out);
-    return *port = (*port & *ddr) | val_keep;
+    on_write_port(val_out);
+    return *port = (*port & ~*ddr) | val_out;
   }
   // CRx bit 2 == 0 -> DDRx selected
   return *ddr = val;

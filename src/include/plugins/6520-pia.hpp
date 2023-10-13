@@ -56,10 +56,10 @@ public:
   plugin_callback_t plugin_callback;
 
   std::function<Byte(void)> read_port_a = [&]() { return *port_a; };
-  std::function<Byte(Byte)> write_port_a = [&](Byte val) { return *port_a = val; };
+  std::function<void(Byte)> on_write_port_a = [&](Byte val) { return; };
 
   std::function<Byte(void)> read_port_b = [&]() { return *port_b; };
-  std::function<Byte(Byte)> write_port_b = [&](Byte val) { return *port_b = val; };
+  std::function<void(Byte)> on_write_port_b = [&](Byte val) { return; };
 
   bool ca1 = 1;
   bool ca2 = 1;
