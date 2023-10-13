@@ -4,20 +4,22 @@
 #include <iostream>
 
 #include "main_window.hpp"
+#include "plugin-loader.hpp"
 
 SDL_Window *main_window;
 SDL_Renderer *main_renderer;
 
+extern void plugin_callback_handler(PluginCallbackType, void *);
+
 int main_window_init() {
-  // commented out for now; conflicts with chardev
-  // if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-  //   std::cerr << "Failed to initialize SDL2" << std::endl;
-  //   return -1;
-  // }
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    std::cerr << "Failed to initialize SDL2" << std::endl;
+    return -1;
+  }
 
-  // SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+  SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
 
-  main_window = SDL_CreateWindow("Main window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600,
+  main_window = SDL_CreateWindow("6502emu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720,
                                  SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
   if (!main_window) {
     std::cerr << "Failed to create SDL2 window: " << SDL_GetError() << std::endl;
@@ -41,19 +43,32 @@ int main_window_init() {
 
 void main_window_update() {
   SDL_Event event;
-  // commented out for now; conflicts with chardev
-  // while (SDL_PollEvent(&event)) {
-  //   ImGui_ImplSDL2_ProcessEvent(&event);
-  // }
+  while (SDL_PollEvent(&event)) {
+    ImGui_ImplSDL2_ProcessEvent(&event);
+
+    switch (event.type) {
+      case SDL_WINDOWEVENT:
+        if (!(event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(main_window)))
+          break;
+      case SDL_QUIT:
+        plugin_callback_handler(EMU_EXIT, (void *)0);
+        break;
+    }
+
+    for (auto plugin_ui_event : plugin_ui_event_funcs)
+      plugin_ui_event(event);
+  }
+
+  SDL_SetRenderDrawColor(main_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+  SDL_RenderClear(main_renderer);
 
   ImGui_ImplSDLRenderer2_NewFrame();
   ImGui_ImplSDL2_NewFrame();
   ImGui::NewFrame();
   ImGui::ShowDemoWindow();
 
-  SDL_SetRenderDrawColor(main_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-  SDL_RenderClear(main_renderer);
-  // etc
+  for (auto plugin_ui_render : plugin_ui_render_funcs)
+    plugin_ui_render(main_renderer);
 
   ImGui::Render();
   ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());

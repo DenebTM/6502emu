@@ -1,5 +1,10 @@
-LDLIBS = `sdl2-config --cflags --libs`
-OBJS = main.o chardev.o keyboard.o
+LDLIBS = `sdl2-config --libs` 
+INCLUDE = `sdl2-config --cflags`
+SOURCES = main.cpp chardev.cpp keyboard.cpp
 OUTFILE = ../pet2001.so
+
+# ImGui
+IMGUI_DIR = ../../ui/imgui
+INCLUDE += -I$(IMGUI_DIR)
 
 include ../plugin-makefile-base

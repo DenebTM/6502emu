@@ -1,4 +1,5 @@
 #pragma once
+#include <SDL2/SDL.h>
 #include <filesystem>
 #include <tuple>
 
@@ -51,10 +52,23 @@ typedef int (*plugin_destroy_t)(void);
  */
 typedef int (*plugin_update_t)(void);
 
+/**
+ * extern "C" int plugin_ui_event - OPTIONAL
+ * extern "C" int plugin_ui_render - OPTIONAL
+ *
+ * a plugin may provide functions to display an ImGui window and handle SDL events
+ *
+ * @return ignored
+ */
+typedef int (*plugin_ui_event_t)(SDL_Event &);
+typedef int (*plugin_ui_render_t)(SDL_Renderer *);
+
 extern std::vector<std::string> plugin_filenames;
 extern std::vector<std::tuple<plugin_init_t, Word>> plugin_init_funcs;
 extern std::vector<plugin_destroy_t> plugin_destroy_funcs;
 extern std::vector<plugin_update_t> plugin_update_funcs;
+extern std::vector<plugin_ui_event_t> plugin_ui_event_funcs;
+extern std::vector<plugin_ui_render_t> plugin_ui_render_funcs;
 
 /**
  * load a plugin from a shared object file

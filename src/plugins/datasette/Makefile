@@ -1,5 +1,5 @@
-LDLIBS = `sdl2-config --cflags --libs`
-OBJS = main.o cassette.o
+LDLIBS =
+SOURCES = main.cpp cassette.cpp
 OUTFILE = ../datasette.so
 
 include ../plugin-makefile-base

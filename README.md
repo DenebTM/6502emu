@@ -42,6 +42,6 @@ Additionally requires a 2k PETSCII character ROM to be present at `roms/char_rom
 ## TODO
 
 - more plugins - full CBM PET or VIC-20 emulation as potential goal
-- UI for debugging
+- UI for debugging (ongoing)
 - documentation (ongoing)
 - sort out plugin load order issues

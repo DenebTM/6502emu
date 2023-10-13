@@ -22,7 +22,7 @@ const char *CSI = "\33[";
 
 bool cmd_thread_running = false;
 void cmd_thread_fn() {
-  std::cout << CSI << "1F";
+  // std::cout << CSI << "1F";
   std::cout << "=== Datasette command interface ===" << std::endl;
   std::cout << "Available commands:" << std::endl;
   for (auto cmd : {"load <filename>", "play", "stop", "rewind", "exit"}) {

@@ -1,15 +1,19 @@
 CXX = g++
 CXXFLAGS = -g -O3 -Wall -Wpedantic -std=c++20 -fPIC -fvisibility=hidden -MMD
 
-INCLUDE = ../../include
+INCLUDE += -I../../include
+
+OBJDIR = obj
+OBJS = $(addprefix $(OBJDIR)/, $(SOURCES:%.cpp=%.o))
 
 $(OUTFILE): $(OBJS)
 	$(CXX) -shared -o $@ $^ $(LDLIBS)
 
 -include $(OBJS:%.o=%.d)
 
-%.o: %.cpp
-	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -c $<
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(INCLUDE) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	$(RM) $(OUTFILE) $(OBJS) $(OBJS:.o=.d)
+	$(RM) -r $(OUTFILE) $(OBJDIR)

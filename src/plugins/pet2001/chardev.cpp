@@ -10,11 +10,14 @@ using namespace std::chrono_literals;
 #include "plugins/6520-pia.hpp"
 #include "plugins/6522-via.hpp"
 
+#include "imgui.h"
+
 #define COL_WIDTH 8
 #define ROW_HEIGHT 8
 #define COLS 40
 #define ROWS 25
 
+// #define RENDER_SCALE 2.
 #define RENDER_SCALE 2.
 constexpr int RENDER_WIDTH = COL_WIDTH * COLS * RENDER_SCALE;
 constexpr int RENDER_HEIGHT = ROW_HEIGHT * ROWS * RENDER_SCALE;
@@ -36,12 +39,8 @@ Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
 }
 
 Chardev::~Chardev() {
-  if (sdl_initialized) {
-    sdl_wake_cond.notify_all();
-    sdl_thread_exit = true;
-    if (sdl_thread.joinable())
-      sdl_thread.join();
-  }
+  // allow ongoing render to complete
+  sdl_wake_cond.notify_all();
 
   if (characters) {
     delete[] characters;
@@ -102,43 +101,51 @@ void Chardev::update() {
   }
 }
 
-int Chardev::sdl_init() {
-  std::promise<int> sdl_init_promise;
-  auto sdl_init_future = sdl_init_promise.get_future();
+int Chardev::sdl_init(SDL_Renderer *renderer) {
+  this->renderer = renderer;
+  create_char_textures();
 
-  sdl_thread = std::thread(&Chardev::sdl_thread_fn, this, std::move(sdl_init_promise));
+  render_tex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, //
+                                 RENDER_WIDTH, RENDER_HEIGHT);
 
-  sdl_init_future.wait();
-  auto sdl_init_return = sdl_init_future.get();
+  if (!render_tex) {
+    std::cerr << "Error creating render texture: " << SDL_GetError() << std::endl;
+    return -1;
+  }
 
-  sdl_initialized = (sdl_init_return == 0);
-  return sdl_init_return;
+  return 0;
 }
 
-void Chardev::sdl_handle_events() {
-  SDL_Event event;
-  while (SDL_PollEvent(&event)) {
-    switch (event.type) {
-      case SDL_WINDOWEVENT:
-        if (!(event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window)))
-          break;
-      case SDL_QUIT:
-        plugin_callback(EMU_EXIT, (void *)0);
-        break;
+void Chardev::ui_handle_event(SDL_Event &event) {
+  switch (event.type) {
+    case SDL_KEYDOWN:
+      if (!event.key.repeat)
+        handle_key_down(event.key.keysym);
+      break;
 
-      case SDL_KEYDOWN:
-        if (!event.key.repeat)
-          handle_key_down(event.key.keysym);
-        break;
-
-      case SDL_KEYUP:
-        handle_key_up(event.key.keysym);
-        break;
-    }
+    case SDL_KEYUP:
+      handle_key_up(event.key.keysym);
+      break;
   }
 }
 
-void Chardev::sdl_render() {
+void Chardev::ui_render() {
+  // wait until `update` signals wake-up
+  // FIXME: this blocks the UI thread
+  std::unique_lock<std::mutex> sdl_wake_lock(sdl_wake_mutex);
+  sdl_wake_cond.wait(sdl_wake_lock);
+
+  // save current renderer state
+  SDL_Texture *old_render_target = SDL_GetRenderTarget(renderer);
+  SDL_bool old_integer_scale = SDL_RenderGetIntegerScale(renderer);
+  float old_scale_x, old_scale_y;
+  SDL_RenderGetScale(renderer, &old_scale_x, &old_scale_y);
+
+  // prepare renderer to draw to the texture
+  SDL_SetRenderTarget(renderer, render_tex);
+  SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
+  SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
+
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
 
@@ -151,50 +158,17 @@ void Chardev::sdl_render() {
     }
   }
 
-  SDL_RenderPresent(renderer);
-}
+  // restore old renderer state
+  SDL_SetRenderTarget(renderer, old_render_target);
+  SDL_RenderSetIntegerScale(renderer, old_integer_scale);
+  SDL_RenderSetScale(renderer, old_scale_x, old_scale_y);
 
-void Chardev::sdl_thread_fn(std::promise<int> &&ret) {
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    std::cerr << "Failed to initialize SDL2" << std::endl;
-    ret.set_value(-1);
-    return;
+  // draw PET screen into an ImGui window
+  {
+    ImGui::Begin("PET 2001 Display");
+    ImGui::Image((void *)render_tex, ImVec2(RENDER_WIDTH, RENDER_HEIGHT));
+    ImGui::End();
   }
-
-  SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-
-  window = SDL_CreateWindow("Chardev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RENDER_WIDTH, RENDER_HEIGHT, 0);
-  if (!window) {
-    std::cerr << "Failed to create SDL2 window" << std::endl;
-    ret.set_value(-2);
-    return;
-  }
-
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  if (!renderer) {
-    std::cerr << "Failed to create SDL2 renderer" << std::endl;
-    ret.set_value(-3);
-    return;
-  }
-
-  ret.set_value(0);
-
-  create_char_textures();
-
-  SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
-  SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
-
-  while (!sdl_thread_exit) {
-    // wait until main thread signals wake-up
-    std::unique_lock<std::mutex> sdl_wake_lock(sdl_wake_mutex);
-    sdl_wake_cond.wait(sdl_wake_lock);
-
-    sdl_handle_events();
-    sdl_render();
-  }
-
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
 }
 
 int Chardev::load_char_rom() {
@@ -215,7 +189,7 @@ int Chardev::load_char_rom() {
   return 0;
 }
 
-void Chardev::create_char_textures() {
+int Chardev::create_char_textures() {
   characters = new SDL_Texture *[512];
 
   SDL_Color colors[2] = {{0, 0, 0, 255}, {255, 255, 255, 255}};
@@ -223,6 +197,10 @@ void Chardev::create_char_textures() {
   for (int i = 0; i < 128; i++) {
     // character set 1
     SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(char_rom + 8 * i, 8, 8, 1, 1, SDL_PIXELFORMAT_INDEX1MSB);
+    if (!surface) {
+      std::cerr << "Error creating surface: " << SDL_GetError() << std::endl;
+      return -1;
+    }
 
     SDL_SetPaletteColors(surface->format->palette, colors, 0, 2);
     characters[i] = SDL_CreateTextureFromSurface(renderer, surface);
@@ -233,6 +211,10 @@ void Chardev::create_char_textures() {
 
     // character set 2
     surface = SDL_CreateRGBSurfaceWithFormatFrom(char_rom + 8 * (i + 128), 8, 8, 1, 1, SDL_PIXELFORMAT_INDEX1MSB);
+    if (!surface) {
+      std::cerr << "Error creating surface: " << SDL_GetError() << std::endl;
+      return -1;
+    }
 
     SDL_SetPaletteColors(surface->format->palette, colors, 0, 2);
     characters[i + 256] = SDL_CreateTextureFromSurface(renderer, surface);
@@ -241,4 +223,6 @@ void Chardev::create_char_textures() {
 
     delete surface;
   }
+
+  return 0;
 }

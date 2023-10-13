@@ -16,6 +16,8 @@ std::vector<std::string> plugin_filenames;
 std::vector<std::tuple<plugin_init_t, Word>> plugin_init_funcs;
 std::vector<plugin_destroy_t> plugin_destroy_funcs;
 std::vector<plugin_update_t> plugin_update_funcs;
+std::vector<plugin_ui_event_t> plugin_ui_event_funcs;
+std::vector<plugin_ui_render_t> plugin_ui_render_funcs;
 
 void load_plugin(std::filesystem::path path, Word map_addr) {
   std::string loaded_filename = path.filename().string();
@@ -64,6 +66,14 @@ void load_plugin(std::filesystem::path path, Word map_addr) {
   auto plugin_update_func = (plugin_update_t)dlsym(plugin, "plugin_update");
   if (plugin_update_func)
     plugin_update_funcs.push_back(plugin_update_func);
+
+  auto plugin_ui_event_func = (plugin_ui_event_t)dlsym(plugin, "plugin_ui_event");
+  if (plugin_ui_event_func)
+    plugin_ui_event_funcs.push_back(plugin_ui_event_func);
+
+  auto plugin_ui_render_func = (plugin_ui_render_t)dlsym(plugin, "plugin_ui_render");
+  if (plugin_ui_render_func)
+    plugin_ui_render_funcs.push_back(plugin_ui_render_func);
 }
 
 void load_configured_plugins() {

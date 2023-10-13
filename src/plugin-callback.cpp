@@ -4,7 +4,7 @@
 #include "plugin-callback.hpp"
 
 extern std::atomic_bool is_running;
-extern int exit_code;
+extern int exit_status;
 extern Emu6502 cpu;
 
 /**
@@ -14,7 +14,7 @@ extern Emu6502 cpu;
 void plugin_callback_handler(PluginCallbackType type, void *arg) {
   switch (type) {
     case EMU_EXIT:
-      exit_code = (int)arg;
+      exit_status = (int)arg;
       is_running = false;
       break;
 

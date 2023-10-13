@@ -15,16 +15,16 @@
 #include "plugin-callback.hpp"
 #include "plugin-loader.hpp"
 
-#include "ui/main_window.hpp"
+#include "ui/ui_thread.hpp"
 
 void load_configured_roms();
 void setup_configured_ram();
 void signal_callback_handler(int signum);
-void emu_exit(int code);
+void emu_exit(int status);
 
 extern void plugin_callback_handler(PluginCallbackType, void *);
 
-int exit_code = 0;
+int exit_status = 0;
 std::atomic_bool is_running = true;
 
 AddressSpace add_spc;
@@ -58,21 +58,8 @@ int main(int argc, char **argv) {
   setup_configured_ram();
   load_configured_plugins();
 
+  start_ui_thread();
   init_plugins();
-
-  // create main window (TODO: this should be the only window)
-  std::atomic_bool main_window_thread_running = true;
-  main_window_thread = new std::thread([&]() {
-    if (main_window_init() != 0) {
-      return;
-    }
-
-    while (main_window_thread_running) {
-      main_window_update();
-    }
-
-    main_window_destroy();
-  });
 
   // config may either use the reset vector (default) or set the pc to a defined value
   if (config->init_reset) {
@@ -86,11 +73,7 @@ int main(int argc, char **argv) {
     cpu.do_instruction();
   }
 
-  emu_exit(exit_code);
-
-  main_window_thread_running = false;
-  if (main_window_thread->joinable())
-    main_window_thread->join();
+  emu_exit(exit_status);
 }
 
 void load_configured_roms() {
@@ -120,11 +103,12 @@ void signal_callback_handler(int signum) {
     emu_exit(0);
 }
 
-void emu_exit(int code) {
+void emu_exit(int status) {
   std::cout << std::endl << "Exiting." << std::endl;
 
   destroy_plugins();
+  stop_ui_thread();
   delete config;
 
-  exit(code);
+  exit(status);
 }

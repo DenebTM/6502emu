@@ -1,3 +1,4 @@
+#include <SDL2/SDL_events.h>
 #include <future>
 #include <optional>
 #include <thread>
@@ -36,9 +37,6 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *c
   system_clock_speed = config->clock_speed;
 
   addr = addr ? addr : 0x8000;
-
-  if (chardev->sdl_init() != 0)
-    return -1;
 
   // 40-column screen memory is mirrored four times
   add_spc.map_mem(chardev, addr + 0x000);
@@ -91,6 +89,33 @@ extern "C" EXPORT int plugin_destroy() {
 extern "C" EXPORT int plugin_update() {
   if (chardev)
     chardev->update();
+
+  return 0;
+}
+
+extern "C" EXPORT int plugin_ui_event(SDL_Event &event) {
+  if (chardev)
+    chardev->ui_handle_event(event);
+
+  return 0;
+}
+
+extern "C" EXPORT int plugin_ui_render(SDL_Renderer *renderer) {
+  static bool sdl_initialized = false;
+  static bool sdl_init_failed = false;
+
+  if (!sdl_initialized) {
+    sdl_initialized = true;
+
+    if (chardev->sdl_init(renderer) != 0)
+      sdl_init_failed = true;
+  }
+
+  if (sdl_init_failed)
+    return -1;
+
+  if (chardev)
+    chardev->ui_render();
 
   return 0;
 }
