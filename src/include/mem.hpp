@@ -53,7 +53,7 @@ public:
    * @param addr_lo location from which to read low byte
    * @param wrap_page when `true`, `addr_hi`'s high byte will not be incremented for the second read
    */
-  Word read_word(Word addr_lo, bool wrap_page) {
+  Word read_word(Word addr_lo, bool wrap_page = false) {
     auto addr_hi = addr_lo + 1;
     if (wrap_page) {
       addr_hi &= 0x00ff;
@@ -62,13 +62,6 @@ public:
 
     return (Word)read(addr_lo) + ((Word)read(addr_hi) << 8);
   }
-
-  /**
-   * read a word from memory (little-endian byte order)
-   *
-   * @param addr_lo location from which to read low byte
-   */
-  Word read_word(Word addr_lo) { return read_word(addr_lo, false); }
 
   /**
    * write a byte to mapped RAM, ROM or device
@@ -99,7 +92,7 @@ public:
    * @param addr_lo location at which to store low byte of `val`
    * @param wrap_page when `true`, `addr_hi`'s high byte will not be incremented for the second write
    */
-  void write_word(Word addr_lo, Word val, bool wrap_page) {
+  void write_word(Word addr_lo, Word val, bool wrap_page = false) {
     auto addr_hi = addr_lo + 1;
     if (wrap_page) {
       addr_hi &= 0x00ff;
@@ -110,13 +103,6 @@ public:
   }
 
   /**
-   * write a word to memory (little-endian byte order)
-   *
-   * @param addr_lo location at which to store low byte of `val`
-   */
-  void write_word(Word addr_lo, Word val) { write_word(addr_lo, val, false); }
-
-  /**
    * mark a region in the address space as mapped and read-only, optionally copy a byte array into it
    *
    * @param bytes ROM data or NULL
@@ -124,18 +110,11 @@ public:
   void map_mem(const Byte *bytes, DWord size, Word start_addr) { map_mem((Byte *)bytes, size, start_addr, true); }
 
   /**
-   * mark a region in the address space as mapped and read-write, optionally copy a byte array into it
-   *
-   * @param bytes RAM data or NULL
-   */
-  void map_mem(Byte *bytes, DWord size, Word start_addr) { map_mem(bytes, size, start_addr, false); }
-
-  /**
    * mark a region in the address space as mapped, optionally copy a byte array into it
    *
    * @param bytes binary data or NULL
    */
-  void map_mem(Byte *bytes, DWord size, Word start_addr, bool read_only) {
+  void map_mem(Byte *bytes, DWord size, Word start_addr, bool read_only = false) {
     for (size_t i = 0; i < size && (start_addr + i) < SIZE; i++) {
       mem_info[start_addr + i].mapped = true;
       mem_info[start_addr + i].read_only = read_only;

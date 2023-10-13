@@ -40,12 +40,6 @@ Emu6502::AddressingMode Emu6502::get_addr_mode(int opc_a, int opc_b, int opc_c) 
 /**
  * get memory address of instruction operand based on addressing mode
  * also advances the program counter to point at the following instruction
- */
-Word Emu6502::get_target(AddressingMode mode) { return get_target(mode, false); }
-
-/**
- * get memory address of instruction operand based on addressing mode
- * also advances the program counter to point at the following instruction
  *
  * @param index_always_adds_cycle when `false`, indexed addressing modes only add an extra cycle
  * when a page boundary is crossed
@@ -113,7 +107,6 @@ void Emu6502::set_flags(Byte val, Byte flags) {
 
 Byte Emu6502::get_sr() { return reg_sr | 0x20; }
 
-void Emu6502::set_reg(Byte *reg, Byte val) { set_reg(reg, val, 0); }
 void Emu6502::set_reg(Byte *reg, Byte val, Byte flags) {
   if (reg == &reg_sr) {
     reg_sr = (reg_sr & (FLAG_B | 0x20)) | (val & ~(FLAG_B | 0x20));
@@ -128,7 +121,6 @@ inline Byte Emu6502::read(Word addr) {
   step_cycle();
   return add_spc.read(addr);
 }
-inline Word Emu6502::read_word(Word addr_lo) { return read_word(addr_lo, false); }
 inline Word Emu6502::read_word(Word addr_lo, bool wrap_page) {
   step_cycle(2);
   return add_spc.read_word(addr_lo, wrap_page);

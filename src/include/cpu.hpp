@@ -49,12 +49,10 @@ public:
 
 private:
   AddressingMode get_addr_mode(int opc_a, int opc_b, int opc_c);
-  Word get_target(AddressingMode mode);
-  Word get_target(AddressingMode mode, bool index_always_adds_cycle);
+  Word get_target(AddressingMode mode, bool index_always_adds_cycle = false);
 
   Byte read(Word addr);
-  Word read_word(Word addr_lo);
-  Word read_word(Word addr_lo, bool wrap_page);
+  Word read_word(Word addr_lo, bool wrap_page = false);
   void write(Word addr, Byte val);
 
   void move(Byte val, Byte *target);
@@ -67,8 +65,7 @@ private:
   void set_flags(Byte val, Byte flags);
 
   Byte get_sr();
-  void set_reg(Byte *reg, Byte val);
-  void set_reg(Byte *reg, Byte val, Byte flags);
+  void set_reg(Byte *reg, Byte val, Byte flags = 0);
 
   void alu_add(Byte operand, Byte flags);
   void alu_add(Byte op1, Byte op2, Byte *target, Byte flags, Byte carry_in);
