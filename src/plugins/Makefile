@@ -7,7 +7,7 @@ CLEAN_TARGETS = $(PLUGINS:%=%-clean)
 all: $(BUILD_TARGETS)
 
 $(BUILD_TARGETS):
-	$(MAKE) -C $(@:.so=)
+	@$(MAKE) -C $(@:.so=)
 
 clean: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):

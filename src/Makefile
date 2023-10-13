@@ -2,12 +2,23 @@ CXX = g++
 CXXFLAGS = -g -O3 -Wall -Wpedantic -funsigned-char -fpermissive -std=c++20 -MMD
 LDLIBS = -lm -ldl -lreadline -lyaml-cpp
 
-INCLUDE = include
-OBJS = main.o sysclock.o emu-config.o cpu/cpu.o plugin-callback.o plugin-loader.o
-# OBJS = main.o sysclock.o emu-config.o cpu/cpu-alt.o plugin-callback.o plugin-loader.o
+INCLUDE = -Iinclude
+SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callback.cpp plugin-loader.cpp cpu/cpu.cpp ui/main_window.cpp
+# SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callback.cpp plugin-loader.cpp cpu/cpu-alt.cpp ui/main_window.cpp
+
+# ImGui
+IMGUI_DIR = ui/imgui
+LDLIBS += `sdl2-config --libs` 
+INCLUDE += -I$(IMGUI_DIR) `sdl2-config --cflags`
+SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
+SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp $(IMGUI_DIR)/backends/imgui_impl_sdlrenderer2.cpp
+
+OBJDIR = obj
+OBJS = $(addprefix $(OBJDIR)/, $(SOURCES:%.cpp=%.o))
+
 OUTFILE = 6502
 
-.PHONY: all plugins clean clean-all rebuild rebuild-plugins rebuild-all
+.PHONY: all plugins clean clean-all rebuild rebuild-plugins rebuild-all h
 
 all: 6502 plugins
 
@@ -16,14 +27,15 @@ $(OUTFILE): $(OBJS)
 
 -include $(OBJS:%.o=%.d)
 
-%.o: %.cpp
-	$(CXX) -I$(INCLUDE) $(CXXFLAGS) -c $< -o $@
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(INCLUDE) $(CXXFLAGS) -c $< -o $@
 
 plugins:
-	$(MAKE) -C plugins all
+	@$(MAKE) -C plugins all
 
 clean:
-	$(RM) $(OUTFILE) $(OBJS) $(OBJS:.o=.d)
+	$(RM) -r $(OUTFILE) $(OBJDIR)
 clean-plugins:
 	$(MAKE) -C plugins clean
 clean-all: clean clean-plugins

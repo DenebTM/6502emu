@@ -1,9 +1,19 @@
+# dotfiles
 **/.*
 !**/.clang-format
 !**/.gitignore
-**/6502
+
+# objects
+obj/
+obj/**
 **/*.o
 **/*.d
+
+# binaries
+**/6502
 **/*.so
+
+# runtime
+imgui.ini
 roms/**/*.bin
 roms/**/*.lst
