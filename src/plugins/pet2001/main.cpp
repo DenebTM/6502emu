@@ -55,10 +55,11 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
     } while (!dev_pia1.has_value());
 
     pia1 = dynamic_cast<Pia *>(dev_pia1.value());
-    pia1->write_port_a = [](Byte val) {
-      set_kb_row(val & 0x0f);
-      return pia1->mapped_regs[Pia::ORA] = val;
-    };
+
+    // temporary: set all Port A input bits to 1
+    pia1->mapped_regs[Pia::ORA] = 0xff;
+
+    pia1->on_write_port_a = [](Byte val) { set_kb_row(val & 0x0f); };
     pia1->read_port_b = get_kb_row_contents;
   });
 
