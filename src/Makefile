@@ -10,7 +10,7 @@ SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callback.cpp plugin-loader
 IMGUI_DIR = ui/imgui
 LDLIBS += `sdl2-config --libs` 
 INCLUDE += -I$(IMGUI_DIR) `sdl2-config --cflags`
-SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
+SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp $(IMGUI_DIR)/backends/imgui_impl_sdlrenderer2.cpp
 
 OBJDIR = obj

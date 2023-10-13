@@ -65,7 +65,6 @@ void main_window_update() {
   ImGui_ImplSDLRenderer2_NewFrame();
   ImGui_ImplSDL2_NewFrame();
   ImGui::NewFrame();
-  ImGui::ShowDemoWindow();
 
   for (auto plugin_ui_render : plugin_ui_render_funcs)
     plugin_ui_render(main_renderer);
