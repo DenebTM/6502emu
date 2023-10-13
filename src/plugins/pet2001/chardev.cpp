@@ -17,10 +17,9 @@ using namespace std::chrono_literals;
 #define COLS 40
 #define ROWS 25
 
-// #define RENDER_SCALE 2.
 #define RENDER_SCALE 2.
-constexpr int RENDER_WIDTH = COL_WIDTH * COLS * RENDER_SCALE;
-constexpr int RENDER_HEIGHT = ROW_HEIGHT * ROWS * RENDER_SCALE;
+constexpr int SCREEN_WIDTH = COL_WIDTH * COLS;
+constexpr int SCREEN_HEIGHT = ROW_HEIGHT * ROWS;
 
 extern plugin_callback_t plugin_callback;
 extern uint64_t system_clock_speed;
@@ -106,7 +105,7 @@ int Chardev::sdl_init(SDL_Renderer *renderer) {
   create_char_textures();
 
   render_tex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, //
-                                 RENDER_WIDTH, RENDER_HEIGHT);
+                                 SCREEN_WIDTH, SCREEN_HEIGHT);
 
   if (!render_tex) {
     std::cerr << "Chardev: Error creating render texture: " << SDL_GetError() << std::endl;
@@ -116,7 +115,11 @@ int Chardev::sdl_init(SDL_Renderer *renderer) {
   return 0;
 }
 
+static bool imgui_window_focused = false;
 void Chardev::ui_handle_event(SDL_Event &event) {
+  if (!imgui_window_focused)
+    return;
+
   switch (event.type) {
     case SDL_KEYDOWN:
       if (!event.key.repeat)
@@ -137,14 +140,14 @@ void Chardev::ui_render() {
 
   // save current renderer state
   SDL_Texture *old_render_target = SDL_GetRenderTarget(renderer);
-  SDL_bool old_integer_scale = SDL_RenderGetIntegerScale(renderer);
-  float old_scale_x, old_scale_y;
-  SDL_RenderGetScale(renderer, &old_scale_x, &old_scale_y);
+  // SDL_bool old_integer_scale = SDL_RenderGetIntegerScale(renderer);
+  // float old_scale_x, old_scale_y;
+  // SDL_RenderGetScale(renderer, &old_scale_x, &old_scale_y);
 
   // prepare renderer to draw to the texture
   SDL_SetRenderTarget(renderer, render_tex);
-  SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
-  SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
+  // SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
+  // SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
 
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
@@ -160,13 +163,18 @@ void Chardev::ui_render() {
 
   // restore old renderer state
   SDL_SetRenderTarget(renderer, old_render_target);
-  SDL_RenderSetIntegerScale(renderer, old_integer_scale);
-  SDL_RenderSetScale(renderer, old_scale_x, old_scale_y);
+  // SDL_RenderSetIntegerScale(renderer, old_integer_scale);
+  // SDL_RenderSetScale(renderer, old_scale_x, old_scale_y);
 
   // draw PET screen into an ImGui window
   {
-    ImGui::Begin("PET 2001 Display");
-    ImGui::Image((void *)render_tex, ImVec2(RENDER_WIDTH, RENDER_HEIGHT));
+    ImGui::Begin("PET 2001 Display", NULL, ImGuiWindowFlags_NoResize);
+    imgui_window_focused = ImGui::IsWindowFocused();
+
+    static constexpr auto IMG_WIDTH = SCREEN_WIDTH * RENDER_SCALE;
+    static constexpr auto IMG_HEIGHT = SCREEN_HEIGHT * RENDER_SCALE;
+    ImGui::Image((void *)render_tex, ImVec2(IMG_WIDTH, IMG_HEIGHT));
+
     ImGui::End();
   }
 }

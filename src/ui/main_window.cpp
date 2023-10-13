@@ -13,7 +13,7 @@ extern void plugin_callback_handler(PluginCallbackType, void *);
 
 int main_window_init() {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    std::cerr << "Failed to initialize SDL2" << std::endl;
+    std::cerr << "Failed to initialize SDL2: " << SDL_GetError() << std::endl;
     return -1;
   }
 
