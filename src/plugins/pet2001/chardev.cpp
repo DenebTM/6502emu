@@ -52,46 +52,11 @@ Chardev::~Chardev() {
   }
 }
 
-int Chardev::sdl_init() {
-  std::promise<int> sdl_init_promise;
-  auto sdl_init_future = sdl_init_promise.get_future();
-
-  sdl_thread = std::thread(&Chardev::sdl_thread_fn, this, std::move(sdl_init_promise));
-
-  sdl_init_future.wait();
-  auto sdl_init_return = sdl_init_future.get();
-
-  sdl_initialized = (sdl_init_return == 0);
-  return sdl_init_return;
-}
-
-void Chardev::sdl_handle_events() {
-  SDL_Event event;
-  while (SDL_PollEvent(&event)) {
-    switch (event.type) {
-      case SDL_QUIT:
-        plugin_callback(EMU_EXIT, (void *)0);
-        break;
-
-      case SDL_KEYDOWN:
-        if (!event.key.repeat)
-          handle_key_down(event.key.keysym);
-        break;
-
-      case SDL_KEYUP:
-        handle_key_up(event.key.keysym);
-        break;
-    }
-  }
-}
-
 /**
  * this function ties the SDL thread to the system clock - every ~16.7ms
  * a condition variable is used to signal the SDL thread to wake up
  *
  * additionally signals vblank to the system for 1.5ms after each frame
- *
- * TODO: use configured clock speed instead of 1MHz
  */
 void Chardev::update() {
   // 60Hz refresh rate at full clock speed
@@ -134,6 +99,42 @@ void Chardev::update() {
     // begin next frame
     thisframe_cycle = 0;
     frame_vblank_done = false;
+  }
+}
+
+int Chardev::sdl_init() {
+  std::promise<int> sdl_init_promise;
+  auto sdl_init_future = sdl_init_promise.get_future();
+
+  sdl_thread = std::thread(&Chardev::sdl_thread_fn, this, std::move(sdl_init_promise));
+
+  sdl_init_future.wait();
+  auto sdl_init_return = sdl_init_future.get();
+
+  sdl_initialized = (sdl_init_return == 0);
+  return sdl_init_return;
+}
+
+void Chardev::sdl_handle_events() {
+  SDL_Event event;
+  while (SDL_PollEvent(&event)) {
+    switch (event.type) {
+      case SDL_WINDOWEVENT:
+        if (!(event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window)))
+          break;
+      case SDL_QUIT:
+        plugin_callback(EMU_EXIT, (void *)0);
+        break;
+
+      case SDL_KEYDOWN:
+        if (!event.key.repeat)
+          handle_key_down(event.key.keysym);
+        break;
+
+      case SDL_KEYUP:
+        handle_key_up(event.key.keysym);
+        break;
+    }
   }
 }
 

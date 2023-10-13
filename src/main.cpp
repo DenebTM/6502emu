@@ -6,13 +6,16 @@
 #include <iostream>
 #include <readline/readline.h>
 #include <signal.h>
+#include <thread>
 
 #include "cpu.hpp"
-#include "emu-types.hpp"
 #include "emu-config.hpp"
+#include "emu-types.hpp"
 #include "mem.hpp"
 #include "plugin-callback.hpp"
 #include "plugin-loader.hpp"
+
+#include "ui/main_window.hpp"
 
 void load_configured_roms();
 void setup_configured_ram();
@@ -26,6 +29,8 @@ std::atomic_bool is_running = true;
 
 AddressSpace add_spc;
 Emu6502 cpu;
+
+std::thread *main_window_thread;
 
 int main(int argc, char **argv) {
   // load configuration
@@ -55,6 +60,20 @@ int main(int argc, char **argv) {
 
   init_plugins();
 
+  // create main window (TODO: this should be the only window)
+  std::atomic_bool main_window_thread_running = true;
+  main_window_thread = new std::thread([&]() {
+    if (main_window_init() != 0) {
+      return;
+    }
+
+    while (main_window_thread_running) {
+      main_window_update();
+    }
+
+    main_window_destroy();
+  });
+
   // config may either use the reset vector (default) or set the pc to a defined value
   if (config->init_reset) {
     cpu.reset();
@@ -68,6 +87,10 @@ int main(int argc, char **argv) {
   }
 
   emu_exit(exit_code);
+
+  main_window_thread_running = false;
+  if (main_window_thread->joinable())
+    main_window_thread->join();
 }
 
 void load_configured_roms() {
