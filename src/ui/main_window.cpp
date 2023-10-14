@@ -43,6 +43,11 @@ int main_window_init() {
 }
 
 void main_window_update() {
+  // FIXME: 4am fix; handle this more elegantly
+  static bool done = false;
+  if (done)
+    return;
+
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     ImGui_ImplSDL2_ProcessEvent(&event);
@@ -53,7 +58,8 @@ void main_window_update() {
           break;
       case SDL_QUIT:
         plugin_callback_handler(EMU_EXIT, (void *)0);
-        break;
+        done = true;
+        return;
     }
 
     for (auto plugin_ui_event : plugin_ui_event_funcs)
