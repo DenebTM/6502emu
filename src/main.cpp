@@ -74,11 +74,8 @@ int main(int argc, char **argv) {
   init_plugins();
 
   // config may either use the reset vector (default) or set the pc to a defined value
-  if (config->init_reset) {
-    cpu.reset();
-  } else {
-    cpu.reg_pc = config->init_pc;
-  }
+  cpu.do_reset = config->init_reset;
+  cpu.reg_pc = config->init_pc;
 
   // execution loop runs until is_running is cleared by either the signal handler or plugin callback
   while (is_running) {

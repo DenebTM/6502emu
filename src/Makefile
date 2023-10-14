@@ -1,9 +1,9 @@
 CXX = g++
-CXXFLAGS = -g -O3 -Wall -Wpedantic -funsigned-char -fpermissive -std=c++20 -MMD
+CXXFLAGS = -g -Wall -Wpedantic -funsigned-char -fpermissive -std=c++20 -MMD
 LDLIBS = -lm -ldl -lreadline -lyaml-cpp
 
 INCLUDE = -Iinclude
-SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callback.cpp plugin-loader.cpp cpu/cpu.cpp ui/main_window.cpp ui/ui_thread.cpp
+SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callback.cpp plugin-loader.cpp cpu/cpu.cpp ui/main_window.cpp ui/ui_thread.cpp ui/cpu_debug.cpp
 # SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callback.cpp plugin-loader.cpp cpu/cpu-alt.cpp ui/main_window.cpp
 
 # ImGui

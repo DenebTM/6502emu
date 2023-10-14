@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include <iostream>
 
+#include "cpu_debug.hpp"
 #include "main_window.hpp"
 #include "plugin-loader.hpp"
 
@@ -65,6 +66,8 @@ void main_window_update() {
   ImGui_ImplSDLRenderer2_NewFrame();
   ImGui_ImplSDL2_NewFrame();
   ImGui::NewFrame();
+
+  render_cpu_debug_window();
 
   for (auto plugin_ui_render : plugin_ui_render_funcs)
     plugin_ui_render(main_renderer);

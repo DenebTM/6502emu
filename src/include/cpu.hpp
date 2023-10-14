@@ -43,9 +43,15 @@ public:
   Byte current_opcode;
 
   void do_instruction();
-  void reset();
 
   void assert_interrupt(bool nmi);
+  std::atomic_bool do_reset = true;
+  std::atomic_int new_pc = -1;
+  std::atomic_int new_sp = -1;
+  std::atomic_int new_sr = -1;
+  std::atomic_int new_a = -1;
+  std::atomic_int new_x = -1;
+  std::atomic_int new_y = -1;
 
 private:
   AddressingMode get_addr_mode(int opc_a, int opc_b, int opc_c);
@@ -74,6 +80,8 @@ private:
   void handle_interrupt(bool brk);
   std::atomic_bool got_irq;
   std::atomic_bool got_nmi;
+
+  void reset();
 
   std::tuple<std::string, std::function<void(Emu6502::AddressingMode)>> *opcode_map;
 };
