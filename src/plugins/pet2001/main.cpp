@@ -49,7 +49,7 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *c
    * this plugin may be initialized before PIA1, therefore wait for it asynchronously and return early
    * so as not to block _its_ initialization
    */
-  std::future<void> wait_for_pia1 = std::async(std::launch::async, [&] {
+  static std::future<void> wait_for_pia1 = std::async(std::launch::async, [&] {
     std::optional<MemoryMappedDevice *> dev_pia1 = std::nullopt;
     do {
       dev_pia1 = add_spc.get_dev(0xe810);

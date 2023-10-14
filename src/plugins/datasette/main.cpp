@@ -27,7 +27,7 @@ extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
 extern "C" EXPORT int plugin_init(AddressSpace &add_spc) {
   datasette = new Datasette;
 
-  std::future<void> wait_for_pia1 = std::async(std::launch::async, [&] {
+  static std::future<void> wait_for_pia1 = std::async(std::launch::async, [&] {
     std::optional<MemoryMappedDevice *> dev_pia1 = std::nullopt;
     do {
       dev_pia1 = add_spc.get_dev(0xe810);
@@ -57,11 +57,23 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
   ImGui::Begin("PET 2001 Datasette");
 
   if (ImGui::Button("Load file...")) {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = {{"CBM TAP 1.0/1.1 File", "tap"}};
-    if (NFD_OpenDialog(&outPath, filterItem, 1, NULL) == NFD_OKAY) {
-      datasette->load_tap(std::string(outPath));
-      NFD_FreePath(outPath);
+    static bool opening_file = false;
+    static std::future<void> load_file;
+
+    // prevent the dialog from being opened twice
+    if (!opening_file) {
+      opening_file = true;
+      // run asynchronously so as not to block the UI thread
+      load_file = std::async(std::launch::async, [&] {
+        nfdchar_t *outPath;
+        nfdfilteritem_t filterItem[1] = {{"CBM TAP 1.0/1.1 File", "tap"}};
+        if (NFD_OpenDialog(&outPath, filterItem, 1, NULL) == NFD_OKAY) {
+          datasette->load_tap(std::string(outPath));
+          NFD_FreePath(outPath);
+        }
+
+        opening_file = false;
+      });
     }
   }
 

@@ -8,7 +8,7 @@ std::thread *ui_thread;
 std::atomic_bool ui_thread_running = true;
 
 void start_ui_thread() {
-  ui_thread = new std::thread([&]() {
+  ui_thread = new std::thread([&] {
     if (main_window_init() != 0) {
       return;
     }
