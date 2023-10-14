@@ -1,8 +1,6 @@
-#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <thread>
 
 #include "cassette.hpp"
 #include "emu-types.hpp"

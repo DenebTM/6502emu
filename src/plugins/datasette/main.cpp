@@ -2,7 +2,6 @@
 #include <optional>
 #include <readline/readline.h>
 #include <string.h>
-#include <thread>
 using namespace std::chrono_literals;
 
 #include "cassette.hpp"
@@ -11,56 +10,13 @@ using namespace std::chrono_literals;
 #include "plugins/6520-pia.hpp"
 #include "plugins/plugin-types.hpp"
 
+#include "imgui.h"
+#include "nfdx/src/include/nfd.h"
+
 plugin_callback_t plugin_callback;
 
 Datasette *datasette;
 Pia *pia1;
-
-std::thread *cmd_thread;
-
-const char *CSI = "\33[";
-
-bool cmd_thread_running = false;
-void cmd_thread_fn() {
-  // std::cout << CSI << "1F";
-  std::cout << "=== Datasette command interface ===" << std::endl;
-  std::cout << "Available commands:" << std::endl;
-  for (auto cmd : {"load <filename>", "play", "stop", "rewind", "exit"}) {
-    std::cout << "- " << cmd << std::endl;
-  }
-
-  // force readline to not block the thread
-  rl_event_hook = []() {
-    if (!cmd_thread_running)
-      rl_done = true;
-    return 0;
-  };
-
-  while (cmd_thread_running) {
-    char *in = readline("> ");
-    if (!in) {
-      in = (char *)"exit";
-    } else if (strlen(in) == 0) {
-      continue;
-    }
-
-    char *cmd = strtok(in, " ");
-    std::string cmd_str = std::string(cmd);
-    if (cmd_str == "load") {
-      std::string filename = std::string(strtok(NULL, " "));
-      datasette->load_tap(filename);
-    } else if (cmd_str == "play") {
-      datasette->play();
-    } else if (cmd_str == "stop") {
-      datasette->stop();
-    } else if (cmd_str == "rewind") {
-      datasette->rewind();
-    } else if (cmd_str == "exit") {
-      cmd_thread_running = false;
-      plugin_callback(EMU_EXIT, (void *)0);
-    }
-  }
-}
 
 extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   plugin_callback = callback;
@@ -81,30 +37,53 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc) {
     pia1 = dynamic_cast<Pia *>(dev_pia1.value());
   });
 
-  cmd_thread_running = true;
-  cmd_thread = new std::thread(cmd_thread_fn);
+  NFD_Init();
 
   return 0;
 }
 
 extern "C" EXPORT int plugin_destroy() {
-  cmd_thread_running = false;
-  if (cmd_thread->joinable()) {
-    cmd_thread->join();
-  }
-  delete cmd_thread;
+  NFD_Quit();
   return 0;
 }
 
 extern "C" EXPORT int plugin_update() {
-  // show tape loading status
-  if (datasette->update() > 0) {
-    std::cout << std::endl
-              << (datasette->tap_index - TAP_HEADER_LEN) << " / " << (datasette->tap_size - TAP_HEADER_LEN);
-    std::cout << CSI << "1F";
-    std::cout << "> " << rl_line_buffer;
-    fflush(stdout);
+  datasette->update();
+
+  return 0;
+}
+
+extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
+  ImGui::Begin("PET 2001 Datasette");
+
+  if (ImGui::Button("Load file...")) {
+    nfdchar_t *outPath;
+    nfdfilteritem_t filterItem[1] = {{"CBM TAP 1.0/1.1 File", "tap"}};
+    if (NFD_OpenDialog(&outPath, filterItem, 1, NULL) == NFD_OKAY) {
+      datasette->load_tap(std::string(outPath));
+      NFD_FreePath(outPath);
+    }
   }
+
+  ImGui::Text("Status: %s", (datasette->tap_size > 0) ? (datasette->playing ? "Playing" : "Stopped") : "No file");
+  ImGui::Text("tap_index: %ld / %ld", datasette->tap_size ? datasette->tap_index - TAP_HEADER_LEN : 0,
+              datasette->tap_size ? datasette->tap_size - TAP_HEADER_LEN : 0);
+
+  if (ImGui::Button("Play")) {
+    datasette->play();
+  }
+
+  ImGui::SameLine();
+  if (ImGui::Button("Stop")) {
+    datasette->stop();
+  }
+
+  ImGui::SameLine();
+  if (ImGui::Button("Rewind")) {
+    datasette->rewind();
+  }
+
+  ImGui::End();
 
   return 0;
 }
