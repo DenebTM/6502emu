@@ -70,7 +70,7 @@ int Datasette::update() {
 
     if (autostop_cycles >= 1000000) {
       autostop_cycles = 0;
-      playing = false;
+      stop();
     }
   }
 
