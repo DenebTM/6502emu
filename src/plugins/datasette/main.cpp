@@ -21,12 +21,12 @@ Pia *pia1;
 extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   plugin_callback = callback;
 
+  datasette = new Datasette();
+
   return 0;
 }
 
 extern "C" EXPORT int plugin_init(AddressSpace &add_spc) {
-  datasette = new Datasette;
-
   static std::future<void> wait_for_pia1 = std::async(std::launch::async, [&] {
     std::optional<MemoryMappedDevice *> dev_pia1 = std::nullopt;
     do {

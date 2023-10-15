@@ -4,14 +4,10 @@
 #include "plugins/6522-via.hpp"
 #include "plugins/plugin-types.hpp"
 
-plugin_callback_t plugin_callback;
-
 Via *via;
 
 extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
-  plugin_callback = callback;
-
-  via = new Via();
+  via = new Via(callback);
 
   return 0;
 }

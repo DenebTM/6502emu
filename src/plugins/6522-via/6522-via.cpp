@@ -7,9 +7,9 @@ using namespace std::chrono_literals;
 #include "plugin-callback.hpp"
 #include "plugins/6522-via.hpp"
 
-extern plugin_callback_t plugin_callback;
+Via::Via(plugin_callback_t callback) : MemoryMappedDevice(false, 16) {
+  this->plugin_callback = callback;
 
-Via::Via() : MemoryMappedDevice(false, 16) {
   *ddr_a = 0;
   *ddr_b = 0;
 

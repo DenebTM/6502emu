@@ -53,8 +53,6 @@ public:
 
   void flag_interrupt();
 
-  plugin_callback_t plugin_callback;
-
   std::function<Byte(void)> read_port_a = [&] { return *port_a; };
   std::function<void(Byte)> on_write_port_a = [&](Byte val) { return; };
 
@@ -74,6 +72,8 @@ public:
   void update();
 
 private:
+  plugin_callback_t plugin_callback;
+
   Byte *port_a = mapped_regs + ORA;
   Byte *ctrl_a = mapped_regs + CRA;
   Byte *port_b = mapped_regs + ORB;

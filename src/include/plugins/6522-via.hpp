@@ -36,7 +36,7 @@ public:
     ANY = 0xff,
   };
 
-  Via();
+  Via(plugin_callback_t callback);
 
   int pre_read(Word offset) { return 0; }
   int post_write(Word offset) { return 0; }
@@ -49,6 +49,8 @@ public:
 private:
   void flag_interrupt(IRQ irq);
   void clear_interrupt(IRQ irq);
+
+  plugin_callback_t plugin_callback;
 
   bool timer1_irq_on_zero = false;
   bool timer2_irq_on_zero = false;
