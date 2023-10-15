@@ -66,7 +66,7 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *c
   });
 
   // same for VIA
-  std::future<void> wait_for_via = std::async(std::launch::async, [&] {
+  static std::future<void> wait_for_via = std::async(std::launch::async, [&] {
     std::optional<MemoryMappedDevice *> dev_via = std::nullopt;
     do {
       dev_via = add_spc.get_dev(0xe840);

@@ -18,8 +18,7 @@ void step_cycle() {
   cycle_current_scanline++;
   cycle++;
 
-  for (auto plugin_update : plugin_update_funcs)
-    plugin_update();
+  update_plugins();
 
   if (cycle_current_scanline >= cycles_per_scanline) {
     std::this_thread::sleep_until(next_wake);

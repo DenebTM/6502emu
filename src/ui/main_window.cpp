@@ -62,8 +62,7 @@ void main_window_update() {
         return;
     }
 
-    for (auto plugin_ui_event : plugin_ui_event_funcs)
-      plugin_ui_event(event);
+    handle_plugin_ui_events(event);
   }
 
   SDL_SetRenderDrawColor(main_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -75,8 +74,7 @@ void main_window_update() {
 
   render_cpu_debug_window();
 
-  for (auto plugin_ui_render : plugin_ui_render_funcs)
-    plugin_ui_render(main_renderer);
+  render_plugin_uis(main_renderer);
 
   ImGui::Render();
   ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());

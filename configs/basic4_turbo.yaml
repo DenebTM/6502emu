@@ -32,18 +32,22 @@ roms:
 plugins:
   enumerate: false
   config:
-    - file: 6520-pia.so
+    - id: PIA1
+      file: 6520-pia.so
       address: 0xe810
+      # disable: false
 
-    # - file: 6520-pia.so
-    #   address: 0xe820
+    - id: PIA2
+      file: 6520-pia.so
+      address: 0xe820
 
-    - file: 6522-via.so
+    - id: VIA
+      file: 6522-via.so
       address: 0xe840
 
-    - file: datasette.so
-      address: 0x0000
+    - id: 'Tape #1'
+      file: datasette.so
 
-    - file: pet2001.so
-      # disable: false
+    - id: PET2001 I/O
+      file: pet2001.so
       address: 0x8000

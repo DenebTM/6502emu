@@ -1,9 +1,11 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <filesystem>
+#include <map>
 #include <tuple>
 
 #include "emu-config.hpp"
+#include "emu-types.hpp"
 #include "mem.hpp"
 #include "plugin-callback.hpp"
 
@@ -63,12 +65,28 @@ typedef int (*plugin_update_t)(void);
 typedef int (*plugin_ui_event_t)(SDL_Event &);
 typedef int (*plugin_ui_render_t)(SDL_Renderer *);
 
-extern std::vector<std::string> plugin_filenames;
-extern std::vector<std::tuple<plugin_init_t, Word>> plugin_init_funcs;
-extern std::vector<plugin_destroy_t> plugin_destroy_funcs;
-extern std::vector<plugin_update_t> plugin_update_funcs;
-extern std::vector<plugin_ui_event_t> plugin_ui_event_funcs;
-extern std::vector<plugin_ui_render_t> plugin_ui_render_funcs;
+struct Plugin {
+  std::string filename;
+
+  // handle returned by dlopen
+  void *dlib_handle;
+
+  // required functions
+  plugin_init_t init;
+  plugin_destroy_t destroy;
+
+  // optional functions (except for plugin_load)
+  plugin_update_t update;
+  plugin_ui_event_t ui_event;
+  plugin_ui_render_t ui_render;
+
+  // config
+  // TODO: more config options
+  Word map_addr;
+};
+
+using PluginID = std::string;
+extern std::map<PluginID, Plugin> plugins;
 
 /**
  * load a plugin from a shared object file
@@ -83,8 +101,12 @@ extern std::vector<plugin_ui_render_t> plugin_ui_render_funcs;
  * @param path filesystem location of shared object to be loaded
  * @param map_addr location in the address space to map plugin at
  */
-void load_plugin(std::filesystem::path path, Word map_addr);
+void load_plugin(PluginID id, std::string path);
 
 void load_configured_plugins();
+
 void init_plugins();
 void destroy_plugins();
+void update_plugins();
+void handle_plugin_ui_events(SDL_Event &event);
+void render_plugin_uis(SDL_Renderer *renderer);

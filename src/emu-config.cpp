@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <filesystem>
 #include <iostream>
 #include <yaml-cpp/yaml.h>
 
@@ -56,17 +58,45 @@ EmuConfig::EmuConfig(FilePath file_name) {
 
     if (plugin_opts["config"].IsDefined()) {
       for (YAML::Node plugin_node : plugin_opts["config"]) {
-        std::string file_name = plugin_node["file"].as<FileName>();
+        static int unknown_id = 0;
+
+        std::string plugin_filename = plugin_node["file"].as<FileName>();
         Word start_address = 0;
-        if (plugin_node["disable"].IsDefined())
+        if (plugin_node["address"].IsDefined())
           start_address = plugin_node["address"].as<Word>();
 
         bool plugin_disable = false;
         if (plugin_node["disable"].IsDefined())
           plugin_disable = plugin_node["disable"].as<bool>();
 
-        this->plugin_configs.push_back({file_name, start_address, plugin_disable});
+        // clang-format off
+        PluginID id = plugin_node["id"].IsDefined()
+                          ? plugin_node["id"].as<PluginID>()
+                          : "UNK" + std::to_string(unknown_id++);
+        // clang-format on
+
+        if (this->get_plugin_config(id).has_value()) {
+          std::cerr << "Config error: duplicate plugin ID '" << id << "', ignoring" << std::endl;
+          continue;
+        }
+
+        this->plugin_configs.push_back({
+            .id = id,
+            .filename = plugin_filename,
+            .disable = plugin_disable,
+            .map_addr = start_address,
+        });
       }
     }
   }
+}
+
+std::optional<EmuConfig::PluginConfig> EmuConfig::get_plugin_config(PluginID id) {
+  auto elem = std::find_if(plugin_configs.begin(), plugin_configs.end(),
+                           [id](PluginConfig &config) { return config.id == id; });
+
+  if (elem == plugin_configs.end())
+    return std::nullopt;
+
+  return *elem;
 }

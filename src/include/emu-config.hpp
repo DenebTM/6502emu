@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -12,7 +13,7 @@ struct EmuConfig {
   using StartAddress = Word;
   using Size = DWord;
   using ReadOnly = bool;
-  using PluginDisable = bool;
+  using PluginID = std::string;
 
   EmuConfig(FilePath file_name);
 
@@ -25,8 +26,18 @@ struct EmuConfig {
   std::vector<std::pair<StartAddress, Size>> ram;
   std::vector<std::tuple<FilePath, StartAddress, ReadOnly>> roms;
 
+  struct PluginConfig {
+    PluginID id;
+    FileName filename;
+    bool disable;
+    StartAddress map_addr;
+
+    bool operator==(PluginConfig &other) { return other.id == this->id; }
+  };
+
   bool enumerate_plugins = true;
-  std::vector<std::tuple<FileName, StartAddress, PluginDisable>> plugin_configs;
+  std::vector<PluginConfig> plugin_configs;
+  std::optional<PluginConfig> get_plugin_config(PluginID id);
 };
 
 extern EmuConfig *config;
