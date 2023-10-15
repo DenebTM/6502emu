@@ -44,16 +44,24 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc) {
 
 extern "C" EXPORT int plugin_destroy() {
   NFD_Quit();
+
+  delete datasette;
+  datasette = NULL;
+
   return 0;
 }
 
 extern "C" EXPORT int plugin_update() {
-  datasette->update();
+  if (datasette)
+    datasette->update();
 
   return 0;
 }
 
 extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
+  if (!datasette)
+    return -1;
+
   ImGui::Begin("PET 2001 Datasette");
 
   if (ImGui::Button("Load file...")) {

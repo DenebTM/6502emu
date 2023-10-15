@@ -6,6 +6,7 @@
 #include "cpu_debug.hpp"
 #include "main_window.hpp"
 #include "plugin-loader.hpp"
+#include "plugin_list.hpp"
 
 SDL_Window *main_window;
 SDL_Renderer *main_renderer;
@@ -72,7 +73,8 @@ void main_window_update() {
   ImGui_ImplSDL2_NewFrame();
   ImGui::NewFrame();
 
-  render_cpu_debug_window();
+  show_cpu_debug_window();
+  show_plugin_list();
 
   render_plugin_uis(main_renderer);
 

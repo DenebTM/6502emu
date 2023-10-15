@@ -8,7 +8,7 @@
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
 
-void render_cpu_debug_window() {
+void show_cpu_debug_window() {
   ImGui::Begin("CPU");
 
   if (ImGui::Button("Reset")) {
