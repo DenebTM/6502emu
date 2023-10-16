@@ -26,7 +26,7 @@ bool is_dlib_loaded(std::string filename) {
 }
 
 void load_plugin(PluginID id, std::string filename) {
-  auto path = std::filesystem::path(PLUGIN_PATH + filename);
+  auto path = std::filesystem::path(filename);
 
   // load plugin into base namespace by default
   Lmid_t lmid = LM_ID_BASE;
@@ -113,7 +113,7 @@ void load_configured_plugins() {
             if (plugin_config.disable)
               break;
 
-            load_plugin(plugin_config.id, plugin_config.filename);
+            load_plugin(plugin_config.id, PLUGIN_PATH + plugin_config.filename);
             break;
           }
         }
@@ -127,7 +127,7 @@ void load_configured_plugins() {
       if (plugin_config.disable)
         continue;
 
-      load_plugin(plugin_config.id, plugin_config.filename);
+      load_plugin(plugin_config.id, PLUGIN_PATH + plugin_config.filename);
     }
   }
 }

@@ -13,6 +13,12 @@ INCLUDE += -I$(IMGUI_DIR) `sdl2-config --cflags`
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp $(IMGUI_DIR)/backends/imgui_impl_sdlrenderer2.cpp
 
+# Native File Dialog Extended
+NFDX_DIR = ui/nfdx/src
+LDLIBS += `pkg-config --libs dbus-glib-1`
+INCLUDE += -I$(NFDX_DIR)/include `pkg-config --cflags dbus-glib-1`
+SOURCES += $(NFDX_DIR)/nfd_portal.cpp
+
 OBJDIR = obj
 OBJS = $(addprefix $(OBJDIR)/, $(SOURCES:%.cpp=%.o))
 

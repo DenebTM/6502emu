@@ -2,5 +2,5 @@
 	path = src/ui/imgui
 	url = https://github.com/ocornut/imgui.git
 [submodule "src/plugins/datasette/nfdx"]
-	path = src/plugins/datasette/nfdx
+	path = src/ui/nfdx
 	url = https://github.com/btzy/nativefiledialog-extended.git
