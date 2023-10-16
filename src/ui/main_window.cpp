@@ -3,10 +3,10 @@
 #include "imgui.h"
 #include <iostream>
 
-#include "cpu_debug.hpp"
-#include "main_window.hpp"
 #include "plugin-loader.hpp"
-#include "plugin_list.hpp"
+#include "ui/cpu_debug.hpp"
+#include "ui/main_window.hpp"
+#include "ui/plugin_list.hpp"
 
 SDL_Window *main_window;
 SDL_Renderer *main_renderer;

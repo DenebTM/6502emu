@@ -1,7 +1,7 @@
 #include "imgui/imgui.h"
 
 #include "plugin-loader.hpp"
-#include "plugin_list.hpp"
+#include "ui/plugin_list.hpp"
 // #include "emu-config.hpp"
 
 void show_plugin_list() {

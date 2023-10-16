@@ -1,8 +1,8 @@
 #include <atomic>
 #include <thread>
 
-#include "main_window.hpp"
-#include "ui_thread.hpp"
+#include "ui/main_window.hpp"
+#include "ui/ui_thread.hpp"
 
 std::thread *ui_thread;
 std::atomic_bool ui_thread_running = true;

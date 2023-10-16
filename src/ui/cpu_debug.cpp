@@ -1,9 +1,9 @@
 #include "imgui/imgui.h"
 
 #include "cpu.hpp"
-#include "cpu_debug.hpp"
 #include "emu-config.hpp"
 #include "emu-types.hpp"
+#include "ui/cpu_debug.hpp"
 
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
