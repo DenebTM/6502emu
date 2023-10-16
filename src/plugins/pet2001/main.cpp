@@ -21,6 +21,9 @@ Chardev *chardev;
 Pia *pia1;
 Via *via;
 
+AddressSpace *_add_spc;
+Word _addr;
+
 extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   plugin_callback = callback;
 
@@ -35,14 +38,14 @@ extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
 
 extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *config) {
   system_clock_speed = config->clock_speed;
-
-  addr = addr ? addr : 0x8000;
+  _add_spc = &add_spc;
+  _addr = addr ? addr : 0xe810;
 
   // 40-column screen memory is mirrored four times
-  add_spc.map_mem(chardev, addr + 0x000);
-  add_spc.map_mem(chardev, addr + 0x400);
-  add_spc.map_mem(chardev, addr + 0x800);
-  add_spc.map_mem(chardev, addr + 0xc00);
+  _add_spc->map_mem(chardev, _addr + 0x000);
+  _add_spc->map_mem(chardev, _addr + 0x400);
+  _add_spc->map_mem(chardev, _addr + 0x800);
+  _add_spc->map_mem(chardev, _addr + 0xc00);
 
   /**
    * PIA must be present in order for vblank interrupts and the keyboard to work
@@ -80,22 +83,31 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *c
 }
 
 extern "C" EXPORT int plugin_destroy() {
-  if (chardev)
-    delete chardev;
+  if (chardev) {
+    _add_spc->unmap_mem(_addr + 0x000);
+    _add_spc->unmap_mem(_addr + 0x400);
+    _add_spc->unmap_mem(_addr + 0x800);
+    _add_spc->unmap_mem(_addr + 0xc00);
+    auto _chardev = chardev;
+    chardev = NULL;
+    delete _chardev;
+  }
 
   return 0;
 }
 
 extern "C" EXPORT int plugin_update() {
-  if (chardev)
+  if (chardev) {
     chardev->update();
+  }
 
   return 0;
 }
 
 extern "C" EXPORT int plugin_ui_event(SDL_Event &event) {
-  if (chardev)
+  if (chardev) {
     chardev->ui_handle_event(event);
+  }
 
   return 0;
 }
@@ -104,6 +116,9 @@ extern "C" EXPORT int plugin_ui_render(SDL_Renderer *renderer) {
   static bool sdl_initialized = false;
   static bool sdl_init_failed = false;
 
+  if (sdl_init_failed)
+    return -1;
+
   if (!sdl_initialized) {
     sdl_initialized = true;
 
@@ -111,11 +126,9 @@ extern "C" EXPORT int plugin_ui_render(SDL_Renderer *renderer) {
       sdl_init_failed = true;
   }
 
-  if (sdl_init_failed)
-    return -1;
-
-  if (chardev)
+  if (chardev) {
     chardev->ui_render();
+  }
 
   return 0;
 }

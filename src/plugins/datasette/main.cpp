@@ -45,15 +45,19 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc) {
 extern "C" EXPORT int plugin_destroy() {
   NFD_Quit();
 
-  delete datasette;
-  datasette = NULL;
+  if (datasette) {
+    auto _datasette = datasette;
+    datasette = NULL;
+    delete _datasette;
+  }
 
   return 0;
 }
 
 extern "C" EXPORT int plugin_update() {
-  if (datasette)
+  if (datasette) {
     datasette->update();
+  }
 
   return 0;
 }

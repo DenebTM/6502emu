@@ -1,3 +1,6 @@
+#include <thread>
+using namespace std::chrono_literals;
+
 #include "mem-dev.hpp"
 #include "mem.hpp"
 #include "plugin-callback.hpp"
@@ -6,6 +9,9 @@
 
 Via *via;
 
+AddressSpace *_add_spc;
+Word _addr;
+
 extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   via = new Via(callback);
 
@@ -13,16 +19,21 @@ extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
 }
 
 extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
-  addr = addr ? addr : 0xe840;
+  _add_spc = &add_spc;
+  _addr = addr ? addr : 0xe840;
 
-  add_spc.map_mem(via, addr);
+  _add_spc->map_mem(via, _addr);
 
   return 0;
 }
 
 extern "C" EXPORT int plugin_destroy() {
-  if (via)
-    delete via;
+  if (via) {
+    _add_spc->unmap_mem(_addr);
+    auto _via = via;
+    via = NULL;
+    delete _via;
+  }
 
   return 0;
 }

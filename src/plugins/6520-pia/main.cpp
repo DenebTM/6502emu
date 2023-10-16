@@ -6,6 +6,9 @@
 
 Pia *pia;
 
+AddressSpace *_add_spc;
+Word _addr;
+
 extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
   pia = new Pia(callback);
 
@@ -13,19 +16,27 @@ extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
 }
 
 extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
-  addr = addr ? addr : 0xe810;
+  _add_spc = &add_spc;
+  _addr = addr ? addr : 0xe810;
 
-  add_spc.map_mem(pia, addr);
-  add_spc.map_mem(pia, addr + 4);
-  add_spc.map_mem(pia, addr + 8);
-  add_spc.map_mem(pia, addr + 12);
+  _add_spc->map_mem(pia, _addr);
+  _add_spc->map_mem(pia, _addr + 4);
+  _add_spc->map_mem(pia, _addr + 8);
+  _add_spc->map_mem(pia, _addr + 12);
 
   return 0;
 }
 
 extern "C" EXPORT int plugin_destroy() {
-  if (pia)
-    delete pia;
+  if (pia) {
+    _add_spc->unmap_mem(_addr);
+    _add_spc->unmap_mem(_addr + 4);
+    _add_spc->unmap_mem(_addr + 8);
+    _add_spc->unmap_mem(_addr + 12);
+    auto _pia = pia;
+    pia = NULL;
+    delete _pia;
+  }
 
   return 0;
 }

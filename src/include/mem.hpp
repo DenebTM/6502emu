@@ -138,14 +138,28 @@ public:
   /**
    * unmap all RAM, ROM and peripheral devices from a memory region
    *
+   * if count == 0 and a device is found at the specified address,
+   * the whole device is unmapped
+   *
    * @param start_addr first address to unmap
    * @param count number of addresses to unmap
    */
-  void unmap_mem(Word start_addr, DWord count) {
+  void unmap_mem(Word start_addr, DWord count = 0) {
+    if (count == 0) {
+      if (mem_info[start_addr].dev.has_value()) {
+        auto &[dev, offset] = mem_info[start_addr].dev.value();
+
+        start_addr -= offset;
+        count = dev->mapped_regs_count;
+      } else {
+        count = 1;
+      }
+    }
+
     for (size_t i = 0; i < count && (start_addr + i) < SIZE; i++) {
-      mem_info[i].mapped = false;
-      mem_info[i].read_only = true;
-      mem_info[i].dev.reset();
+      mem_info[start_addr + i].mapped = false;
+      mem_info[start_addr + i].read_only = true;
+      mem_info[start_addr + i].dev = std::nullopt;
     }
   }
 
