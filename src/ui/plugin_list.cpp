@@ -25,7 +25,6 @@ void show_plugin_list() {
     }
 
     if (ImGui::Button(("Remove##" + id).c_str())) {
-      plugin.destroy();
       to_be_erased.push_back(id);
     }
   }
@@ -33,6 +32,6 @@ void show_plugin_list() {
   ImGui::End();
 
   for (auto id : to_be_erased)
-    plugins.erase(id);
+    unload_plugin(id);
   to_be_erased.clear();
 }

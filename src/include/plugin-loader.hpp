@@ -102,6 +102,7 @@ extern std::map<PluginID, Plugin> plugins;
  * @param map_addr location in the address space to map plugin at
  */
 void load_plugin(PluginID id, std::string path);
+void unload_plugin(PluginID id);
 
 void load_configured_plugins();
 

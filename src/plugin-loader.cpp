@@ -86,6 +86,14 @@ void load_plugin(PluginID id, std::string filename) {
                  .map_addr = map_addr};
 }
 
+void unload_plugin(PluginID id) {
+  if (plugins.contains(id)) {
+    plugins[id].destroy();
+    dlclose(plugins[id].dlib_handle);
+    plugins.erase(id);
+  }
+}
+
 void load_configured_plugins() {
   if (!std::filesystem::exists(PLUGIN_PATH)) {
     std::cerr << "Could not find plugin directory (" << PLUGIN_PATH << ")" << std::endl;
