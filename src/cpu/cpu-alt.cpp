@@ -337,10 +337,27 @@ Emu6502::Emu6502() {
 Emu6502::~Emu6502() { delete[] opcode_map; }
 
 void Emu6502::do_instruction() {
-  if (got_irq || got_nmi) {
+  int _atomic_val = -1;
+
+  if (do_reset.exchange(false)) {
+    reset();
+  } else if ((_atomic_val = new_pc.exchange(-1)) >= 0) {
+    reg_pc = _atomic_val;
+  } else if (got_irq || got_nmi) {
     got_irq = got_nmi = false;
     handle_interrupt(false);
   }
+
+  if ((_atomic_val = new_sp.exchange(-1)) >= 0)
+    reg_sp = _atomic_val;
+  if ((_atomic_val = new_sr.exchange(-1)) >= 0)
+    reg_sr = _atomic_val;
+  if ((_atomic_val = new_a.exchange(-1)) >= 0)
+    reg_a = _atomic_val;
+  if ((_atomic_val = new_x.exchange(-1)) >= 0)
+    reg_x = _atomic_val;
+  if ((_atomic_val = new_y.exchange(-1)) >= 0)
+    reg_y = _atomic_val;
 
   // fetch the next instruction from memory
   current_opcode = read(reg_pc++);
