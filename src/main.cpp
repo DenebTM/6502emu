@@ -7,6 +7,7 @@
 #include <readline/readline.h>
 #include <signal.h>
 #include <thread>
+using namespace std::chrono_literals;
 
 #include "cpu.hpp"
 #include "emu-config.hpp"
@@ -14,6 +15,7 @@
 #include "mem.hpp"
 #include "plugin-callback.hpp"
 #include "plugin-loader.hpp"
+#include "sysclock.hpp"
 
 #include "ui/ui_thread.hpp"
 
@@ -71,15 +73,25 @@ int main(int argc, char **argv) {
   load_configured_plugins();
 
   start_ui_thread();
+  sysclock_init(config->clock_speed);
   init_plugins();
 
   // config may either use the reset vector (default) or set the pc to a defined value
   cpu.do_reset = config->init_reset;
   cpu.reg_pc = config->init_pc;
 
-  // execution loop runs until is_running is cleared by either the signal handler or plugin callback
+  // execution loop runs until `is_running` is cleared by either the signal handler or plugin callback
   while (is_running) {
-    cpu.do_instruction();
+    cpu.do_instruction_pre();
+
+    if (!sysclock_paused) {
+      cpu.do_instruction();
+    } else {
+      std::this_thread::sleep_for(1ms);
+
+      if (cpu.step_instructions != 0)
+        sysclock_resume();
+    }
   }
 
   emu_exit(exit_status);

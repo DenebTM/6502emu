@@ -1,8 +1,14 @@
+#include <atomic>
+#include <thread>
+using namespace std::chrono_literals;
+
 #include "cpu.hpp"
 #include "sysclock.hpp"
 
 extern AddressSpace add_spc;
 extern Emu6502 cpu;
+
+extern std::atomic_bool is_running;
 
 /**
  * determine addressing mode based on this table: https://www.masswerk.at/6502/6502_instruction_set.html#layout
@@ -51,9 +57,9 @@ Word Emu6502::get_target(AddressingMode mode, bool index_always_adds_cycle) {
     case ZPG:
       return read(reg_pc++);
     case ZPG_X:
-      return (Byte)(read(reg_pc++) + (step_cycle(), reg_x));
+      return (Byte)(read(reg_pc++) + (sysclock_step(), reg_x));
     case ZPG_Y:
-      return (Byte)(read(reg_pc++) + (step_cycle(), reg_y));
+      return (Byte)(read(reg_pc++) + (sysclock_step(), reg_y));
     case ABS: {
       auto addr = read_word(reg_pc);
       reg_pc += 2;
@@ -63,7 +69,7 @@ Word Emu6502::get_target(AddressingMode mode, bool index_always_adds_cycle) {
       auto addr_preindex = read_word(reg_pc);
       auto addr = addr_preindex + reg_x;
       if (index_always_adds_cycle || (addr & 0xff00) != (addr_preindex & 0xff00))
-        step_cycle();
+        sysclock_step();
       reg_pc += 2;
       return addr;
     }
@@ -71,7 +77,7 @@ Word Emu6502::get_target(AddressingMode mode, bool index_always_adds_cycle) {
       auto addr_preindex = read_word(reg_pc);
       auto addr = addr_preindex + reg_y;
       if (index_always_adds_cycle || (addr & 0xff00) != (addr_preindex & 0xff00))
-        step_cycle();
+        sysclock_step();
       reg_pc += 2;
       return addr;
     }
@@ -79,7 +85,7 @@ Word Emu6502::get_target(AddressingMode mode, bool index_always_adds_cycle) {
       return read_word(read_word(reg_pc));
     }
     case X_IND: {
-      auto addr_zpg = (Byte)(read(reg_pc++) + (step_cycle(), reg_x));
+      auto addr_zpg = (Byte)(read(reg_pc++) + (sysclock_step(), reg_x));
       return read_word(addr_zpg, true);
     }
     case IND_Y: {
@@ -87,12 +93,12 @@ Word Emu6502::get_target(AddressingMode mode, bool index_always_adds_cycle) {
       auto addr_preindex = read_word(addr_zpg, true);
       auto addr = addr_preindex + reg_y;
       if (index_always_adds_cycle || (addr & 0xff00) != (addr_preindex & 0xff00))
-        step_cycle();
+        sysclock_step();
       return addr;
     }
 
     case ACC:
-      step_cycle();
+      sysclock_step();
     case NONE:
       return 0;
   }
@@ -118,16 +124,16 @@ void Emu6502::set_reg(Byte *reg, Byte val, Byte flags) {
 }
 
 inline Byte Emu6502::read(Word addr) {
-  step_cycle();
+  sysclock_step();
   return add_spc.read(addr);
 }
 inline Word Emu6502::read_word(Word addr_lo, bool wrap_page) {
-  step_cycle(2);
+  sysclock_step(2);
   return add_spc.read_word(addr_lo, wrap_page);
 }
 
 inline void Emu6502::write(Word addr, Byte val) {
-  step_cycle();
+  sysclock_step();
   add_spc.write(addr, val);
 }
 
@@ -179,7 +185,7 @@ void Emu6502::reset() {
   reg_sp = 0xff;
   reg_pc = read_word(VEC_RST);
 
-  step_cycle(4);
+  sysclock_step(4);
 }
 
 void Emu6502::assert_interrupt(bool nmi) {
@@ -196,5 +202,34 @@ void Emu6502::handle_interrupt(bool brk) {
   reg_pc = read_word(got_nmi ? VEC_NMI : VEC_IRQ);
 
   (got_nmi ? got_nmi : got_irq) = false;
-  step_cycle();
+  sysclock_step();
+}
+
+void Emu6502::do_instruction_pre() {
+  if (step_instructions > 0)
+    step_instructions--;
+  if (step_instructions == 0 && !sysclock_paused)
+    sysclock_pause();
+
+  int _atomic_val = -1;
+
+  if (cpu.do_reset.exchange(false)) {
+    cpu.reset();
+  } else if ((_atomic_val = new_pc.exchange(-1)) >= 0) {
+    reg_pc = _atomic_val;
+  } else if (got_irq || got_nmi) {
+    got_irq = got_nmi = false;
+    handle_interrupt(false);
+  }
+
+  if ((_atomic_val = new_sp.exchange(-1)) >= 0)
+    reg_sp = _atomic_val;
+  if ((_atomic_val = new_sr.exchange(-1)) >= 0)
+    reg_sr = _atomic_val;
+  if ((_atomic_val = new_a.exchange(-1)) >= 0)
+    reg_a = _atomic_val;
+  if ((_atomic_val = new_x.exchange(-1)) >= 0)
+    reg_x = _atomic_val;
+  if ((_atomic_val = new_y.exchange(-1)) >= 0)
+    reg_y = _atomic_val;
 }

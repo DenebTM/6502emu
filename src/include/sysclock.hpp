@@ -1,12 +1,15 @@
 #pragma once
 
-#include "emu-types.hpp"
+extern uint64_t sysclock_cycle;
+extern bool sysclock_paused;
 
-extern QWord cycle_current_period;
-extern QWord cycle;
+void sysclock_init(uint64_t clock_speed);
 
-void step_cycle();
-inline void step_cycle(unsigned int count) {
+void sysclock_step();
+inline void sysclock_step(unsigned int count) {
   for (unsigned int i = 0; i < count; i++)
-    step_cycle();
+    sysclock_step();
 }
+
+void sysclock_pause();
+void sysclock_resume();

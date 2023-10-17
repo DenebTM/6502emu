@@ -33,6 +33,15 @@ public:
   Emu6502();
   ~Emu6502();
 
+  // handle reset, interrupts, loading register values from `new_` variables, etc.
+  void do_instruction_pre();
+
+  // fetch and execute a single instruction from memory
+  void do_instruction();
+
+  // signal an interrupt to the CPU
+  void assert_interrupt(bool nmi);
+
   Word reg_pc = 0;
   Byte reg_sp = 0x00;
   Byte reg_sr = 0x20;
@@ -42,9 +51,6 @@ public:
 
   Byte current_opcode;
 
-  void do_instruction();
-
-  void assert_interrupt(bool nmi);
   std::atomic_bool do_reset = true;
   std::atomic_int new_pc = -1;
   std::atomic_int new_sp = -1;
@@ -52,6 +58,7 @@ public:
   std::atomic_int new_a = -1;
   std::atomic_int new_x = -1;
   std::atomic_int new_y = -1;
+  long long step_instructions = -1;
 
 private:
   AddressingMode get_addr_mode(int opc_a, int opc_b, int opc_c);

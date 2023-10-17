@@ -2,7 +2,6 @@
 #include "sysclock.hpp"
 
 extern AddressSpace add_spc;
-extern Emu6502 cpu;
 
 // hacky but reduces code duplication
 #include "cpu-common.cpp"
@@ -12,28 +11,6 @@ Emu6502::Emu6502() {}
 Emu6502::~Emu6502() {}
 
 void Emu6502::do_instruction() {
-  int _atomic_val = -1;
-
-  if (do_reset.exchange(false)) {
-    reset();
-  } else if ((_atomic_val = new_pc.exchange(-1)) >= 0) {
-    reg_pc = _atomic_val;
-  } else if (got_irq || got_nmi) {
-    got_irq = got_nmi = false;
-    handle_interrupt(false);
-  }
-
-  if ((_atomic_val = new_sp.exchange(-1)) >= 0)
-    reg_sp = _atomic_val;
-  if ((_atomic_val = new_sr.exchange(-1)) >= 0)
-    reg_sr = _atomic_val;
-  if ((_atomic_val = new_a.exchange(-1)) >= 0)
-    reg_a = _atomic_val;
-  if ((_atomic_val = new_x.exchange(-1)) >= 0)
-    reg_x = _atomic_val;
-  if ((_atomic_val = new_y.exchange(-1)) >= 0)
-    reg_y = _atomic_val;
-
   // fetch the next instruction from memory
   current_opcode = read(reg_pc++);
 
@@ -91,53 +68,53 @@ void Emu6502::do_instruction() {
     // TAX
     case 0xaa:
       set_reg(&reg_x, reg_a, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
     // TAY
     case 0xa8:
       set_reg(&reg_y, reg_a, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
     // TSX
     case 0xba:
       set_reg(&reg_x, reg_sp, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
     // TXA
     case 0x8a:
       set_reg(&reg_a, reg_x, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
     // TXS
     case 0x9a:
       set_reg(&reg_sp, reg_x);
-      step_cycle();
+      sysclock_step();
       break;
     // TYA
     case 0x98:
       set_reg(&reg_a, reg_y, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
 
     // PHA
     case 0x48:
       push(reg_a);
-      step_cycle();
+      sysclock_step();
       break;
     // PHP
     case 0x08:
       push(get_sr() | FLAG_B);
-      step_cycle();
+      sysclock_step();
       break;
     // PLA
     case 0x68:
       set_reg(&reg_a, pop(), FLAG_N | FLAG_Z);
-      step_cycle(2);
+      sysclock_step(2);
       break;
     // PLP
     case 0x28:
       set_reg(&reg_sr, pop());
-      step_cycle(2);
+      sysclock_step(2);
       break;
 
     // DEC
@@ -149,20 +126,20 @@ void Emu6502::do_instruction() {
       auto val = read(addr) - 1;
       write(addr, val);
       set_flags(val, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
     }
     // DEX
     case 0xca:
       reg_x--;
       set_flags(reg_x, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
     // DEY
     case 0x88:
       reg_y--;
       set_flags(reg_y, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
 
     // INC
@@ -174,20 +151,20 @@ void Emu6502::do_instruction() {
       auto val = read(addr) + 1;
       write(addr, val);
       set_flags(val, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
     }
     // INX
     case 0xe8:
       reg_x++;
       set_flags(reg_x, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
     // INY
     case 0xc8:
       reg_y++;
       set_flags(reg_y, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
       break;
 
     // ADC
@@ -279,7 +256,7 @@ void Emu6502::do_instruction() {
       reg_sr &= ~FLAG_C;
       reg_sr |= (res & 0x100) >> 8;
       set_flags((Byte)res, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
 
       if (mode == ACC) {
         reg_a = (Byte)res;
@@ -302,7 +279,7 @@ void Emu6502::do_instruction() {
       reg_sr &= ~FLAG_C;
       reg_sr |= FLAG_C & val;
       set_flags((Byte)res, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
 
       if (mode == ACC) {
         reg_a = (Byte)res;
@@ -325,7 +302,7 @@ void Emu6502::do_instruction() {
       reg_sr &= ~FLAG_C;
       reg_sr |= (res & 0x100) >> 8;
       set_flags((Byte)res, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
 
       if (mode == ACC) {
         reg_a = (Byte)res;
@@ -348,7 +325,7 @@ void Emu6502::do_instruction() {
       reg_sr &= ~FLAG_C;
       reg_sr |= FLAG_C & val;
       set_flags((Byte)res, FLAG_N | FLAG_Z);
-      step_cycle();
+      sysclock_step();
 
       if (mode == ACC) {
         reg_a = (Byte)res;
@@ -377,7 +354,7 @@ void Emu6502::do_instruction() {
         reg_sr |= flag_affected[opc_a / 2];
       }
 
-      step_cycle();
+      sysclock_step();
       break;
     }
 
@@ -428,9 +405,9 @@ void Emu6502::do_instruction() {
 
       if (conditions[opc_a]) {
         auto new_pc = reg_pc + *(SByte *)&offset;
-        step_cycle();
+        sysclock_step();
         if ((reg_pc & 0xff00) != (new_pc & 0xff00))
-          step_cycle();
+          sysclock_step();
         reg_pc = new_pc;
       }
       break;
@@ -439,7 +416,7 @@ void Emu6502::do_instruction() {
     // JSR
     case 0x20:
       push_word(reg_pc + 1);
-      step_cycle();
+      sysclock_step();
     // JMP
     case 0x4c:
     case 0x6c:
@@ -449,18 +426,18 @@ void Emu6502::do_instruction() {
     // RTS
     case 0x60:
       reg_pc = pop_word() + 1;
-      step_cycle(3);
+      sysclock_step(3);
       break;
 
     // RTI
     case 0x40:
       set_reg(&reg_sr, pop());
       reg_pc = pop_word();
-      step_cycle(2);
+      sysclock_step(2);
       break;
 
     case 0xea:
-      step_cycle();
+      sysclock_step();
       break;
 
     // BRK
