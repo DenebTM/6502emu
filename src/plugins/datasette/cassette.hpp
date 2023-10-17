@@ -17,5 +17,5 @@ struct Datasette {
   unsigned char *tap;
   size_t tap_size = 0;
   bool playing = false;
-  size_t tap_index = 0;
+  size_t tap_index = TAP_HEADER_LEN;
 };

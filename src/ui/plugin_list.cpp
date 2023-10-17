@@ -44,7 +44,7 @@ void load_plugin_modal(bool *modal_shown) {
   }
   ImGui::SameLine();
   ImGui::SetNextItemWidth(150);
-  ImGui::TextWrapped(filename.c_str());
+  ImGui::TextWrapped(std::filesystem::path(filename).filename().c_str());
 
   static char id[16] = {0};
   ImGui::PushItemWidth(150);

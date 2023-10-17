@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <future>
 #include <optional>
 #include <readline/readline.h>
@@ -68,6 +69,7 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
 
   ImGui::Begin("PET 2001 Datasette");
 
+  static std::filesystem::path file;
   if (ImGui::Button("Load file...")) {
     static bool opening_file = false;
     static std::future<void> load_file;
@@ -80,6 +82,7 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
         nfdchar_t *outPath;
         nfdfilteritem_t filterItem[1] = {{"CBM TAP 1.0/1.1 File", "tap"}};
         if (NFD_OpenDialog(&outPath, filterItem, 1, NULL) == NFD_OKAY) {
+          file = std::filesystem::path(outPath);
           datasette->load_tap(std::string(outPath));
           NFD_FreePath(outPath);
         }
@@ -89,23 +92,41 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
     }
   }
 
+  ImGui::SameLine();
+  ImGui::TextWrapped(file.filename().c_str());
+
   ImGui::Text("Status: %s", (datasette->tap_size > 0) ? (datasette->playing ? "Playing" : "Stopped") : "No file");
   ImGui::Text("tap_index: %ld / %ld", datasette->tap_size ? datasette->tap_index - TAP_HEADER_LEN : 0,
               datasette->tap_size ? datasette->tap_size - TAP_HEADER_LEN : 0);
 
+  bool play_disabled = datasette->playing || datasette->tap_size == 0;
+  if (play_disabled)
+    ImGui::BeginDisabled();
   if (ImGui::Button("Play")) {
     datasette->play();
   }
+  if (play_disabled)
+    ImGui::EndDisabled();
 
   ImGui::SameLine();
+  bool stop_disabled = !datasette->playing;
+  if (stop_disabled)
+    ImGui::BeginDisabled();
   if (ImGui::Button("Stop")) {
     datasette->stop();
   }
+  if (stop_disabled)
+    ImGui::EndDisabled();
 
   ImGui::SameLine();
+  bool rewind_disabled = datasette->tap_index == TAP_HEADER_LEN;
+  if (rewind_disabled)
+    ImGui::BeginDisabled();
   if (ImGui::Button("Rewind")) {
     datasette->rewind();
   }
+  if (rewind_disabled)
+    ImGui::EndDisabled();
 
   ImGui::End();
 
