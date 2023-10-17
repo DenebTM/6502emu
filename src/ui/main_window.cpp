@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "plugin-loader.hpp"
-#include "ui/cpu_debug.hpp"
+#include "ui/debug_window.hpp"
 #include "ui/main_window.hpp"
 #include "ui/plugin_list.hpp"
 
@@ -73,7 +73,7 @@ void main_window_update() {
   ImGui_ImplSDL2_NewFrame();
   ImGui::NewFrame();
 
-  show_cpu_debug_window();
+  show_debug_window();
   show_plugin_list();
 
   render_plugin_uis(main_renderer);

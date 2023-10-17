@@ -40,12 +40,20 @@ public:
     if (info.dev.has_value()) {
       auto [dev, dev_idx] = info.dev.value();
       dev->pre_read(dev_idx);
-      return dev->read(dev_idx);
+      memory[addr] = dev->read(dev_idx);
     }
 
     // read directly from RAM/ROM
     return memory[addr];
   }
+
+  /**
+   * return the byte currently in memory at an address, but do not call devices
+   * mapped there.
+   *
+   * for memory-mapped devices, returns the most recently read/written byte
+   */
+  constexpr Byte re_read(Word addr) { return memory[addr]; }
 
   /**
    * read a word from memory (little-endian byte order)
@@ -77,7 +85,7 @@ public:
     if (info.dev.has_value()) {
       auto [dev, dev_idx] = info.dev.value();
       if (!info.read_only)
-        dev->write(dev_idx, val);
+        memory[addr] = dev->write(dev_idx, val);
       dev->post_write(dev_idx);
     }
 
