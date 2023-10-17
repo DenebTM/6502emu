@@ -1,7 +1,10 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
+#include <chrono>
 #include <iostream>
+#include <thread>
+using namespace std::chrono_literals;
 
 #include "plugin-loader.hpp"
 #include "ui/debug_window.hpp"
@@ -81,6 +84,12 @@ void main_window_update() {
   ImGui::Render();
   ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
   SDL_RenderPresent(main_renderer);
+
+  // cap to 60fps
+  static auto frame_time = 1s / 60.;
+  static auto next_wake = std::chrono::system_clock::now() + frame_time;
+  std::this_thread::sleep_until(next_wake);
+  next_wake += frame_time;
 }
 
 void main_window_destroy() {

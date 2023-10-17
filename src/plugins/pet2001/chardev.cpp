@@ -27,8 +27,7 @@ extern uint64_t system_clock_speed;
 extern Pia *pia1;
 extern Via *via;
 
-std::condition_variable sdl_wake_cond;
-std::mutex sdl_wake_mutex;
+bool render_update;
 
 Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
   screen_mem = mapped_regs;
@@ -38,9 +37,6 @@ Chardev::Chardev() : MemoryMappedDevice(false, 1024) {
 }
 
 Chardev::~Chardev() {
-  // allow ongoing render to complete
-  sdl_wake_cond.notify_all();
-
   if (characters) {
     delete[] characters;
   }
@@ -91,8 +87,8 @@ void Chardev::update() {
       via->mapped_regs[Via::PortB] |= BIT5;
     }
 
-    // use a condition variable to wake the SDL thread
-    sdl_wake_cond.notify_all();
+    // signal to render thread that a new frame should be drawn
+    render_update = true;
 
     // begin next frame
     thisframe_cycle = 0;
@@ -133,38 +129,37 @@ void Chardev::ui_handle_event(SDL_Event &event) {
 }
 
 void Chardev::ui_render() {
-  // wait until `update` signals wake-up
-  // FIXME: this blocks the UI thread
-  std::unique_lock<std::mutex> sdl_wake_lock(sdl_wake_mutex);
-  sdl_wake_cond.wait(sdl_wake_lock);
+  if (render_update) {
+    render_update = false;
 
-  // save current renderer state
-  SDL_Texture *old_render_target = SDL_GetRenderTarget(renderer);
-  // SDL_bool old_integer_scale = SDL_RenderGetIntegerScale(renderer);
-  // float old_scale_x, old_scale_y;
-  // SDL_RenderGetScale(renderer, &old_scale_x, &old_scale_y);
+    // save current renderer state
+    SDL_Texture *old_render_target = SDL_GetRenderTarget(renderer);
+    // SDL_bool old_integer_scale = SDL_RenderGetIntegerScale(renderer);
+    // float old_scale_x, old_scale_y;
+    // SDL_RenderGetScale(renderer, &old_scale_x, &old_scale_y);
 
-  // prepare renderer to draw to the texture
-  SDL_SetRenderTarget(renderer, render_tex);
-  // SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
-  // SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
+    // prepare renderer to draw to the texture
+    SDL_SetRenderTarget(renderer, render_tex);
+    // SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
+    // SDL_RenderSetScale(renderer, RENDER_SCALE, RENDER_SCALE);
 
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-  SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
 
-  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-  for (int row = 0; row < 25; row++) {
-    for (int col = 0; col < 40; col++) {
-      auto screen_addr = row * 40 + col;
-      SDL_Rect dst{.x = 8 * col, .y = 8 * row, .w = 8, .h = 8};
-      SDL_RenderCopy(renderer, characters[screen_mem[screen_addr]], NULL, &dst);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    for (int row = 0; row < 25; row++) {
+      for (int col = 0; col < 40; col++) {
+        auto screen_addr = row * 40 + col;
+        SDL_Rect dst{.x = 8 * col, .y = 8 * row, .w = 8, .h = 8};
+        SDL_RenderCopy(renderer, characters[screen_mem[screen_addr]], NULL, &dst);
+      }
     }
-  }
 
-  // restore old renderer state
-  SDL_SetRenderTarget(renderer, old_render_target);
-  // SDL_RenderSetIntegerScale(renderer, old_integer_scale);
-  // SDL_RenderSetScale(renderer, old_scale_x, old_scale_y);
+    // restore old renderer state
+    SDL_SetRenderTarget(renderer, old_render_target);
+    // SDL_RenderSetIntegerScale(renderer, old_integer_scale);
+    // SDL_RenderSetScale(renderer, old_scale_x, old_scale_y);
+  }
 
   // draw PET screen into an ImGui window
   {
