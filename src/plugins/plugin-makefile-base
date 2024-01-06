@@ -1,5 +1,5 @@
-CXX = g++
-CXXFLAGS = -g -O3 -Wall -Wpedantic -std=c++20 -fPIC -fvisibility=hidden -MMD
+-include ../../../Makeflags
+CXXFLAGS += -fPIC -fvisibility=hidden
 
 INCLUDE += -I../../include
 

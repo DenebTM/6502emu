@@ -1,5 +1,4 @@
-CXX = g++
-CXXFLAGS = -g -O3 -Wall -Wpedantic -funsigned-char -fpermissive -std=c++20 -MMD
+-include ../Makeflags
 LDLIBS = -lm -ldl -lreadline -lyaml-cpp
 
 INCLUDE = -Iinclude
