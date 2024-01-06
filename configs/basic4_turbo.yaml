@@ -1,6 +1,6 @@
 cpu:
   init_pc: reset
-  clock_speed: 30000000
+  clock_speed: 300000000
 
 ram:
   # 8K

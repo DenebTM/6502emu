@@ -1,6 +1,6 @@
 cpu:
   init_pc: reset
-  clock_speed: 1000000000
+  clock_speed: 100000000
 
 ram:
   - start: 0x0000
@@ -11,8 +11,4 @@ roms:
     start: 0xc000
 
 plugins:
-  enumerate: true
-  config:
-    - id: STDIO
-      file: emu-stdio.so
-      address: 0xf001
+  enumerate: false
