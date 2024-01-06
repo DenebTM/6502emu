@@ -44,7 +44,7 @@ void load_plugin_modal(bool *modal_shown) {
   }
   ImGui::SameLine();
   ImGui::SetNextItemWidth(150);
-  ImGui::TextWrapped(std::filesystem::path(filename).filename().c_str());
+  ImGui::TextWrapped("%s", std::filesystem::path(filename).filename().c_str());
 
   static char id[16] = {0};
   ImGui::PushItemWidth(150);
@@ -96,7 +96,7 @@ void show_plugin_list() {
   for (auto &[id, plugin] : plugins) {
     ImGui::Separator();
 
-    ImGui::Text(id.c_str());
+    ImGui::Text("%s", id.c_str());
     if (plugin.map_addr) {
       if (ImGui::BeginTable(("plugin-list/" + id).c_str(), 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
         ImGui::TableNextColumn();

@@ -93,7 +93,7 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
   }
 
   ImGui::SameLine();
-  ImGui::TextWrapped(file.filename().c_str());
+  ImGui::TextWrapped("%s", file.filename().c_str());
 
   ImGui::Text("Status: %s", (datasette->tap_size > 0) ? (datasette->playing ? "Playing" : "Stopped") : "No file");
   ImGui::Text("tap_index: %ld / %ld", datasette->tap_size ? datasette->tap_index - TAP_HEADER_LEN : 0,

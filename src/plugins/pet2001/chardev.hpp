@@ -8,8 +8,8 @@ public:
   Chardev();
   ~Chardev();
 
-  int pre_read(Word offset) { return 0; }
-  int post_write(Word offset) { return 0; }
+  int pre_read(Word offset) override { return 0; }
+  int post_write(Word offset) override { return 0; }
 
   int sdl_init(SDL_Renderer *renderer);
 
@@ -23,7 +23,6 @@ public:
 private:
   Byte *screen_mem;
 
-  SDL_Window *window;
   SDL_Renderer *renderer;
 
   char *char_rom;

@@ -44,8 +44,8 @@ public:
 
   Pia(plugin_callback_t plugin_callback);
 
-  int pre_read(Word offset) { return 0; }
-  int post_write(Word offset) { return 0; }
+  int pre_read(Word offset) override { return 0; }
+  int post_write(Word offset) override { return 0; }
 
   Byte read(Word offset) override;
 

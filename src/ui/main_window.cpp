@@ -39,7 +39,6 @@ int main_window_init() {
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGuiIO &io = ImGui::GetIO();
   ImGui_ImplSDL2_InitForSDLRenderer(main_window, main_renderer);
   ImGui_ImplSDLRenderer2_Init(main_renderer);
 
