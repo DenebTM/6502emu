@@ -48,7 +48,7 @@ extern "C" EXPORT int plugin_destroy() {
 
   if (datasette) {
     auto _datasette = datasette;
-    datasette = NULL;
+    datasette = nullptr;
     delete _datasette;
   }
 
@@ -81,7 +81,7 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
       load_file = std::async(std::launch::async, [&] {
         nfdchar_t *outPath;
         nfdfilteritem_t filterItem[1] = {{"CBM TAP 1.0/1.1 File", "tap"}};
-        if (NFD_OpenDialog(&outPath, filterItem, 1, NULL) == NFD_OKAY) {
+        if (NFD_OpenDialog(&outPath, filterItem, 1, nullptr) == NFD_OKAY) {
           file = std::filesystem::path(outPath);
           datasette->load_tap(std::string(outPath));
           NFD_FreePath(outPath);

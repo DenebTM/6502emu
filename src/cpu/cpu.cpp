@@ -376,7 +376,7 @@ void Emu6502::do_instruction() {
       auto reg = (opc_c == 1) ? reg_a : (opc_a == 7) ? reg_x : reg_y;
       auto operand = read(get_target(mode));
 
-      alu_add(reg, ~operand, NULL, FLAG_C | FLAG_Z | FLAG_N, 1);
+      alu_add(reg, ~operand, nullptr, FLAG_C | FLAG_Z | FLAG_N, 1);
       break;
     }
 

@@ -33,7 +33,7 @@ void load_plugin_modal(bool *modal_shown) {
       load_file = std::async(std::launch::async, [&] {
         nfdchar_t *outPath;
         nfdfilteritem_t filterItem[1] = {{"Shared library", "so"}};
-        if (NFD_OpenDialog(&outPath, filterItem, 1, NULL) == NFD_OKAY) {
+        if (NFD_OpenDialog(&outPath, filterItem, 1, nullptr) == NFD_OKAY) {
           filename = std::string(outPath);
           NFD_FreePath(outPath);
         }
@@ -52,7 +52,7 @@ void load_plugin_modal(bool *modal_shown) {
 
   static Word addr = 0;
   ImGui::PushItemWidth(50);
-  ImGui::InputScalar("Load address", ImGuiDataType_U16, &addr, NULL, NULL, "%04X");
+  ImGui::InputScalar("Load address", ImGuiDataType_U16, &addr, nullptr, nullptr, "%04X");
 
   ImGui::Separator();
 
@@ -87,7 +87,7 @@ void show_plugin_list() {
   }
 
   // plugin list
-  ImGui::Begin("Plugins", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+  ImGui::Begin("Plugins", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
 
   if (ImGui::Button("Load plugin")) {
     load_plugin_modal_shown = true;

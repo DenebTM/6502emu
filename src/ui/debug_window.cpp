@@ -88,7 +88,7 @@ void cpu_section() {
   ImGui::PushItemWidth(60);
 
   static Word new_pc;
-  ImGui::InputScalar("PC", ImGuiDataType_U16, &new_pc, NULL, NULL, "%04X");
+  ImGui::InputScalar("PC", ImGuiDataType_U16, &new_pc, nullptr, nullptr, "%04X");
   if (ImGui::IsItemDeactivatedAfterEdit()) {
     cpu.new_pc = new_pc;
   } else {
@@ -97,7 +97,7 @@ void cpu_section() {
 
   static Byte new_sp;
   ImGui::SameLine();
-  ImGui::InputScalar("SP", ImGuiDataType_U8, &new_sp, NULL, NULL, "%02X");
+  ImGui::InputScalar("SP", ImGuiDataType_U8, &new_sp, nullptr, nullptr, "%02X");
   if (ImGui::IsItemDeactivatedAfterEdit()) {
     cpu.new_sp = new_sp;
   } else {
@@ -133,7 +133,7 @@ void cpu_section() {
 
   // hex input for status register
   ImGui::SameLine();
-  ImGui::InputScalar("SR##sr-hex", ImGuiDataType_U8, &new_sr, NULL, NULL, "%02X");
+  ImGui::InputScalar("SR##sr-hex", ImGuiDataType_U8, &new_sr, nullptr, nullptr, "%02X");
   if (ImGui::IsItemDeactivatedAfterEdit()) {
     cpu.new_sr = new_sr;
   } else {
@@ -143,7 +143,7 @@ void cpu_section() {
   ImGui::Separator();
 
   static Byte new_a;
-  ImGui::InputScalar("A", ImGuiDataType_U8, &new_a, NULL, NULL, "%02X");
+  ImGui::InputScalar("A", ImGuiDataType_U8, &new_a, nullptr, nullptr, "%02X");
   if (ImGui::IsItemDeactivatedAfterEdit()) {
     cpu.new_a = new_a;
   } else {
@@ -152,7 +152,7 @@ void cpu_section() {
 
   static Byte new_x;
   ImGui::SameLine();
-  ImGui::InputScalar("X", ImGuiDataType_U8, &new_x, NULL, NULL, "%02X");
+  ImGui::InputScalar("X", ImGuiDataType_U8, &new_x, nullptr, nullptr, "%02X");
   if (ImGui::IsItemDeactivatedAfterEdit()) {
     cpu.new_x = new_x;
   } else {
@@ -161,7 +161,7 @@ void cpu_section() {
 
   static Byte new_y;
   ImGui::SameLine();
-  ImGui::InputScalar("Y", ImGuiDataType_U8, &new_y, NULL, NULL, "%02X");
+  ImGui::InputScalar("Y", ImGuiDataType_U8, &new_y, nullptr, nullptr, "%02X");
   if (ImGui::IsItemDeactivatedAfterEdit()) {
     cpu.new_y = new_y;
   } else {
@@ -173,7 +173,7 @@ void memory_view_section() {
   static MemoryEditor mem_edit;
   mem_edit.WriteFn = [](ImU8 *_, size_t addr, ImU8 val) { add_spc.write(addr, val); };
   mem_edit.ReadFn = [](const ImU8 *_, size_t addr) { return add_spc.re_read(addr); };
-  mem_edit.DrawContents(NULL, 65536);
+  mem_edit.DrawContents(nullptr, 65536);
 }
 
 void show_debug_window() {

@@ -1,11 +1,11 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <csignal>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <readline/readline.h>
-#include <signal.h>
 #include <thread>
 using namespace std::chrono_literals;
 
@@ -48,7 +48,7 @@ char *input_config_file() {
 
 int main(int argc, char **argv) {
   // load configuration
-  char *config_filename = NULL;
+  char *config_filename = nullptr;
   if (argc >= 2) {
     config_filename = argv[1];
   } else {
@@ -116,7 +116,7 @@ void load_configured_roms() {
 
 void setup_configured_ram() {
   for (auto [start_addr, size] : config->ram)
-    add_spc.map_mem(NULL, size, start_addr, false);
+    add_spc.map_mem(nullptr, size, start_addr, false);
 }
 
 void signal_callback_handler(int signum) {

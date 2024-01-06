@@ -273,7 +273,7 @@ Emu6502::Emu6502() {
   static std::function<void(Byte *, AddressingMode)> cmp_fn = [&](Byte *reg, AddressingMode mode) {
     auto operand = read(get_target(mode));
 
-    alu_add(*reg, ~operand, NULL, FLAG_C | FLAG_Z | FLAG_N, 1);
+    alu_add(*reg, ~operand, nullptr, FLAG_C | FLAG_Z | FLAG_N, 1);
   };
   opcode_map[0xc9] = {"CMP #", [&](AddressingMode mode) { cmp_fn(&reg_a, mode); }};
   opcode_map[0xc5] = {"CMP zpg", [&](AddressingMode mode) { cmp_fn(&reg_a, mode); }};

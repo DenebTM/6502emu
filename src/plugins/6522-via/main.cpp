@@ -31,7 +31,7 @@ extern "C" EXPORT int plugin_destroy() {
   if (via) {
     _add_spc->unmap_mem(_addr);
     auto _via = via;
-    via = NULL;
+    via = nullptr;
     delete _via;
   }
 

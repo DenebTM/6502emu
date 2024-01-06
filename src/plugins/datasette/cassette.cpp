@@ -45,7 +45,7 @@ int Datasette::update() {
   static unsigned int cycles_since_last_pulse = 0;
   static unsigned int autostop_cycles = 0;
 
-  bool motor_en = (pia1 != NULL) && (pia1->cb2 == 0);
+  bool motor_en = (pia1 != nullptr) && (pia1->cb2 == 0);
 
   if (playing && motor_en && tap_index < tap_size) {
     unsigned int num_cycles = tap[tap_index] * 8;

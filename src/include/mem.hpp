@@ -113,14 +113,14 @@ public:
   /**
    * mark a region in the address space as mapped and read-only, optionally copy a byte array into it
    *
-   * @param bytes ROM data or NULL
+   * @param bytes ROM data or nullptr
    */
   void map_mem(const Byte *bytes, DWord size, Word start_addr) { map_mem((Byte *)bytes, size, start_addr, true); }
 
   /**
    * mark a region in the address space as mapped, optionally copy a byte array into it
    *
-   * @param bytes binary data or NULL
+   * @param bytes binary data or nullptr
    */
   void map_mem(Byte *bytes, DWord size, Word start_addr, bool read_only = false) {
     for (size_t i = 0; i < size && (start_addr + i) < SIZE; i++) {

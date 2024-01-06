@@ -151,7 +151,7 @@ void Chardev::ui_render() {
       for (int col = 0; col < 40; col++) {
         auto screen_addr = row * 40 + col;
         SDL_Rect dst{.x = 8 * col, .y = 8 * row, .w = 8, .h = 8};
-        SDL_RenderCopy(renderer, characters[screen_mem[screen_addr]], NULL, &dst);
+        SDL_RenderCopy(renderer, characters[screen_mem[screen_addr]], nullptr, &dst);
       }
     }
 
@@ -163,7 +163,7 @@ void Chardev::ui_render() {
 
   // draw PET screen into an ImGui window
   {
-    ImGui::Begin("PET 2001 Display", NULL, ImGuiWindowFlags_NoResize);
+    ImGui::Begin("PET 2001 Display", nullptr, ImGuiWindowFlags_NoResize);
     imgui_window_focused = ImGui::IsWindowFocused();
 
     static constexpr auto IMG_WIDTH = SCREEN_WIDTH * RENDER_SCALE;

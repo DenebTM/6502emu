@@ -89,7 +89,7 @@ extern "C" EXPORT int plugin_destroy() {
     _add_spc->unmap_mem(_addr + 0x800);
     _add_spc->unmap_mem(_addr + 0xc00);
     auto _chardev = chardev;
-    chardev = NULL;
+    chardev = nullptr;
     delete _chardev;
   }
 

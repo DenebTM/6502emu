@@ -34,7 +34,7 @@ extern "C" EXPORT int plugin_destroy() {
     _add_spc->unmap_mem(_addr + 8);
     _add_spc->unmap_mem(_addr + 12);
     auto _pia = pia;
-    pia = NULL;
+    pia = nullptr;
     delete _pia;
   }
 
