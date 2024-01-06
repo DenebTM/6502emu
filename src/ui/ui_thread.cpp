@@ -26,4 +26,6 @@ void stop_ui_thread() {
 
   if (ui_thread->joinable())
     ui_thread->join();
+
+  delete ui_thread;
 }

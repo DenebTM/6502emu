@@ -88,9 +88,10 @@ void load_plugin(PluginID id, std::string filename) {
 
 void unload_plugin(PluginID id) {
   if (plugins.contains(id)) {
-    plugins[id].destroy();
-    dlclose(plugins[id].dlib_handle);
+    auto plugin = plugins[id];
     plugins.erase(id);
+    plugin.destroy();
+    dlclose(plugin.dlib_handle);
   }
 }
 
