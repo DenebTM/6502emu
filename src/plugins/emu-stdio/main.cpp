@@ -59,7 +59,7 @@ void init_ncurses() {
   cbreak();
   noecho();
   keypad(stdscr, TRUE);
-  nodelay(stdscr, TRUE);
+  timeout(100);
   scrollok(stdscr, TRUE);
 
   raw();
