@@ -1,0 +1,18 @@
+cpu:
+  init_pc: reset
+  clock_speed: 1000000
+
+ram:
+  - start: 0x0000
+    size: 512
+
+roms:
+  - file: roms/fbclear.bin
+    start: 0xff00
+
+plugins:
+  enumerate: false
+  config:
+    - id: framebuf
+      file: framebuf.so
+      address: 0x9000
