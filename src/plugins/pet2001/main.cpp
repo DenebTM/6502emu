@@ -39,7 +39,7 @@ extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
 extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *config) {
   system_clock_speed = config->clock_speed;
   _add_spc = &add_spc;
-  _addr = addr ? addr : 0xe810;
+  _addr = addr ? addr : 0x8000;
 
   // 40-column screen memory is mirrored four times
   _add_spc->map_mem(chardev, _addr + 0x000);
