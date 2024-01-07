@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 uint64_t sysclock_cycle = 0;
 
-uint64_t cycles_per_scanline;
+double cycles_per_scanline;
 std::chrono::system_clock::duration scanline_time;
 std::chrono::system_clock::time_point next_wake;
 
@@ -15,13 +15,14 @@ bool sysclock_paused = false;
 std::chrono::system_clock::time_point last_pause;
 
 void sysclock_init(uint64_t clock_speed) {
-  cycles_per_scanline = clock_speed / 220 / 60;
-  scanline_time = 1000000000ns / (clock_speed / cycles_per_scanline);
+  // FIXME: Don't hardcode this
+  cycles_per_scanline = (double)clock_speed / 220 / 60;
+  scanline_time = 1000000000ns / (uint64_t)(clock_speed / cycles_per_scanline);
   next_wake = std::chrono::system_clock::now() + scanline_time;
 }
 
 void sysclock_step() {
-  static uint64_t cycle_current_scanline = 0;
+  static double cycle_current_scanline = 0;
 
   cycle_current_scanline++;
   sysclock_cycle++;
