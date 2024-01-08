@@ -13,7 +13,7 @@ using namespace std::chrono_literals;
 #include "emu-config.hpp"
 #include "emu-types.hpp"
 #include "mem.hpp"
-#include "plugin-callback.hpp"
+#include "plugin-callback-handler.hpp"
 #include "plugin-loader.hpp"
 #include "sysclock.hpp"
 
@@ -23,8 +23,6 @@ void load_configured_roms();
 void setup_configured_ram();
 void signal_callback_handler(int signum);
 void emu_exit(int status);
-
-extern void plugin_callback_handler(PluginCallbackType, void *);
 
 int exit_status = 0;
 std::atomic_bool is_running = true;

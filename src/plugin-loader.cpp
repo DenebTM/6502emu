@@ -7,10 +7,10 @@
 #include "emu-config.hpp"
 #include "emu-types.hpp"
 #include "mem.hpp"
+#include "plugin-callback-handler.hpp"
 #include "plugin-loader.hpp"
 
 extern AddressSpace add_spc;
-extern void plugin_callback_handler(PluginCallbackType type, void *arg);
 
 std::map<PluginID, Plugin> plugins;
 

@@ -6,6 +6,7 @@
 #include <thread>
 using namespace std::chrono_literals;
 
+#include "plugin-callback-handler.hpp"
 #include "plugin-loader.hpp"
 #include "ui/debug_window.hpp"
 #include "ui/main_window.hpp"
@@ -13,8 +14,6 @@ using namespace std::chrono_literals;
 
 SDL_Window *main_window;
 SDL_Renderer *main_renderer;
-
-extern void plugin_callback_handler(PluginCallbackType, void *);
 
 int main_window_init() {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {

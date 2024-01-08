@@ -1,7 +1,7 @@
 #include <atomic>
 
 #include "cpu.hpp"
-#include "plugin-callback.hpp"
+#include "plugin-callback-handler.hpp"
 
 extern std::atomic_bool is_running;
 extern int exit_status;
