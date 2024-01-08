@@ -11,8 +11,8 @@ using namespace std::chrono_literals;
 #include "plugins/6520-pia.hpp"
 #include "plugins/plugin-types.hpp"
 
-#include "imgui.h"
-#include "nfdx/src/include/nfd.h"
+#include <imgui.h>
+#include <nfd.h>
 
 plugin_callback_t plugin_callback;
 

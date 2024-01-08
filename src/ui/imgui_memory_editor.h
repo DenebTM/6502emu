@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include <imgui.h>
 #include <stdint.h> // uint8_t, etc.
 #include <stdio.h>  // sprintf, scanf
 

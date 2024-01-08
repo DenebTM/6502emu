@@ -4,7 +4,7 @@ SOURCES = main.cpp chardev.cpp keyboard.cpp
 OUTFILE = ../pet2001.so
 
 # ImGui
-IMGUI_DIR = ../../ui/imgui
+IMGUI_DIR = ../../../lib/imgui
 INCLUDE += -I$(IMGUI_DIR)
 
 include ../plugin-makefile-base

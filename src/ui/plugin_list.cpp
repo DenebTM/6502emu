@@ -1,11 +1,10 @@
-#include "imgui/imgui.h"
 #include <future>
+#include <imgui.h>
+#include <nfd.h>
 
 #include "plugin-loader.hpp"
 #include "ui/plugin_list.hpp"
 // #include "emu-config.hpp"
-
-#include "nfd.h"
 
 extern AddressSpace add_spc;
 

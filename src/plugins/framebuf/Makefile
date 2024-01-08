@@ -4,7 +4,7 @@ SOURCES = main.cpp framebuf.cpp
 OUTFILE = ../framebuf.so
 
 # ImGui
-IMGUI_DIR = ../../ui/imgui
+IMGUI_DIR = ../../../lib/imgui
 INCLUDE += -I$(IMGUI_DIR)
 
 include ../plugin-makefile-base
