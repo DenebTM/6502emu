@@ -1,10 +1,10 @@
 start       = $ff00 ; ROM start address
 
-FB_BANK_CNT = 15    ; number of framebuffer-internal screen memory banks
-FB_PAGE_CNT = 10    ; number of memory pages taken up by framebuffer MMIO
+FB_BANK_CNT = 10    ; number of framebuffer-internal screen memory banks
+FB_PAGE_CNT = 15    ; number of memory pages taken up by framebuffer MMIO
 FBADD_LO    = $00   ; framebuffer MMIO screen memory address (low byte)
 FBADD_HI    = $90   ; framebuffer MMIO screen memory address (high byte)
-FB_BANK_REG = $9a00 ; framebuffer MMIO address to set current bank (0..(FB_BANK_CNT-1))
+FB_BANK_REG = $9f00 ; framebuffer MMIO address to set current bank (0..(FB_BANK_CNT-1))
 
 addr        = $00   ; address holding low byte of framebuffer address
 addr_hi     = $01   ; address holding high byte of framebuffer address

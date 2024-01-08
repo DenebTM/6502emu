@@ -21,7 +21,7 @@ public:
 
 private:
   Byte *screen_mem;
-  size_t active_page = 0;
+  size_t active_bank = 0;
 
   SDL_Renderer *renderer;
   SDL_Texture *render_tex;

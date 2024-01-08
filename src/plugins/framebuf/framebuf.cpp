@@ -10,8 +10,8 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-#define MAP_SIZE 3072
-#define PAGE_SIZE 2560
+#define MAP_SIZE 4096
+#define BANK_SIZE 3840
 
 extern plugin_callback_t plugin_callback;
 
@@ -27,17 +27,17 @@ Framebuf::Framebuf() : MemoryMappedDevice(false, MAP_SIZE) {
 Framebuf::~Framebuf() {}
 
 Byte Framebuf::read(Word offset) {
-  if (offset >= PAGE_SIZE)
-    return active_page;
+  if (offset >= BANK_SIZE)
+    return active_bank;
 
-  return screen_mem[active_page * PAGE_SIZE + offset];
+  return screen_mem[active_bank * BANK_SIZE + offset];
 }
 
 Byte Framebuf::write(Word offset, Byte val) {
-  if (offset >= PAGE_SIZE)
-    return active_page = val;
+  if (offset >= BANK_SIZE)
+    return active_bank = val;
 
-  return screen_mem[active_page * PAGE_SIZE + offset] = val;
+  return screen_mem[active_bank * BANK_SIZE + offset] = val;
 }
 
 int Framebuf::sdl_init(SDL_Renderer *renderer) {
