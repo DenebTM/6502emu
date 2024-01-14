@@ -2,7 +2,7 @@
 
 ## Build dependencies
 
-- GCC supporting C++20 or higher
+- Clang supporting C++20 or higher
 - GNU Make
 - readline
 - yaml-cpp
