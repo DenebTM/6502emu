@@ -27,7 +27,7 @@ extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
 }
 
 extern "C" EXPORT int plugin_init(AddressSpace &add_spc) {
-  static std::future<void> wait_for_pia1 = std::async(std::launch::async, [&] {
+  static std::future<void> wait_for_pia1 = std::async(std::launch::async, [&add_spc] {
     std::optional<MemoryMappedDevice *> dev_pia1 = std::nullopt;
     do {
       dev_pia1 = add_spc.get_dev(0xe810);

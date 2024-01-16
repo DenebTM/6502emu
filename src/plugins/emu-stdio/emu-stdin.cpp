@@ -15,7 +15,7 @@ InChar::InChar() : MemoryMappedDevice(true, 1) {
   val = mapped_regs;
   *val = 0;
 
-  stdin_thread = new std::thread([&] {
+  stdin_thread = new std::thread([this] {
     while (stdin_thread_running) {
       int ch = getch();
       switch (ch) {

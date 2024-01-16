@@ -52,10 +52,10 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *c
    * this plugin may be initialized before PIA1, therefore wait for it asynchronously and return early
    * so as not to block _its_ initialization
    */
-  static std::future<void> wait_for_pia1 = std::async(std::launch::async, [&] {
+  static std::future<void> wait_for_pia1 = std::async(std::launch::async, [] {
     std::optional<MemoryMappedDevice *> dev_pia1 = std::nullopt;
     do {
-      dev_pia1 = add_spc.get_dev(0xe810);
+      dev_pia1 = _add_spc->get_dev(0xe810);
       std::this_thread::sleep_for(10ms);
     } while (!dev_pia1.has_value());
 
@@ -69,10 +69,10 @@ extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *c
   });
 
   // same for VIA
-  static std::future<void> wait_for_via = std::async(std::launch::async, [&] {
+  static std::future<void> wait_for_via = std::async(std::launch::async, [] {
     std::optional<MemoryMappedDevice *> dev_via = std::nullopt;
     do {
-      dev_via = add_spc.get_dev(0xe840);
+      dev_via = _add_spc->get_dev(0xe840);
       std::this_thread::sleep_for(10ms);
     } while (!dev_via.has_value());
 

@@ -29,7 +29,7 @@ void load_plugin_modal(bool *modal_shown) {
     if (!opening_file) {
       opening_file = true;
       // run asynchronously so as not to block the UI thread
-      load_file = std::async(std::launch::async, [&] {
+      load_file = std::async(std::launch::async, [] {
         nfdchar_t *outPath;
         nfdfilteritem_t filterItem[1] = {{"Shared library", "so"}};
         if (NFD_OpenDialog(&outPath, filterItem, 1, nullptr) == NFD_OKAY) {
