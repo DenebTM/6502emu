@@ -50,11 +50,11 @@ public:
 
   void flag_interrupt();
 
-  std::function<Byte(void)> read_port_a = [this] { return *port_a; };
-  std::function<void(Byte)> on_write_port_a = [this](Byte val) { return; };
+  std::function<Byte(void)> read_port_a = [this] { return *(this->port_a); };
+  std::function<void(Byte)> on_write_port_a = [](Byte val) { return; };
 
-  std::function<Byte(void)> read_port_b = [this] { return *port_b; };
-  std::function<void(Byte)> on_write_port_b = [this](Byte val) { return; };
+  std::function<Byte(void)> read_port_b = [this] { return *(this->port_b); };
+  std::function<void(Byte)> on_write_port_b = [](Byte val) { return; };
 
   bool ca1 = 1;
   bool ca2 = 1;
