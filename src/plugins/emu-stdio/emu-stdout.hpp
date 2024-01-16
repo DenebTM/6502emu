@@ -3,8 +3,8 @@
 
 struct OutChar : public MemoryMappedDevice {
   OutChar();
-  Byte *val;
 
-  int pre_read(Word offset) override;
-  int post_write(Word offset) override;
+  Byte *last_char;
+
+  Byte write(Word offset, Byte val) override;
 };

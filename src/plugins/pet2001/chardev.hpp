@@ -8,9 +8,6 @@ public:
   Chardev();
   ~Chardev();
 
-  int pre_read(Word offset) override { return 0; }
-  int post_write(Word offset) override { return 0; }
-
   int sdl_init(SDL_Renderer *renderer);
 
   void update();

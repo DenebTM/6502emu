@@ -7,13 +7,10 @@
 
 extern plugin_callback_t plugin_callback;
 
-std::atomic_bool stdin_thread_running = true;
-std::thread *stdin_thread;
-
 InChar::InChar() : MemoryMappedDevice(true, 1) {
   init_ncurses();
-  val = mapped_regs;
-  *val = 0;
+  last_char = mapped_regs;
+  *last_char = 0;
 
   stdin_thread = new std::thread([this] {
     while (stdin_thread_running) {
@@ -47,31 +44,31 @@ InChar::InChar() : MemoryMappedDevice(true, 1) {
             x = 0;
           }
           move(y, x);
-          *val = NOCHAR;
+          *last_char = NOCHAR;
           break;
         }
         case KEY_BACKSPACE:
         case SC_BKSP:
         case SC_DEL:
-          *val = SC_BKSP;
+          *last_char = SC_BKSP;
           break;
         case SC_LF:
           addch(SC_LF);
-          *val = SC_CR;
+          *last_char = SC_CR;
           break;
 
         case SC_EOF:
           plugin_callback(EMU_EXIT, (void *)0);
           return;
         case ERR:
-          *val = 0;
+          *last_char = 0;
           return;
         default:
           // swap upper- and lowercase because EHBasic does not recognise lowercase
           // commands
           if ((ch | 0x20) >= 'a' && (ch | 0x20) <= 'z')
             ch ^= 32;
-          *val = (Byte)ch;
+          *last_char = (Byte)ch;
       }
     }
   });
@@ -84,4 +81,10 @@ InChar::~InChar() {
     stdin_thread->join();
 
   delete stdin_thread;
+}
+
+Byte InChar::read(Word offset) {
+  auto val = *last_char;
+  *last_char = 0;
+  return val;
 }

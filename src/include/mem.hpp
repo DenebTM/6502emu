@@ -39,7 +39,6 @@ public:
     // redirect request to mapped device
     if (info.dev.has_value()) {
       auto [dev, dev_idx] = info.dev.value();
-      dev->pre_read(dev_idx);
       memory[addr] = dev->read(dev_idx);
     }
 
@@ -86,7 +85,6 @@ public:
       auto [dev, dev_idx] = info.dev.value();
       if (!info.read_only)
         memory[addr] = dev->write(dev_idx, val);
-      dev->post_write(dev_idx);
     }
 
     // write directly to RAM

@@ -8,11 +8,8 @@ public:
   Framebuf();
   ~Framebuf();
 
-  virtual Byte read(Word offset) override;
-  virtual Byte write(Word offset, Byte val) override;
-
-  int pre_read(Word offset) override { return 0; }
-  int post_write(Word offset) override { return 0; }
+  Byte read(Word offset) override;
+  Byte write(Word offset, Byte val) override;
 
   int sdl_init(SDL_Renderer *renderer);
   SDL_Surface *create_surface();

@@ -3,11 +3,12 @@
 
 OutChar::OutChar() : MemoryMappedDevice(false, 1) {
   init_ncurses();
-  val = mapped_regs;
+  last_char = mapped_regs;
+  *last_char = NOCHAR;
 }
-int OutChar::pre_read(Word offset) { return 0; }
-int OutChar::post_write(Word offset) {
-  switch (*val) {
+
+Byte OutChar::write(Word offset, Byte val) {
+  switch (val) {
     case NOCHAR:
       return 1;
     case SC_BKSP: {
@@ -26,9 +27,8 @@ int OutChar::post_write(Word offset) {
       break;
 
     default:
-      addch(*val);
+      addch(val);
       refresh();
   }
-  *val = NOCHAR;
-  return 0;
+  return val;
 }
