@@ -14,14 +14,9 @@ extern AddressSpace add_spc;
 std::map<PluginID, Plugin> plugins;
 
 bool is_dlib_loaded(std::string filename) {
-  static std::vector<std::filesystem::path> loaded_libs;
-  auto path = std::filesystem::path(PLUGIN_PATH + filename);
-
-  if (std::find(loaded_libs.begin(), loaded_libs.end(), path) != loaded_libs.end())
-    return true;
-
-  loaded_libs.push_back(path);
-  return false;
+  return std::find_if(plugins.begin(), plugins.end(), [&filename](const std::pair<PluginID, Plugin> &plugin_entry) {
+           return plugin_entry.second.filename == filename;
+         }) != plugins.end();
 }
 
 void load_plugin(PluginID id, std::string filename) {
