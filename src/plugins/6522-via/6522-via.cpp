@@ -4,12 +4,10 @@
 using namespace std::chrono_literals;
 
 #include "emu-types.hpp"
-#include "plugin-callback.hpp"
 #include "plugins/6522-via.hpp"
+#include "plugins/callbacks.hpp"
 
-Via::Via(plugin_callback_t callback) : MemoryMappedDevice(false, 16) {
-  this->plugin_callback = callback;
-
+Via::Via() : MemoryMappedDevice(false, 16) {
   *ddr_a = 0;
   *ddr_b = 0;
 
@@ -133,7 +131,7 @@ void Via::flag_interrupt(IRQ irq) {
   *ifr |= irq | ((irq > 0) && (*ier & ~BIT7)) << 7;
 
   if (*ifr & *ier & ~BIT7) {
-    plugin_callback(CPU_INTERRUPT, (void *)false);
+    plugin_callbacks::assert_interrupt(false);
   }
 }
 

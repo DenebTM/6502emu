@@ -9,12 +9,10 @@ using namespace std::chrono_literals;
 #include "keyboard.hpp"
 #include "mem-dev.hpp"
 #include "mem.hpp"
-#include "plugin-callback.hpp"
 #include "plugins/6520-pia.hpp"
 #include "plugins/6522-via.hpp"
 #include "plugins/plugin-types.hpp"
 
-plugin_callback_t plugin_callback;
 uint64_t system_clock_speed = 1000000;
 
 Chardev *chardev;
@@ -24,9 +22,7 @@ Via *via;
 AddressSpace *_add_spc;
 Word _addr;
 
-extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
-  plugin_callback = callback;
-
+extern "C" EXPORT int plugin_load() {
   chardev = new Chardev();
   if (!chardev->load_success) {
     delete chardev;

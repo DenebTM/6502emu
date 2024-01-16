@@ -6,7 +6,6 @@ using namespace std::chrono_literals;
 
 #include "chardev.hpp"
 #include "keyboard.hpp"
-#include "plugin-callback.hpp"
 #include "plugins/6520-pia.hpp"
 #include "plugins/6522-via.hpp"
 
@@ -21,7 +20,6 @@ using namespace std::chrono_literals;
 constexpr int SCREEN_WIDTH = COL_WIDTH * COLS;
 constexpr int SCREEN_HEIGHT = ROW_HEIGHT * ROWS;
 
-extern plugin_callback_t plugin_callback;
 extern uint64_t system_clock_speed;
 
 extern Pia *pia1;

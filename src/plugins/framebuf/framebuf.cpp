@@ -1,7 +1,6 @@
 #include <SDL2/SDL.h>
 
 #include "framebuf.hpp"
-#include "plugin-callback.hpp"
 #include "plugins/6520-pia.hpp"
 #include "plugins/6522-via.hpp"
 
@@ -12,8 +11,6 @@
 
 #define MAP_SIZE 4096
 #define BANK_SIZE 3840
-
-extern plugin_callback_t plugin_callback;
 
 extern Pia *pia1;
 extern Via *via;

@@ -3,9 +3,7 @@
 
 #include "emu-stdin.hpp"
 #include "emu-stdio-common.hpp"
-#include "plugin-callback.hpp"
-
-extern plugin_callback_t plugin_callback;
+#include "plugins/callbacks.hpp"
 
 InChar::InChar() : MemoryMappedDevice(true, 1) {
   init_ncurses();
@@ -58,7 +56,7 @@ InChar::InChar() : MemoryMappedDevice(true, 1) {
           break;
 
         case SC_EOF:
-          plugin_callback(EMU_EXIT, (void *)0);
+          plugin_callbacks::emu_exit();
           return;
         case ERR:
           *last_char = 0;

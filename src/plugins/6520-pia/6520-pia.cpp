@@ -1,8 +1,7 @@
 #include "plugins/6520-pia.hpp"
+#include "plugins/callbacks.hpp"
 
-Pia::Pia(plugin_callback_t plugin_callback) : MemoryMappedDevice(false, 4) {
-  this->plugin_callback = plugin_callback;
-
+Pia::Pia() : MemoryMappedDevice(false, 4) {
   /**
    * initial configuration:
    * - CA1/CA2/CB1/CB2 in input mode, negative edge, IRQ disabled
@@ -149,7 +148,7 @@ void Pia::set_cx2(bool cb, bool val) {
   *cx2 = val;
 }
 
-void Pia::flag_interrupt() { plugin_callback(CPU_INTERRUPT, (void *)false); }
+void Pia::flag_interrupt() { plugin_callbacks::assert_interrupt(); }
 
 void Pia::update() {
   static bool ca2_pulse_low = false;

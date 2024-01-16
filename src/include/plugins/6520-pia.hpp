@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "mem-dev.hpp"
-#include "plugin-callback.hpp"
 #include "plugins/plugin-types.hpp"
 
 #define Cx1_CTRL (BIT0 | BIT1)
@@ -42,7 +41,7 @@ public:
     CRB, // Control register B
   };
 
-  Pia(plugin_callback_t plugin_callback);
+  Pia();
 
   Byte read(Word offset) override;
 
@@ -69,8 +68,6 @@ public:
   void update();
 
 private:
-  plugin_callback_t plugin_callback;
-
   Byte *port_a = mapped_regs + ORA;
   Byte *ctrl_a = mapped_regs + CRA;
   Byte *port_b = mapped_regs + ORB;

@@ -7,7 +7,6 @@
 #include "emu-config.hpp"
 #include "emu-types.hpp"
 #include "mem.hpp"
-#include "plugin-callback.hpp"
 
 #define PLUGIN_PATH std::string("./plugins/")
 
@@ -21,7 +20,7 @@
  *
  * @return 0: success; non-zero: failure
  */
-typedef int (*plugin_load_t)(plugin_callback_t);
+typedef int (*plugin_load_t)();
 
 /**
  * extern "C" int plugin_init - REQUIRED

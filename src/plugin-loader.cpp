@@ -7,7 +7,6 @@
 #include "emu-config.hpp"
 #include "emu-types.hpp"
 #include "mem.hpp"
-#include "plugin-callback-handler.hpp"
 #include "plugin-loader.hpp"
 
 extern AddressSpace add_spc;
@@ -46,7 +45,7 @@ void load_plugin(PluginID id, std::string filename) {
 
   // find and call the plugin's load function if present
   auto plugin_load_func = (plugin_load_t)dlsym(plugin_handle, "plugin_load");
-  if (plugin_load_func && plugin_load_func(&plugin_callback_handler) == -1) {
+  if (plugin_load_func && plugin_load_func() == -1) {
     std::cerr << "Plugin " << filename << " failed to load." << std::endl;
     dlclose(plugin_handle);
     return;

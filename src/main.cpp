@@ -13,7 +13,6 @@ using namespace std::chrono_literals;
 #include "emu-config.hpp"
 #include "emu-types.hpp"
 #include "mem.hpp"
-#include "plugin-callback-handler.hpp"
 #include "plugin-loader.hpp"
 #include "sysclock.hpp"
 

@@ -7,26 +7,18 @@ using namespace std::chrono_literals;
 
 #include "cassette.hpp"
 #include "mem.hpp"
-#include "plugin-callback.hpp"
 #include "plugins/6520-pia.hpp"
+#include "plugins/callbacks.hpp"
 #include "plugins/plugin-types.hpp"
 
 #include <imgui.h>
 
-plugin_callback_t plugin_callback;
-
 Datasette *datasette;
 Pia *pia1;
 
-extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
-  plugin_callback = callback;
-
+extern "C" EXPORT int plugin_init(AddressSpace &add_spc) {
   datasette = new Datasette();
 
-  return 0;
-}
-
-extern "C" EXPORT int plugin_init(AddressSpace &add_spc) {
   static std::future<void> wait_for_pia1 = std::async(std::launch::async, [&add_spc] {
     std::optional<MemoryMappedDevice *> dev_pia1 = std::nullopt;
     do {
@@ -70,7 +62,7 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
     datasette->load_tap(file);
   };
   if (ImGui::Button("Load file...")) {
-    plugin_callback(CHOOSE_FILE, &load_callback);
+    plugin_callbacks::choose_file(&load_callback);
   }
 
   ImGui::SameLine();

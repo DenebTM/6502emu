@@ -6,8 +6,8 @@
 #include <thread>
 using namespace std::chrono_literals;
 
-#include "plugin-callback-handler.hpp"
 #include "plugin-loader.hpp"
+#include "plugins/callbacks.hpp"
 #include "ui/debug_window.hpp"
 #include "ui/main_window.hpp"
 #include "ui/plugin_list.hpp"
@@ -59,7 +59,7 @@ void main_window_update() {
         if (!(event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(main_window)))
           break;
       case SDL_QUIT:
-        plugin_callback_handler(EMU_EXIT, (void *)0);
+        plugin_callbacks::emu_exit();
         done = true;
         return;
     }

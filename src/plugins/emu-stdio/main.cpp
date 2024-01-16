@@ -2,21 +2,13 @@
 #include "emu-stdio-common.hpp"
 #include "emu-stdout.hpp"
 #include "mem.hpp"
-#include "plugin-callback.hpp"
 #include "plugins/plugin-types.hpp"
 
 OutChar *emu_out;
 InChar *emu_in;
 
-plugin_callback_t plugin_callback;
-
 AddressSpace *_add_spc;
 Word _addr;
-
-extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
-  plugin_callback = callback;
-  return 0;
-}
 
 extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
   _add_spc = &add_spc;

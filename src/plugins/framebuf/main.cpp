@@ -2,14 +2,11 @@
 #include <thread>
 using namespace std::chrono_literals;
 
-#include "emu-config.hpp"
 #include "framebuf.hpp"
 #include "mem-dev.hpp"
 #include "mem.hpp"
-#include "plugin-callback.hpp"
 #include "plugins/plugin-types.hpp"
 
-plugin_callback_t plugin_callback;
 uint64_t system_clock_speed = 1000000;
 
 Framebuf *framebuf;
@@ -20,16 +17,13 @@ Word _addr;
 std::thread *render_thread;
 std::atomic_bool render_thread_running = true;
 
-extern "C" EXPORT int plugin_load(plugin_callback_t callback) {
-  plugin_callback = callback;
-
+extern "C" EXPORT int plugin_load() {
   framebuf = new Framebuf();
 
   return 0;
 }
 
-extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr, EmuConfig *config) {
-  system_clock_speed = config->clock_speed;
+extern "C" EXPORT int plugin_init(AddressSpace &add_spc, Word addr) {
   _add_spc = &add_spc;
   _addr = addr ? addr : 0x9000;
 

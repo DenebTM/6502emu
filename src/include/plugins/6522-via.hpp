@@ -36,7 +36,7 @@ public:
     ANY = 0xff,
   };
 
-  Via(plugin_callback_t callback);
+  Via();
 
   Byte read(Word offset) override;
   Byte write(Word offset, Byte val) override;
@@ -46,8 +46,6 @@ public:
 private:
   void flag_interrupt(IRQ irq);
   void clear_interrupt(IRQ irq);
-
-  plugin_callback_t plugin_callback;
 
   bool timer1_irq_on_zero = false;
   bool timer2_irq_on_zero = false;

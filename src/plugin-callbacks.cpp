@@ -1,17 +1,23 @@
 #include <atomic>
-#include <filesystem>
 #include <future>
 #include <nfd.h>
-#include <optional>
+#include <string>
 
 #include "cpu.hpp"
-#include "plugin-callback-handler.hpp"
+#include "plugins/callbacks.hpp"
 
 extern std::atomic_bool is_running;
 extern int exit_status;
 extern Emu6502 cpu;
 
-void choose_file(std::function<void(std::string)> *func) {
+void plugin_callbacks::emu_exit(int status) {
+  exit_status = status;
+  is_running = false;
+}
+
+void plugin_callbacks::assert_interrupt(bool nmi) { cpu.assert_interrupt(nmi); }
+
+void plugin_callbacks::choose_file(std::function<void(std::string)> *func) {
   static bool opening_file = false;
   static std::future<void> load_file;
 
@@ -31,29 +37,4 @@ void choose_file(std::function<void(std::string)> *func) {
       opening_file = false;
     }
   });
-}
-
-/**
- * a pointer to this function should be passed to every plugin that
- * needs to be able to interrupt the CPU or cleanly shut down the emulator
- */
-void plugin_callback_handler(PluginCallbackType type, void *arg) {
-  switch (type) {
-    case EMU_EXIT: {
-      exit_status = (int)(intptr_t)arg;
-      is_running = false;
-      break;
-    }
-
-    case CPU_INTERRUPT: {
-      bool nmi = (bool)arg;
-      cpu.assert_interrupt(nmi);
-      break;
-    }
-
-    case CHOOSE_FILE: {
-      choose_file((std::function<void(std::string)> *)arg);
-      break;
-    }
-  }
 }
