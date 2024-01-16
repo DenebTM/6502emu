@@ -3,6 +3,7 @@
 #include <nfd.h>
 
 #include "plugin-loader.hpp"
+#include "ui/choose_file.hpp"
 #include "ui/plugin_list.hpp"
 // #include "emu-config.hpp"
 
@@ -22,24 +23,7 @@ void load_plugin_modal(bool *modal_shown) {
 
   static std::string filename;
   if (ImGui::Button("Choose file...")) {
-    static bool opening_file = false;
-    static std::future<void> load_file;
-
-    // prevent the dialog from being opened twice
-    if (!opening_file) {
-      opening_file = true;
-      // run asynchronously so as not to block the UI thread
-      load_file = std::async(std::launch::async, [] {
-        nfdchar_t *outPath;
-        nfdfilteritem_t filterItem[1] = {{"Shared library", "so"}};
-        if (NFD_OpenDialog(&outPath, filterItem, 1, nullptr) == NFD_OKAY) {
-          filename = std::string(outPath);
-          NFD_FreePath(outPath);
-        }
-
-        opening_file = false;
-      });
-    }
+    ui::choose_file(filename);
   }
   ImGui::SameLine();
   ImGui::SetNextItemWidth(150);

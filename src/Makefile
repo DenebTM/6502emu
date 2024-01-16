@@ -2,8 +2,10 @@
 LDLIBS = -lm -ldl -lreadline -lyaml-cpp
 
 INCLUDE = -Iinclude
-SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callbacks.cpp plugin-loader.cpp cpu/cpu.cpp ui/main_window.cpp ui/ui_thread.cpp ui/debug_window.cpp ui/plugin_list.cpp
-# SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callbacks.cpp plugin-loader.cpp cpu/cpu-alt.cpp ui/main_window.cpp ui/ui_thread.cpp ui/debug_window.cpp ui/plugin_list.cpp
+SOURCES = main.cpp sysclock.cpp emu-config.cpp plugin-callbacks.cpp plugin-loader.cpp cpu/cpu.cpp
+SOURCES += cpu/cpu.cpp
+#SOURCES += cpu/cpu-alt.cpp
+SOURCES += ui/main_window.cpp ui/ui_thread.cpp ui/debug_window.cpp ui/plugin_list.cpp ui/choose_file.cpp
 
 # ImGui
 IMGUI_DIR = ../lib/imgui

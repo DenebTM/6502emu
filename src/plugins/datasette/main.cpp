@@ -8,8 +8,8 @@ using namespace std::chrono_literals;
 #include "cassette.hpp"
 #include "mem.hpp"
 #include "plugins/6520-pia.hpp"
-#include "plugins/callbacks.hpp"
 #include "plugins/plugin-types.hpp"
+#include "ui/choose_file.hpp"
 
 #include <imgui.h>
 
@@ -57,12 +57,11 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
   ImGui::Begin("PET 2001 Datasette");
 
   static std::string file;
-  static std::function<void(std::string)> load_callback = [](std::string new_file) {
-    file = new_file;
-    datasette->load_tap(file);
-  };
   if (ImGui::Button("Load file...")) {
-    plugin_callbacks::choose_file(&load_callback);
+    ui::choose_file([](std::string new_file) {
+      file = new_file;
+      datasette->load_tap(file);
+    });
   }
 
   ImGui::SameLine();
