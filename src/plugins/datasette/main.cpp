@@ -58,10 +58,12 @@ extern "C" EXPORT int plugin_ui_render(/* SDL_Renderer *renderer */) {
 
   static std::string file;
   if (ImGui::Button("Load file...")) {
-    ui::choose_file([](std::string new_file) {
-      file = new_file;
-      datasette->load_tap(file);
-    });
+    ui::choose_file(
+        [](std::string new_file) {
+          file = new_file;
+          datasette->load_tap(file);
+        },
+        {{"CBM TAP 1.0/1.1 File", "tap"}});
   }
 
   ImGui::SameLine();

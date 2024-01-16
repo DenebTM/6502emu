@@ -1,6 +1,4 @@
-#include <future>
 #include <imgui.h>
-#include <nfd.h>
 
 #include "plugin-loader.hpp"
 #include "ui/choose_file.hpp"
@@ -9,21 +7,15 @@
 
 extern AddressSpace add_spc;
 
-static bool nfd_initialized = false;
 void load_plugin_modal(bool *modal_shown) {
   static bool load_allowed = false;
-
-  if (!nfd_initialized) {
-    NFD_Init();
-    nfd_initialized = true;
-  }
 
   ImGui::Begin("Load new plugin", modal_shown, ImGuiWindowFlags_Modal | ImGuiWindowFlags_NoResize);
   ImGui::SetWindowSize(ImVec2(250, 0));
 
   static std::string filename;
   if (ImGui::Button("Choose file...")) {
-    ui::choose_file(filename);
+    ui::choose_file(filename, {{"Shared library", "so"}});
   }
   ImGui::SameLine();
   ImGui::SetNextItemWidth(150);
