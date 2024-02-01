@@ -9,8 +9,8 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-#define MAP_SIZE 4096
-#define BANK_SIZE 3840
+#define MAP_SIZE 4096  // number of consecutive bytes used in address space
+#define BANK_SIZE 3840 // size of visible screen memory portion (3840 bytes = 30,720 pixels = 48 scanlines)
 
 extern Pia *pia1;
 extern Via *via;
