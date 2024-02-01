@@ -37,7 +37,7 @@ Incomplete implementation of the Commodore PET 2001 hardware, sufficient to boot
 Use with [configs/pet2001.yaml](configs/pet2001.yaml) or [configs/pet2001.yaml](configs/basic4.yaml) - ROMs not included.
 Additionally requires a 2k PETSCII character ROM to be present at `roms/char_rom.bin`.
 
-### framebuffer (`framebuf.so`)
+### Bitmap framebuffer (`framebuf.so`)
 
 Provides a 640x480, 1bpp framebuffer at address `0x9000-0x9FFF`.
 
